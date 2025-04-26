@@ -81,13 +81,11 @@
       }
       updateOutput();
     }
-
     function clearGrid() {
       const cells = document.querySelectorAll('.cell');
       cells.forEach(cell => cell.classList.remove('active'));
       updateOutput();
     }
-
     function updateOutput() {
       const name = document.getElementById('patternName').value;
       const pattern = [];
@@ -110,14 +108,12 @@ ${pattern.map(row => "    [" + row.join(", ") + "]").join(",\n")}
 }`;
       document.getElementById('output').value = formatted;
     }
-
     function copyOutput() {
       const output = document.getElementById('output');
       output.select();
       document.execCommand('copy');
       alert('Copied to clipboard!');
     }
-
     generateGrid();
   </script>
 </body>
