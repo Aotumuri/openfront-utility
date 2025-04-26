@@ -1,132 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Pattern JSON Generator + Preview</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .grid, .preview-grid { display: grid; gap: 2px; margin-bottom: 20px; user-select: none; }
-    .cell, .preview-cell { width: 20px; height: 20px; background: #eee; border: 1px solid #ccc; cursor: pointer; }
-    .cell.active { background: #333; }
-    .preview-cell { width: 10px; height: 10px; }
-    .preview-cell.active { background: #999; }
-    .controls { margin-bottom: 10px; }
-    textarea { width: 100%; height: 200px; }
-    button { margin: 5px 5px 5px 0; }
-  </style>
-</head>
-<body>
-  <h1>Pattern JSON Generator</h1>
-
-  <div class="controls">
-    Name: <input type="text" id="patternName" value="openfront" style="width: 150px;">
-    <br><br>
-    Width: <input type="number" id="tileWidth" value="64" min="1" style="width: 60px;">
-    Height: <input type="number" id="tileHeight" value="10" min="1" style="width: 60px;">
-    Scale: <input type="number" id="scale" value="1" min="1" style="width: 60px;">
-    <button onclick="generateGrid()">Generate Grid</button>
-    <button onclick="clearGrid()">Clear Grid</button>
-  </div>
-
-  <div id="grid" class="grid"></div>
-
-  <textarea id="output" readonly></textarea>
-  <button onclick="copyOutput()">Copy JSON</button>
-
-  <h2>Preview (Tiled 3x3)</h2>
-  <div id="preview" class="preview-grid"></div>
-
-  <script>
-    let tileWidth = 64;
-    let tileHeight = 10;
-    let isMouseDown = false;
-
-    document.body.onmousedown = () => (isMouseDown = true);
-    document.body.onmouseup = () => (isMouseDown = false);
-
-    const initialPattern = [
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
-      [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
-    ];
-
-    function generateGrid() {
-      tileWidth = parseInt(document.getElementById('tileWidth').value);
-      tileHeight = parseInt(document.getElementById('tileHeight').value);
-      const grid = document.getElementById('grid');
-      grid.style.gridTemplateColumns = `repeat(${tileWidth}, 20px)`;
-      grid.innerHTML = '';
-      for (let y = 0; y < tileHeight; y++) {
-        for (let x = 0; x < tileWidth; x++) {
-          const cell = document.createElement('div');
-          cell.className = 'cell';
-          cell.dataset.x = x;
-          cell.dataset.y = y;
-          if (initialPattern[y] && initialPattern[y][x] === 1) {
-            cell.classList.add('active');
-          }
-          cell.onclick = () => {
-            cell.classList.toggle('active');
-            updateOutput();
-          };
-          cell.onmouseover = () => {
-            if (isMouseDown) {
-              cell.classList.add('active');
-              updateOutput();
-            }
-          };
-          grid.appendChild(cell);
-        }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pattern JSON Generator + Preview</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
       }
-      updateOutput();
-    }
-
-    function clearGrid() {
-      const cells = document.querySelectorAll('.cell');
-      cells.forEach(cell => cell.classList.remove('active'));
-      updateOutput();
-    }
-
-    function updateOutput() {
-      const pattern = [];
-      for (let y = 0; y < tileHeight; y++) {
-        const row = [];
-        for (let x = 0; x < tileWidth; x++) {
-          const cell = document.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
-          row.push(cell.classList.contains('active') ? 1 : 0);
-        }
-        pattern.push(row);
+      .grid,
+      .preview-grid {
+        display: grid;
+        gap: 2px;
+        margin-bottom: 20px;
+        user-select: none;
       }
-      renderPreview(pattern);
-    }
+      .cell,
+      .preview-cell {
+        width: 20px;
+        height: 20px;
+        background: #eee;
+        border: 1px solid #ccc;
+        cursor: pointer;
+      }
+      .cell.active {
+        background: #333;
+      }
+      .preview-cell {
+        width: 10px;
+        height: 10px;
+      }
+      .preview-cell.active {
+        background: #999;
+      }
+      .controls {
+        margin-bottom: 10px;
+      }
+      textarea {
+        width: 100%;
+        height: 200px;
+      }
+      button {
+        margin: 5px 5px 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Pattern JSON Generator</h1>
 
-    function renderPreview(pattern) {
-      const preview = document.getElementById('preview');
-      preview.style.gridTemplateColumns = `repeat(${tileWidth * 3}, 10px)`;
-      preview.innerHTML = '';
-      for (let dy = 0; dy < 3; dy++) {
+    <div class="controls">
+      Name:
+      <input
+        type="text"
+        id="patternName"
+        value="openfront"
+        style="width: 150px"
+      />
+      <br /><br />
+      Width:
+      <input
+        type="number"
+        id="tileWidth"
+        value="64"
+        min="1"
+        style="width: 60px"
+      />
+      Height:
+      <input
+        type="number"
+        id="tileHeight"
+        value="10"
+        min="1"
+        style="width: 60px"
+      />
+      Scale:
+      <input type="number" id="scale" value="1" min="1" style="width: 60px" />
+      <button onclick="generateGrid()">Generate Grid</button>
+      <button onclick="clearGrid()">Clear Grid</button>
+    </div>
+
+    <div id="grid" class="grid"></div>
+
+    <textarea id="output" readonly></textarea>
+    <button onclick="copyOutput()">Copy JSON</button>
+
+    <h2>Preview (Tiled 3x3)</h2>
+    <div id="preview" class="preview-grid"></div>
+
+    <script>
+      let tileWidth = 64;
+      let tileHeight = 10;
+      let isMouseDown = false;
+
+      document.body.onmousedown = () => (isMouseDown = true);
+      document.body.onmouseup = () => (isMouseDown = false);
+
+      const initialPattern = [
+        [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ],
+        [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ],
+        [
+          0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0,
+          1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0,
+          1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+        ],
+        [
+          0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+          1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0,
+          1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        ],
+        [
+          0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+          1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0,
+          1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        ],
+        [
+          0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0,
+          1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0,
+          1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        ],
+        [
+          0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+          1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0,
+          1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        ],
+        [
+          0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+          1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0,
+          1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        ],
+        [
+          0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0,
+          1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0,
+          1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        ],
+      ];
+
+      function generateGrid() {
+        tileWidth = parseInt(document.getElementById("tileWidth").value);
+        tileHeight = parseInt(document.getElementById("tileHeight").value);
+        const grid = document.getElementById("grid");
+        grid.style.gridTemplateColumns = `repeat(${tileWidth}, 20px)`;
+        grid.innerHTML = "";
         for (let y = 0; y < tileHeight; y++) {
-          for (let dx = 0; dx < 3; dx++) {
-            for (let x = 0; x < tileWidth; x++) {
-              const cell = document.createElement('div');
-              cell.className = 'preview-cell';
-              if (pattern[y][x] === 1) {
-                cell.classList.add('active');
+          for (let x = 0; x < tileWidth; x++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.dataset.x = x;
+            cell.dataset.y = y;
+            if (initialPattern[y] && initialPattern[y][x] === 1) {
+              cell.classList.add("active");
+            }
+            cell.onclick = () => {
+              cell.classList.toggle("active");
+              updateOutput();
+            };
+            cell.onmouseover = () => {
+              if (isMouseDown) {
+                cell.classList.add("active");
+                updateOutput();
               }
-              preview.appendChild(cell);
+            };
+            grid.appendChild(cell);
+          }
+        }
+        updateOutput();
+      }
+
+      function clearGrid() {
+        const cells = document.querySelectorAll(".cell");
+        cells.forEach((cell) => cell.classList.remove("active"));
+        updateOutput();
+      }
+
+      function updateOutput() {
+        const pattern = [];
+        for (let y = 0; y < tileHeight; y++) {
+          const row = [];
+          for (let x = 0; x < tileWidth; x++) {
+            const cell = document.querySelector(
+              `.cell[data-x='${x}'][data-y='${y}']`
+            );
+            row.push(cell.classList.contains("active") ? 1 : 0);
+          }
+          pattern.push(row);
+        }
+
+        const name = document.getElementById("patternName").value;
+        const scale = parseInt(document.getElementById("scale").value);
+        const formatted = `{
+  "name": "${name}",
+  "tileWidth": ${tileWidth},
+  "tileHeight": ${tileHeight},
+  "scale": ${scale},
+  "pattern": [
+${pattern.map((row) => "    [" + row.join(", ") + "]").join(",\n")}
+  ]
+}`;
+        document.getElementById("output").value = formatted;
+
+        renderPreview(pattern);
+      }
+
+      function renderPreview(pattern) {
+        const preview = document.getElementById("preview");
+        preview.style.gridTemplateColumns = `repeat(${tileWidth * 3}, 10px)`;
+        preview.innerHTML = "";
+        for (let dy = 0; dy < 3; dy++) {
+          for (let y = 0; y < tileHeight; y++) {
+            for (let dx = 0; dx < 3; dx++) {
+              for (let x = 0; x < tileWidth; x++) {
+                const cell = document.createElement("div");
+                cell.className = "preview-cell";
+                if (pattern[y][x] === 1) {
+                  cell.classList.add("active");
+                }
+                preview.appendChild(cell);
+              }
             }
           }
         }
       }
-    }
 
-    generateGrid();
-  </script>
-</body>
+      generateGrid();
+    </script>
+  </body>
 </html>
