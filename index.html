@@ -83,6 +83,8 @@
 
     <textarea id="output" readonly></textarea>
     <button onclick="copyOutput()">Copy JSON</button>
+    <br>
+    <button onclick="downloadBin()">Download .bin</button>
 
     <h2>Preview (Tiled 3x3)</h2>
     <div id="preview" class="preview-grid"></div>
@@ -191,10 +193,10 @@
   "tileWidth": ${tileWidth},
   "tileHeight": ${tileHeight},
   "scale": ${scale},
-  "pattern": [
-${pattern.map((row) => "    [" + row.join(", ") + "]").join(",\n")}
-  ]
 }`;
+/*  "pattern": [
+${pattern.map((row) => "    [" + row.join(", ") + "]").join(",\n")}
+  ]*/
         document.getElementById("output").value = formatted;
 
         renderPreview(pattern);
@@ -221,6 +223,38 @@ ${pattern.map((row) => "    [" + row.join(", ") + "]").join(",\n")}
       }
 
       generateGrid();
+
+      function downloadBin() {
+        const pattern = getCurrentPattern();
+        const height = pattern.length;
+        const width = pattern[0]?.length || 0;
+        const totalBits = width * height;
+        const totalBytes = Math.ceil(totalBits / 8);
+        const buffer = new Uint8Array(totalBytes);
+
+        let bitIndex = 0;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            if (pattern[y][x]) {
+              const byteIndex = Math.floor(bitIndex / 8);
+              const bitOffset = bitIndex % 8;
+              buffer[byteIndex] |= 1 << (7 - bitOffset);
+            }
+            bitIndex++;
+          }
+        }
+
+        const blob = new Blob([buffer], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const name = document.getElementById("patternName").value.trim() || "pattern";
+        a.download = name.replace(/\s+/g, "_") + ".bin";
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
     </script>
   </body>
 </html>
