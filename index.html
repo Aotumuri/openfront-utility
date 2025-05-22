@@ -174,6 +174,39 @@
         updateOutput();
       }
 
+      function generatePatternBase64(pattern, width, height, scale) {
+        const version = 1;
+        const header = new Uint8Array(7);
+        header[0] = version;
+        header[1] = (width >> 8) & 0xff;
+        header[2] = width & 0xff;
+        header[3] = (height >> 8) & 0xff;
+        header[4] = height & 0xff;
+        header[5] = (scale >> 8) & 0xff;
+        header[6] = scale & 0xff;
+
+        const totalBits = width * height;
+        const totalBytes = Math.ceil(totalBits / 8);
+        const data = new Uint8Array(totalBytes);
+        let bitIndex = 0;
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            if (pattern[y][x]) {
+              const byteIndex = Math.floor(bitIndex / 8);
+              const bitOffset = bitIndex % 8;
+              data[byteIndex] |= 1 << (7 - bitOffset);
+            }
+            bitIndex++;
+          }
+        }
+
+        const full = new Uint8Array(header.length + data.length);
+        full.set(header, 0);
+        full.set(data, header.length);
+        return btoa(String.fromCharCode(...full));
+      }
+
       function updateOutput() {
         const pattern = [];
         for (let y = 0; y < tileHeight; y++) {
@@ -189,16 +222,11 @@
 
         const name = document.getElementById("patternName").value;
         const scale = parseInt(document.getElementById("scale").value);
+        const base64 = generatePatternBase64(pattern, tileWidth, tileHeight, scale);
         const formatted = `"${name}": {
-  "tileWidth": ${tileWidth},
-  "tileHeight": ${tileHeight},
-  "scale": ${scale},
+  "patternBase64": "${base64}"
 }`;
-/*  "pattern": [
-${pattern.map((row) => "    [" + row.join(", ") + "]").join(",\n")}
-  ]*/
         document.getElementById("output").value = formatted;
-
         renderPreview(pattern);
       }
 
