@@ -223,9 +223,7 @@
         const name = document.getElementById("patternName").value;
         const scale = parseInt(document.getElementById("scale").value);
         const base64 = generatePatternBase64(pattern, tileWidth, tileHeight, scale);
-        const formatted = `"${name}": {
-  "patternBase64": "${base64}"
-}`;
+        const formatted = `"${name}": "${base64}"`;
         document.getElementById("output").value = formatted;
         renderPreview(pattern);
       }
