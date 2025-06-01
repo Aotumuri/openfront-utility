@@ -188,16 +188,15 @@
         const totalBits = width * height;
         const totalBytes = Math.ceil(totalBits / 8);
         const data = new Uint8Array(totalBytes);
-        let bitIndex = 0;
 
         for (let y = 0; y < height; y++) {
           for (let x = 0; x < width; x++) {
+            const idx = y * width + x;
+            const byteIndex = Math.floor(idx / 8);
+            const bitOffset = idx & 7; // <- 修正点（MSBからLSBに）
             if (pattern[y][x]) {
-              const byteIndex = Math.floor(bitIndex / 8);
-              const bitOffset = bitIndex % 8;
-              data[byteIndex] |= 1 << (7 - bitOffset);
+              data[byteIndex] |= 1 << bitOffset;
             }
-            bitIndex++;
           }
         }
 
