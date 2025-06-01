@@ -252,14 +252,10 @@
 
       function generatePatternBase64(pattern, width, height, scale) {
         const version = 1;
-        const header = new Uint8Array(7);
+        const header = new Uint8Array(3);
         header[0] = version;
-        header[1] = (width >> 8) & 0xff;
-        header[2] = width & 0xff;
-        header[3] = (height >> 8) & 0xff;
-        header[4] = height & 0xff;
-        header[5] = (scale >> 8) & 0xff;
-        header[6] = scale & 0xff;
+        header[1] = (scale & 0x7) | ((width & 0x1f) << 3);
+        header[2] = ((width & 0x60) >> 5) | ((height & 0x3f) << 2);
 
         const totalBits = width * height;
         const totalBytes = Math.ceil(totalBits / 8);
@@ -329,9 +325,16 @@
         const pattern = getCurrentPattern();
         const height = pattern.length;
         const width = pattern[0]?.length || 0;
+        const scale = parseInt(document.getElementById("scale").value) || 1;
+
+        const header = new Uint8Array(3);
+        header[0] = 1; // version
+        header[1] = (scale & 0x7) | ((width & 0x1f) << 3);
+        header[2] = ((width & 0x60) >> 5) | ((height & 0x3f) << 2);
+
         const totalBits = width * height;
         const totalBytes = Math.ceil(totalBits / 8);
-        const buffer = new Uint8Array(totalBytes);
+        const data = new Uint8Array(totalBytes);
 
         let bitIndex = 0;
         for (let y = 0; y < height; y++) {
@@ -339,13 +342,17 @@
             if (pattern[y][x]) {
               const byteIndex = Math.floor(bitIndex / 8);
               const bitOffset = bitIndex % 8;
-              buffer[byteIndex] |= 1 << bitOffset;
+              data[byteIndex] |= 1 << bitOffset;
             }
             bitIndex++;
           }
         }
 
-        const blob = new Blob([buffer], { type: 'application/octet-stream' });
+        const full = new Uint8Array(header.length + data.length);
+        full.set(header, 0);
+        full.set(data, header.length);
+
+        const blob = new Blob([full], { type: 'application/octet-stream' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         const name = document.getElementById("patternName").value.trim() || "pattern";
