@@ -49,6 +49,10 @@
     <h1>Pattern JSON Generator</h1>
 
     <div class="controls">
+      Base64:
+      <input type="text" id="base64Input" style="width: 400px" />
+      <button onclick="loadFromBase64()">Load</button>
+      <br /><br />
       Name:
       <input
         type="text"
@@ -152,6 +156,78 @@
           }
         }
         isFirstLoad = false;
+        updateOutput();
+      }
+
+      function loadFromBase64() {
+        const base64 = document.getElementById("base64Input").value;
+        if (!base64) return;
+
+        const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const version = bytes[0];
+        if (version !== 1) {
+          alert("Unsupported pattern version");
+          return;
+        }
+
+        tileWidth = (bytes[1] << 8) | bytes[2];
+        tileHeight = (bytes[3] << 8) | bytes[4];
+        const scale = (bytes[5] << 8) | bytes[6];
+        document.getElementById("tileWidth").value = tileWidth;
+        document.getElementById("tileHeight").value = tileHeight;
+        document.getElementById("scale").value = scale;
+
+        const totalBits = tileWidth * tileHeight;
+        const totalBytes = Math.ceil(totalBits / 8);
+        const pattern = [];
+        for (let y = 0; y < tileHeight; y++) {
+          const row = [];
+          for (let x = 0; x < tileWidth; x++) {
+            const idx = y * tileWidth + x;
+            const byteIndex = Math.floor(idx / 8);
+            const bitOffset = idx % 8;
+            const bit = (bytes[7 + byteIndex] >> bitOffset) & 1;
+            row.push(bit);
+          }
+          pattern.push(row);
+        }
+
+        generateGridWithPattern(pattern);
+      }
+
+      function generateGridWithPattern(pattern) {
+        const grid = document.getElementById("grid");
+        grid.style.gridTemplateColumns = `repeat(${tileWidth}, 20px)`;
+        grid.innerHTML = "";
+        for (let y = 0; y < tileHeight; y++) {
+          for (let x = 0; x < tileWidth; x++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.dataset.x = x;
+            cell.dataset.y = y;
+            if (pattern[y] && pattern[y][x] === 1) {
+              cell.classList.add("active");
+            }
+            cell.onclick = () => {
+              cell.classList.toggle("active");
+              updateOutput();
+            };
+            cell.onmouseover = () => {
+              if (isMouseDown) {
+                if (toggleState === null) {
+                  toggleState = !cell.classList.contains("active");
+                }
+                if (toggleState) {
+                  cell.classList.add("active");
+                } else {
+                  cell.classList.remove("active");
+                }
+                updateOutput();
+              }
+            };
+            grid.appendChild(cell);
+          }
+        }
         updateOutput();
       }
 
