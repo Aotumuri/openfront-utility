@@ -254,8 +254,8 @@
         const version = 1;
         const header = new Uint8Array(3);
         header[0] = version;
-        header[1] = (scale & 0x7) | ((width & 0x1f) << 3);
-        header[2] = ((width & 0x60) >> 5) | ((height & 0x3f) << 2);
+        header[1] = (scale & 0x7) | (((width + 2) & 0x1f) << 3);
+        header[2] = (((width + 2) & 0x60) >> 5) | (((height + 2) & 0x3f) << 2);
 
         const totalBits = width * height;
         const totalBytes = Math.ceil(totalBits / 8);
@@ -265,7 +265,7 @@
           for (let x = 0; x < width; x++) {
             const idx = y * width + x;
             const byteIndex = Math.floor(idx / 8);
-            const bitOffset = idx & 7;
+            const bitOffset = idx % 8;
             if (pattern[y][x]) {
               data[byteIndex] |= 1 << bitOffset;
             }
