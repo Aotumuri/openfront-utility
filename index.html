@@ -163,69 +163,49 @@
         const base64 = document.getElementById("base64Input").value;
         if (!base64) return;
 
-        try {
-          const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-          console.log("Decoded bytes:", bytes);
+        const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
 
-          if (bytes.length < 3) {
-            throw new Error("Base64 data is too short.");
-          }
-
-          const version = bytes[0];
-          if (version !== 1) {
-            throw new Error("Unsupported pattern version.");
-          }
-
-          // デコード時に width と height から 2 を減算
-          const width = (((bytes[1] >> 3) & 0x1f) | ((bytes[2] & 0x03) << 5)) - 2;
-          const height = ((bytes[2] >> 2) & 0x3f) - 2;
-          const scale = bytes[1] & 0x07;
-
-          console.log("Decoded metadata:", { width, height, scale });
-
-          if (width <= 0 || height <= 0) {
-            throw new Error(`Invalid width or height: width=${width}, height=${height}`);
-          }
-
-          // 現在の縦横サイズと異なる場合に更新
-          const currentWidth = parseInt(document.getElementById("tileWidth").value);
-          const currentHeight = parseInt(document.getElementById("tileHeight").value);
-
-          if (currentWidth !== width || currentHeight !== height) {
-            document.getElementById("tileWidth").value = width;
-            document.getElementById("tileHeight").value = height;
-            tileWidth = width;
-            tileHeight = height;
-          }
-
-          document.getElementById("scale").value = scale;
-
-          const totalBits = width * height;
-          const totalBytes = Math.ceil(totalBits / 8);
-
-          if (bytes.length < 3 + totalBytes) {
-            throw new Error("Base64 data is too short for the pattern.");
-          }
-
-          const pattern = [];
-          for (let y = 0; y < height; y++) {
-            const row = [];
-            for (let x = 0; x < width; x++) {
-              const idx = y * width + x;
-              const byteIndex = Math.floor(idx / 8);
-              const bitOffset = idx % 8;
-              const bit = (bytes[3 + byteIndex] >> bitOffset) & 1;
-              row.push(bit);
-            }
-            pattern.push(row);
-          }
-
-          console.log("Decoded pattern:", pattern);
-          generateGridWithPattern(pattern);
-        } catch (error) {
-          console.error("Error loading Base64:", error);
-          alert(`Failed to load Base64: ${error.message}`);
+        if (bytes.length < 3) {
+          alert("Pattern data is too short to contain required metadata.");
+          return;
         }
+
+        const version = bytes[0];
+        if (version !== 1) {
+          alert("The pattern versions are different.");
+          return;
+        }
+
+        const byte1 = bytes[1];
+        const byte2 = bytes[2];
+        const scale = byte1 & 0x07;
+        const tileWidth = (((byte2 & 0x03) << 5) | ((byte1 >> 3) & 0x1f)) + 2;
+        const tileHeight = ((byte2 >> 2) & 0x3f) + 2;
+
+        document.getElementById("tileWidth").value = tileWidth;
+        document.getElementById("tileHeight").value = tileHeight;
+        document.getElementById("scale").value = scale;
+
+        const dataStart = 3;
+        const pattern = [];
+        for (let y = 0; y < tileHeight; y++) {
+          const row = [];
+          for (let x = 0; x < tileWidth; x++) {
+            const idx = y * tileWidth + x;
+            const byteIndex = Math.floor(idx / 8);
+            const bitOffset = idx % 8;
+            const byte = bytes[dataStart + byteIndex];
+            if (byte === undefined) {
+              alert("Invalid pattern data.");
+              return;
+            }
+            const bit = (byte & (1 << bitOffset)) !== 0 ? 1 : 0;
+            row.push(bit);
+          }
+          pattern.push(row);
+        }
+
+        generateGridWithPattern(pattern);
       }
 
       function generateGridWithPattern(pattern) {
