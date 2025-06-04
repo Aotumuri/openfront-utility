@@ -288,7 +288,7 @@
         const header = new Uint8Array(3);
         header[0] = version;
         header[1] = (scale & 0x7) | (((width + 2) & 0x1f) << 3);
-        header[2] = (((width + 2) & 0x60) >> 5) | (((height + 2) & 0x3f) << 2);
+        header[2] = (((width - 2) & 0x60) >> 5) | (((height - 2) & 0x3f) << 2);
 
         const totalBits = width * height;
         const totalBytes = Math.ceil(totalBits / 8);
