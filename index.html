@@ -305,6 +305,14 @@
           }
         }
 
+        console.log("Header values for encode:", {
+          scale,
+          width,
+          height,
+          header1: header[1].toString(2).padStart(8, '0'),
+          header2: header[2].toString(2).padStart(8, '0'),
+        });
+
         const full = new Uint8Array(header.length + data.length);
         full.set(header, 0);
         full.set(data, header.length);
