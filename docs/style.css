@@ -1,0 +1,52 @@
+.tool-btn {
+  margin-right: 8px;
+  padding: 4px 10px;
+  font-size: 1em;
+  border: 1px solid #aaa;
+  background: #f8f8f8;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.tool-btn.selected {
+  background: #d0eaff;
+  border-color: #3399ff;
+}
+body {
+  font-family: sans-serif;
+  padding: 20px;
+}
+.grid,
+.preview-grid {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 20px;
+  user-select: none;
+}
+.cell,
+.preview-cell {
+  width: 20px;
+  height: 20px;
+  background: #eee;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+.cell.active {
+  background: #333;
+}
+.preview-cell {
+  width: 10px;
+  height: 10px;
+}
+.preview-cell.active {
+  background: #999;
+}
+.controls {
+  margin-bottom: 10px;
+}
+textarea {
+  width: 100%;
+  height: 200px;
+}
+button {
+  margin: 5px 5px 5px 0;
+}

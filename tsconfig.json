@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "none",
+    "outDir": "./docs",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "types": [],
+    "typeRoots": ["./node_modules/@types"]
+  },
+  "include": ["src/**/*"]
+}

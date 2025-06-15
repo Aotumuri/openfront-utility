@@ -1,0 +1,12 @@
+{
+  "name": "openfront-utility-ts",
+  "version": "1.0.0",
+  "description": "Pattern JSON Generator + Preview (TypeScript版)",
+  "scripts": {
+    "build": "tsc",
+    "start": "npx serve docs"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

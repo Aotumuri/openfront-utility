@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pattern JSON Generator + Preview</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Pattern JSON Generator + Preview</h1>
+    <div class="controls">
+      <div id="toolbox">
+        <button id="tool-pen" class="tool-btn" data-tool="pen">🖊️ Pen</button>
+        <button id="tool-fill" class="tool-btn" data-tool="fill">🪣 Fill</button>
+        <button id="tool-star" class="tool-btn" data-tool="star">⭐ Star</button>
+        <input type="range" id="star-size" min="2" max="10" value="3" style="width:80px;vertical-align:middle;" />
+        <button id="tool-circle" class="tool-btn" data-tool="circle">⚪ Circle</button>
+        <input type="range" id="circle-size" min="2" max="15" value="5" style="width:80px;vertical-align:middle;" />
+        <label style="margin-left:8px;vertical-align:middle;">
+          <input type="checkbox" id="circle-fill" checked /> Fill
+        </label>
+      </div>
+      <div class="row">
+        <label for="base64Input">Base64:</label>
+        <input type="text" id="base64Input" style="width: 320px" />
+        <button id="loadBtn">Load</button>
+      </div>
+      <div class="row">
+        <label for="patternName">Name:</label>
+        <input type="text" id="patternName" value="openfront" style="width: 120px" />
+      </div>
+      <div class="row">
+        <label for="tileWidth">Width:</label>
+        <input type="number" id="tileWidth" value="66" min="1" style="width: 60px" />
+        <label for="tileHeight">Height:</label>
+        <input type="number" id="tileHeight" value="10" min="1" style="width: 60px" />
+        <label for="scale">Scale:</label>
+        <input type="number" id="scale" value="1" min="1" style="width: 60px" />
+        <button id="generateGridBtn">Grid</button>
+        <button id="clearGridBtn">Clear</button>
+      </div>
+    </div>
+    <div class="main-layout">
+      <div>
+        <div id="grid" class="grid"></div>
+        <div style="margin-top:10px;">
+          <button id="copyOutputBtn">Copy JSON</button>
+          <button id="downloadBinBtn">Download .bin</button>
+        </div>
+      </div>
+      <div class="side-panel">
+        <label for="output">Pattern JSON:</label>
+        <textarea id="output" readonly></textarea>
+        <h2 style="margin-top:20px;">Preview (Tiled 3x3)</h2>
+        <div id="preview" class="preview-grid"></div>
+      </div>
+    </div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

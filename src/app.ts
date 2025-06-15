@@ -1,0 +1,397 @@
+// UIロジック本体（TypeScript）
+
+
+// ここに既存index.htmlのロジックをTypeScriptで移植していきます
+// まずはイベントリスナーやDOM操作の雛形を用意
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  // Get all necessary elements
+  const base64Input = document.getElementById("base64Input") as HTMLInputElement;
+  // Tool buttons
+  const toolPenBtn = document.getElementById("tool-pen") as HTMLButtonElement;
+  const toolFillBtn = document.getElementById("tool-fill") as HTMLButtonElement;
+  const toolStarBtn = document.getElementById("tool-star") as HTMLButtonElement;
+  const toolCircleBtn = document.getElementById("tool-circle") as HTMLButtonElement;
+  let currentTool: 'pen' | 'fill' | 'star' | 'circle' = 'pen';
+  // Tool controls
+  const starSizeInput = document.getElementById("star-size") as HTMLInputElement;
+  const circleSizeInput = document.getElementById("circle-size") as HTMLInputElement;
+  const circleFillInput = document.getElementById("circle-fill") as HTMLInputElement;
+
+  const loadBtn = document.getElementById("loadBtn") as HTMLButtonElement;
+  const tileWidthInput = document.getElementById("tileWidth") as HTMLInputElement;
+  const tileHeightInput = document.getElementById("tileHeight") as HTMLInputElement;
+  const scaleInput = document.getElementById("scale") as HTMLInputElement;
+  const patternNameInput = document.getElementById("patternName") as HTMLInputElement;
+  const generateGridBtn = document.getElementById("generateGridBtn") as HTMLButtonElement;
+  const clearGridBtn = document.getElementById("clearGridBtn") as HTMLButtonElement;
+  const gridDiv = document.getElementById("grid")!;
+  const outputTextarea = document.getElementById("output") as HTMLTextAreaElement;
+  const copyOutputBtn = document.getElementById("copyOutputBtn") as HTMLButtonElement;
+  const downloadBinBtn = document.getElementById("downloadBinBtn") as HTMLButtonElement;
+  const previewDiv = document.getElementById("preview")!;
+
+  let tileWidth = parseInt(tileWidthInput.value);
+  let tileHeight = parseInt(tileHeightInput.value);
+  let isMouseDown = false;
+  let toggleState: boolean|null = null;
+  let isFirstLoad = true;
+
+  document.body.onmousedown = () => (isMouseDown = true);
+  document.body.onmouseup = () => {
+    isMouseDown = false;
+    toggleState = null;
+  };
+
+  // 初期パターン
+  const initialPattern: number[][] = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  ];
+
+  function getCurrentPattern(): number[][] {
+    const pattern: number[][] = [];
+    for (let y = 0; y < tileHeight; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < tileWidth; x++) {
+        const cell = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
+        row.push(cell && cell.classList.contains("active") ? 1 : 0);
+      }
+      pattern.push(row);
+    }
+    return pattern;
+  }
+
+  function generateGrid(pattern?: number[][]) {
+    tileWidth = parseInt(tileWidthInput.value);
+    tileHeight = parseInt(tileHeightInput.value);
+    gridDiv.style.gridTemplateColumns = `repeat(${tileWidth}, 20px)`;
+    gridDiv.innerHTML = "";
+    const usePattern = pattern || (isFirstLoad ? initialPattern : getCurrentPattern());
+    for (let y = 0; y < tileHeight; y++) {
+      for (let x = 0; x < tileWidth; x++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.x = x.toString();
+        cell.dataset.y = y.toString();
+        if (usePattern[y] && usePattern[y][x] === 1) {
+          cell.classList.add("active");
+        }
+        cell.onclick = () => {
+          if (currentTool === 'pen') {
+            cell.classList.toggle("active");
+          } else if (currentTool === 'fill') {
+            floodFill(x, y);
+          } else if (currentTool === 'star') {
+            const r = parseInt(starSizeInput.value);
+            drawStar(x, y, r);
+          } else if (currentTool === 'circle') {
+            const r = parseInt(circleSizeInput.value);
+            const fill = circleFillInput.checked;
+            drawCircle(x, y, r, fill);
+          }
+          updateOutput();
+        };
+        cell.onmouseover = () => {
+          if (isMouseDown && currentTool === 'pen') {
+            if (toggleState === null) {
+              toggleState = !cell.classList.contains("active");
+            }
+            if (toggleState) {
+              cell.classList.add("active");
+            } else {
+              cell.classList.remove("active");
+            }
+            updateOutput();
+          }
+        };
+  // ツール切り替えUI
+  function selectTool(tool: 'pen' | 'fill' | 'star' | 'circle') {
+    currentTool = tool;
+    [toolPenBtn, toolFillBtn, toolStarBtn, toolCircleBtn].forEach(btn => btn.classList.remove('selected'));
+    if (tool === 'pen') toolPenBtn.classList.add('selected');
+    if (tool === 'fill') toolFillBtn.classList.add('selected');
+    if (tool === 'star') toolStarBtn.classList.add('selected');
+    if (tool === 'circle') toolCircleBtn.classList.add('selected');
+  }
+  toolPenBtn.onclick = () => selectTool('pen');
+  toolFillBtn.onclick = () => selectTool('fill');
+  toolStarBtn.onclick = () => selectTool('star');
+  toolCircleBtn.onclick = () => selectTool('circle');
+  selectTool('pen');
+
+  // Draw a circle at (cx, cy) with radius r, optionally filled
+  function drawCircle(cx: number, cy: number, r: number, fill: boolean) {
+    if (fill) {
+      // Midpoint circle fill
+      for (let y = -r; y <= r; y++) {
+        for (let x = -r; x <= r; x++) {
+          if (x * x + y * y <= r * r) {
+            const px = cx + x;
+            const py = cy + y;
+            if (px >= 0 && px < tileWidth && py >= 0 && py < tileHeight) {
+              const c = gridDiv.querySelector(`.cell[data-x='${px}'][data-y='${py}']`);
+              if (c) c.classList.add('active');
+            }
+          }
+        }
+      }
+    } else {
+      // Midpoint circle outline
+      let x = r, y = 0, err = 0;
+      while (x >= y) {
+        plotCirclePoints(cx, cy, x, y);
+        y++;
+        if (err <= 0) {
+          err += 2 * y + 1;
+        } else {
+          x--;
+          err -= 2 * x + 1;
+        }
+      }
+    }
+  }
+  function plotCirclePoints(cx: number, cy: number, x: number, y: number) {
+    const pts = [
+      [cx + x, cy + y], [cx + y, cy + x], [cx - y, cy + x], [cx - x, cy + y],
+      [cx - x, cy - y], [cx - y, cy - x], [cx + y, cy - x], [cx + x, cy - y]
+    ];
+    for (const [px, py] of pts) {
+      if (px >= 0 && px < tileWidth && py >= 0 && py < tileHeight) {
+        const c = gridDiv.querySelector(`.cell[data-x='${px}'][data-y='${py}']`);
+        if (c) c.classList.add('active');
+      }
+    }
+  }
+
+  // 塗りつぶし（バケツ）
+  function floodFill(sx: number, sy: number) {
+    const cells = gridDiv.querySelectorAll('.cell');
+    const get = (x: number, y: number) => {
+      return gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`)?.classList.contains('active') ? 1 : 0;
+    };
+    const set = (x: number, y: number, v: 0|1) => {
+      const c = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
+      if (c) {
+        if (v) c.classList.add('active'); else c.classList.remove('active');
+      }
+    };
+    const target = get(sx, sy);
+    const newValue = target ? 0 : 1;
+    if (get(sx, sy) === newValue) return;
+    const visited = Array(tileHeight).fill(0).map(() => Array(tileWidth).fill(false));
+    const stack: [number, number][] = [[sx, sy]];
+    while (stack.length) {
+      const [x, y] = stack.pop()!;
+      if (x < 0 || y < 0 || x >= tileWidth || y >= tileHeight) continue;
+      if (visited[y][x]) continue;
+      if (get(x, y) !== target) continue;
+      set(x, y, newValue as 0|1);
+      visited[y][x] = true;
+      stack.push([x+1, y], [x-1, y], [x, y+1], [x, y-1]);
+    }
+  }
+
+  // Draw a star at (cx, cy) with radius r
+  function drawStar(cx: number, cy: number, r: number) {
+    // 5-pointed star
+    const points: [number, number][] = [];
+    for (let i = 0; i < 5; i++) {
+      const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+      points.push([
+        Math.round(cx + r * Math.cos(angle)),
+        Math.round(cy + r * Math.sin(angle))
+      ]);
+    }
+    // Draw star lines
+    for (let i = 0; i < 5; i++) {
+      drawLine(cx, cy, points[i][0], points[i][1]);
+      drawLine(points[i][0], points[i][1], points[(i + 2) % 5][0], points[(i + 2) % 5][1]);
+    }
+  }
+  // When tool controls change, update tool (for immediate feedback if needed)
+  starSizeInput.oninput = () => {
+    if (currentTool === 'star') {
+      // Optionally, could preview star size on hover, but for now do nothing
+    }
+  };
+  circleSizeInput.oninput = () => {
+    if (currentTool === 'circle') {
+      // Optionally, could preview circle size on hover, but for now do nothing
+    }
+  };
+  circleFillInput.onchange = () => {
+    if (currentTool === 'circle') {
+      // Optionally, could preview fill on hover, but for now do nothing
+    }
+  };
+  // ブレゼンハムの線分アルゴリズム
+  function drawLine(x0: number, y0: number, x1: number, y1: number) {
+    let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    let err = dx + dy, e2;
+    while (true) {
+      const c = gridDiv.querySelector(`.cell[data-x='${x0}'][data-y='${y0}']`);
+      if (c) c.classList.add('active');
+      if (x0 === x1 && y0 === y1) break;
+      e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x0 += sx; }
+      if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+  }
+        gridDiv.appendChild(cell);
+      }
+    }
+    isFirstLoad = false;
+    updateOutput();
+  }
+
+  function clearGrid() {
+    const cells = gridDiv.querySelectorAll(".cell");
+    cells.forEach(cell => cell.classList.remove("active"));
+    updateOutput();
+  }
+
+  function generatePatternBase64(pattern: number[][], width: number, height: number, scale: number): string {
+    const version = 1;
+    const header = new Uint8Array(3);
+    header[0] = version;
+    header[1] = (scale & 0x7) | (((width - 2) & 0x1f) << 3);
+    header[2] = (((width - 2) & 0x60) >> 5) | (((height - 2) & 0x3f) << 2);
+    const totalBits = width * height;
+    const totalBytes = Math.ceil(totalBits / 8);
+    const data = new Uint8Array(totalBytes);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = y * width + x;
+        const byteIndex = Math.floor(idx / 8);
+        const bitOffset = idx % 8;
+        if (pattern[y][x]) {
+          data[byteIndex] |= 1 << bitOffset;
+        }
+      }
+    }
+    const full = new Uint8Array(header.length + data.length);
+    full.set(header, 0);
+    full.set(data, header.length);
+    return btoa(String.fromCharCode(...full));
+  }
+
+  function updateOutput() {
+    const pattern = getCurrentPattern();
+    const name = patternNameInput.value;
+    const scale = parseInt(scaleInput.value);
+    const base64 = generatePatternBase64(pattern, tileWidth, tileHeight, scale);
+    const formatted = `"${name}": "${base64}"`;
+    outputTextarea.value = formatted;
+    renderPreview(pattern);
+  }
+
+  function renderPreview(pattern: number[][]) {
+    previewDiv.style.gridTemplateColumns = `repeat(${tileWidth * 3}, 10px)`;
+    previewDiv.innerHTML = "";
+    for (let dy = 0; dy < 3; dy++) {
+      for (let y = 0; y < tileHeight; y++) {
+        for (let dx = 0; dx < 3; dx++) {
+          for (let x = 0; x < tileWidth; x++) {
+            const cell = document.createElement("div");
+            cell.className = "preview-cell";
+            if (pattern[y][x] === 1) {
+              cell.classList.add("active");
+            }
+            previewDiv.appendChild(cell);
+          }
+        }
+      }
+    }
+  }
+
+  function loadFromBase64() {
+    const base64 = base64Input.value;
+    if (!base64) return;
+    let decoder: PatternDecoder;
+    try {
+      decoder = new PatternDecoder(base64);
+    } catch (e) {
+      alert((e as Error).message);
+      return;
+    }
+    tileWidthInput.value = decoder.getTileWidth().toString();
+    tileHeightInput.value = decoder.getTileHeight().toString();
+    scaleInput.value = decoder.getScale().toString();
+    tileWidth = decoder.getTileWidth();
+    tileHeight = decoder.getTileHeight();
+    // パターンデータを2次元配列に復元
+    const pattern: number[][] = [];
+    for (let y = 0; y < tileHeight; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < tileWidth; x++) {
+        row.push(decoder.isSet(x, y) ? 1 : 0);
+      }
+      pattern.push(row);
+    }
+    generateGrid(pattern);
+  }
+
+  function copyOutput() {
+    outputTextarea.select();
+    document.execCommand("copy");
+  }
+
+  function downloadBin() {
+    const pattern = getCurrentPattern();
+    const height = pattern.length;
+    const width = pattern[0]?.length || 0;
+    const scale = parseInt(scaleInput.value) || 1;
+    const header = new Uint8Array(3);
+    header[0] = 1; // version
+    header[1] = (scale & 0x7) | ((width & 0x1f) << 3);
+    header[2] = ((width & 0x60) >> 5) | ((height & 0x3f) << 2);
+    const totalBits = width * height;
+    const totalBytes = Math.ceil(totalBits / 8);
+    const data = new Uint8Array(totalBytes);
+    let bitIndex = 0;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (pattern[y][x]) {
+          const byteIndex = Math.floor(bitIndex / 8);
+          const bitOffset = bitIndex % 8;
+          data[byteIndex] |= 1 << bitOffset;
+        }
+        bitIndex++;
+      }
+    }
+    const full = new Uint8Array(header.length + data.length);
+    full.set(header, 0);
+    full.set(data, header.length);
+    const blob = new Blob([full], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const name = patternNameInput.value.trim() || "pattern";
+    a.download = name.replace(/\s+/g, "_") + ".bin";
+    a.href = url;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // イベントバインド
+  loadBtn.onclick = loadFromBase64;
+  generateGridBtn.onclick = () => generateGrid();
+  clearGridBtn.onclick = clearGrid;
+  copyOutputBtn.onclick = copyOutput;
+  downloadBinBtn.onclick = downloadBin;
+
+  // 初期グリッド生成
+  generateGrid();
+});
