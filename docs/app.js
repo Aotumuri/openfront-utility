@@ -276,7 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateOutput();
     }
     function generatePatternBase64(pattern, width, height, scale) {
-        const version = 1;
+        const version = 0;
         const header = new Uint8Array(3);
         header[0] = version;
         header[1] = (scale & 0x7) | (((width - 2) & 0x1f) << 3);
@@ -338,17 +338,23 @@ document.addEventListener("DOMContentLoaded", () => {
             alert(e.message);
             return;
         }
+        // デコードした値でboxを更新
         tileWidthInput.value = decoder.getTileWidth().toString();
         tileHeightInput.value = decoder.getTileHeight().toString();
         scaleInput.value = decoder.getScale().toString();
         tileWidth = decoder.getTileWidth();
         tileHeight = decoder.getTileHeight();
-        // パターンデータを2次元配列に復元
+        // scaleは無視して、パレット（グリッド）にはデータをそのまま展開
         const pattern = [];
         for (let y = 0; y < tileHeight; y++) {
             const row = [];
             for (let x = 0; x < tileWidth; x++) {
-                row.push(decoder.isSet(x, y) ? 1 : 0);
+                // scaleを無視してデータをそのまま展開
+                const idx = y * tileWidth + x;
+                const byteIndex = Math.floor(idx / 8);
+                const bitOffset = idx % 8;
+                const byte = decoder.bytes[decoder.dataStart + byteIndex];
+                row.push(byte !== undefined && (byte & (1 << bitOffset)) !== 0 ? 1 : 0);
             }
             pattern.push(row);
         }

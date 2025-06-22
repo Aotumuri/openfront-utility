@@ -262,7 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function generatePatternBase64(pattern: number[][], width: number, height: number, scale: number): string {
-    const version = 1;
+    const version = 0;
     const header = new Uint8Array(3);
     header[0] = version;
     header[1] = (scale & 0x7) | (((width - 2) & 0x1f) << 3);
