@@ -296,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const name = patternNameInput.value;
     const scale = parseInt(scaleInput.value);
     const base64 = generatePatternBase64(pattern, tileWidth, tileHeight, scale);
-    const formatted = `"${name}": "${base64}"`;
+    const formatted = JSON.stringify({ [base64]: { name } });
     outputTextarea.value = formatted;
     renderPreview(pattern);
   }
