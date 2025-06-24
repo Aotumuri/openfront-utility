@@ -37,6 +37,10 @@ document.addEventListener("DOMContentLoaded", () => {
         isMouseDown = false;
         toggleState = null;
     };
+    tileWidthInput.addEventListener("change", updateOutput);
+    tileHeightInput.addEventListener("change", updateOutput);
+    scaleInput.addEventListener("change", updateOutput);
+    patternNameInput.addEventListener("change", updateOutput);
     // 初期パターン
     const initialPattern = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
