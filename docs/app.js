@@ -310,23 +310,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const base64 = generatePatternBase64(pattern, tileWidth, tileHeight, scale);
         const formatted = JSON.stringify({ [base64]: { name } });
         outputTextarea.value = formatted;
-        renderPreview(pattern);
+        renderPreview(base64);
     }
     function renderPreview(pattern) {
-        previewDiv.style.gridTemplateColumns = `repeat(${tileWidth * 3}, 10px)`;
+        const decoder = new PatternDecoder(pattern);
+        const width = 300;
+        const height = 80;
+        previewDiv.style.gridTemplateColumns = `repeat(${width}, 4px)`;
         previewDiv.innerHTML = "";
-        for (let dy = 0; dy < 3; dy++) {
-            for (let y = 0; y < tileHeight; y++) {
-                for (let dx = 0; dx < 3; dx++) {
-                    for (let x = 0; x < tileWidth; x++) {
-                        const cell = document.createElement("div");
-                        cell.className = "preview-cell";
-                        if (pattern[y][x] === 1) {
-                            cell.classList.add("active");
-                        }
-                        previewDiv.appendChild(cell);
-                    }
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const cell = document.createElement("div");
+                cell.className = "preview-cell";
+                if (decoder.isSet(x, y)) {
+                    cell.classList.add("active");
                 }
+                previewDiv.appendChild(cell);
             }
         }
     }
@@ -343,24 +342,19 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         // デコードした値でboxを更新
-        tileWidthInput.value = decoder.getTileWidth().toString();
-        tileHeightInput.value = decoder.getTileHeight().toString();
-        scaleInput.value = decoder.getScale().toString();
         tileWidth = decoder.getTileWidth();
         tileHeight = decoder.getTileHeight();
-        // scaleは無視して、パレット（グリッド）にはデータをそのまま展開
-        const pattern = [];
+        const scale = decoder.getScale();
+        tileWidthInput.value = tileWidth.toString();
+        tileHeightInput.value = tileHeight.toString();
+        scaleInput.value = scale.toString();
+        const pattern = new Array(tileHeight);
         for (let y = 0; y < tileHeight; y++) {
-            const row = [];
+            const row = new Array(tileWidth);
             for (let x = 0; x < tileWidth; x++) {
-                // scaleを無視してデータをそのまま展開
-                const idx = y * tileWidth + x;
-                const byteIndex = Math.floor(idx / 8);
-                const bitOffset = idx % 8;
-                const byte = decoder.bytes[decoder.dataStart + byteIndex];
-                row.push(byte !== undefined && (byte & (1 << bitOffset)) !== 0 ? 1 : 0);
+                row[x] = decoder.isSet(x << scale, y << scale) ? 1 : 0;
             }
-            pattern.push(row);
+            pattern[y] = row;
         }
         generateGrid(pattern);
     }
