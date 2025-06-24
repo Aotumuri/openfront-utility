@@ -44,8 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleState = null;
   };
 
-  tileWidthInput.addEventListener("change", updateOutput);
-  tileHeightInput.addEventListener("change", updateOutput);
   scaleInput.addEventListener("change", updateOutput);
   patternNameInput.addEventListener("change", updateOutput);
 
