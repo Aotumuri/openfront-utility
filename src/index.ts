@@ -13,7 +13,7 @@ class PatternDecoder {
       throw new Error("Pattern data is too short to contain required metadata.");
     }
     const version = bytes[0];
-    if (version !== 1) {
+    if (version !== 0) {
       throw new Error("The pattern versions are different.");
     }
     const byte1 = bytes[1];
