@@ -278,6 +278,12 @@ document.addEventListener("DOMContentLoaded", () => {
         updateOutput();
     }
     function generatePatternBase64(pattern, width, height, scale) {
+        if (scale !== (scale & 0x07))
+            throw new Error(`Invalid scale: ${scale}`);
+        if (width !== (width & 0x7f))
+            throw new Error(`Invalid width: ${width}`);
+        if (height !== (height & 0x3f))
+            throw new Error(`Invalid height: ${height}`);
         const version = 0;
         const header = new Uint8Array(3);
         header[0] = version;
