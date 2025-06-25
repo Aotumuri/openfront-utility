@@ -37,8 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
         isMouseDown = false;
         toggleState = null;
     };
-    tileWidthInput.addEventListener("change", updateOutput);
-    tileHeightInput.addEventListener("change", updateOutput);
     scaleInput.addEventListener("change", updateOutput);
     patternNameInput.addEventListener("change", updateOutput);
     // 初期パターン
@@ -301,7 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const full = new Uint8Array(header.length + data.length);
         full.set(header, 0);
         full.set(data, header.length);
-        return btoa(String.fromCharCode(...full));
+        return btoa(String.fromCharCode(...full)).replace(/\+/g, "-").replace(/\//g, "_");
     }
     function updateOutput() {
         const pattern = getCurrentPattern();
