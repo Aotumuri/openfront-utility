@@ -305,7 +305,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const full = new Uint8Array(header.length + data.length);
         full.set(header, 0);
         full.set(data, header.length);
-        return btoa(String.fromCharCode(...full)).replace(/\+/g, "-").replace(/\//g, "_");
+        return btoa(String.fromCharCode(...full)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=$/g, "");
     }
     function updateOutput() {
         const pattern = getCurrentPattern();
