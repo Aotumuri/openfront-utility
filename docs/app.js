@@ -149,64 +149,39 @@ document.addEventListener("DOMContentLoaded", () => {
                         updateOutput();
                     }
                 };
-                // ツール切り替えUI
-                function selectTool(tool) {
-                    currentTool = tool;
-                    [toolPenBtn, toolFillBtn, toolStarBtn, toolCircleBtn].forEach(btn => btn.classList.remove('selected'));
-                    if (tool === 'pen')
-                        toolPenBtn.classList.add('selected');
-                    if (tool === 'fill')
-                        toolFillBtn.classList.add('selected');
-                    if (tool === 'star')
-                        toolStarBtn.classList.add('selected');
-                    if (tool === 'circle')
-                        toolCircleBtn.classList.add('selected');
-                }
-                toolPenBtn.onclick = () => selectTool('pen');
-                toolFillBtn.onclick = () => selectTool('fill');
-                toolStarBtn.onclick = () => selectTool('star');
-                toolCircleBtn.onclick = () => selectTool('circle');
-                selectTool('pen');
-                // Draw a circle at (cx, cy) with radius r, optionally filled
-                function drawCircle(cx, cy, r, fill) {
-                    if (fill) {
-                        // Midpoint circle fill
-                        for (let y = -r; y <= r; y++) {
-                            for (let x = -r; x <= r; x++) {
-                                if (x * x + y * y <= r * r) {
-                                    const px = cx + x;
-                                    const py = cy + y;
-                                    if (px >= 0 && px < tileWidth && py >= 0 && py < tileHeight) {
-                                        const c = gridDiv.querySelector(`.cell[data-x='${px}'][data-y='${py}']`);
-                                        if (c)
-                                            c.classList.add('active');
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else {
-                        // Midpoint circle outline
-                        let x = r, y = 0, err = 0;
-                        while (x >= y) {
-                            plotCirclePoints(cx, cy, x, y);
-                            y++;
-                            if (err <= 0) {
-                                err += 2 * y + 1;
-                            }
-                            else {
-                                x--;
-                                err -= 2 * x + 1;
-                            }
-                        }
-                    }
-                }
-                function plotCirclePoints(cx, cy, x, y) {
-                    const pts = [
-                        [cx + x, cy + y], [cx + y, cy + x], [cx - y, cy + x], [cx - x, cy + y],
-                        [cx - x, cy - y], [cx - y, cy - x], [cx + y, cy - x], [cx + x, cy - y]
-                    ];
-                    for (const [px, py] of pts) {
+                gridDiv.appendChild(cell);
+            }
+        }
+        isFirstLoad = false;
+        updateOutput();
+    }
+    // ツール切り替えUI
+    function selectTool(tool) {
+        currentTool = tool;
+        [toolPenBtn, toolFillBtn, toolStarBtn, toolCircleBtn].forEach(btn => btn.classList.remove('selected'));
+        if (tool === 'pen')
+            toolPenBtn.classList.add('selected');
+        if (tool === 'fill')
+            toolFillBtn.classList.add('selected');
+        if (tool === 'star')
+            toolStarBtn.classList.add('selected');
+        if (tool === 'circle')
+            toolCircleBtn.classList.add('selected');
+    }
+    toolPenBtn.onclick = () => selectTool('pen');
+    toolFillBtn.onclick = () => selectTool('fill');
+    toolStarBtn.onclick = () => selectTool('star');
+    toolCircleBtn.onclick = () => selectTool('circle');
+    selectTool('pen');
+    // Draw a circle at (cx, cy) with radius r, optionally filled
+    function drawCircle(cx, cy, r, fill) {
+        if (fill) {
+            // Midpoint circle fill
+            for (let y = -r; y <= r; y++) {
+                for (let x = -r; x <= r; x++) {
+                    if (x * x + y * y <= r * r) {
+                        const px = cx + x;
+                        const py = cy + y;
                         if (px >= 0 && px < tileWidth && py >= 0 && py < tileHeight) {
                             const c = gridDiv.querySelector(`.cell[data-x='${px}'][data-y='${py}']`);
                             if (c)
@@ -214,101 +189,126 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     }
                 }
-                // 塗りつぶし（バケツ）
-                function floodFill(sx, sy) {
-                    const cells = gridDiv.querySelectorAll('.cell');
-                    const get = (x, y) => {
-                        var _a;
-                        return ((_a = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`)) === null || _a === void 0 ? void 0 : _a.classList.contains('active')) ? 1 : 0;
-                    };
-                    const set = (x, y, v) => {
-                        const c = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
-                        if (c) {
-                            if (v)
-                                c.classList.add('active');
-                            else
-                                c.classList.remove('active');
-                        }
-                    };
-                    const target = get(sx, sy);
-                    const newValue = target ? 0 : 1;
-                    if (get(sx, sy) === newValue)
-                        return;
-                    const visited = Array(tileHeight).fill(0).map(() => Array(tileWidth).fill(false));
-                    const stack = [[sx, sy]];
-                    while (stack.length) {
-                        const [x, y] = stack.pop();
-                        if (x < 0 || y < 0 || x >= tileWidth || y >= tileHeight)
-                            continue;
-                        if (visited[y][x])
-                            continue;
-                        if (get(x, y) !== target)
-                            continue;
-                        set(x, y, newValue);
-                        visited[y][x] = true;
-                        stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
-                    }
-                }
-                // Draw a star at (cx, cy) with radius r
-                function drawStar(cx, cy, r) {
-                    // 5-pointed star
-                    const points = [];
-                    for (let i = 0; i < 5; i++) {
-                        const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
-                        points.push([
-                            Math.round(cx + r * Math.cos(angle)),
-                            Math.round(cy + r * Math.sin(angle))
-                        ]);
-                    }
-                    // Draw star lines
-                    for (let i = 0; i < 5; i++) {
-                        drawLine(cx, cy, points[i][0], points[i][1]);
-                        drawLine(points[i][0], points[i][1], points[(i + 2) % 5][0], points[(i + 2) % 5][1]);
-                    }
-                }
-                // When tool controls change, update tool (for immediate feedback if needed)
-                starSizeInput.oninput = () => {
-                    if (currentTool === 'star') {
-                        // Optionally, could preview star size on hover, but for now do nothing
-                    }
-                };
-                circleSizeInput.oninput = () => {
-                    if (currentTool === 'circle') {
-                        // Optionally, could preview circle size on hover, but for now do nothing
-                    }
-                };
-                circleFillInput.onchange = () => {
-                    if (currentTool === 'circle') {
-                        // Optionally, could preview fill on hover, but for now do nothing
-                    }
-                };
-                // ブレゼンハムの線分アルゴリズム
-                function drawLine(x0, y0, x1, y1) {
-                    let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-                    let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-                    let err = dx + dy, e2;
-                    while (true) {
-                        const c = gridDiv.querySelector(`.cell[data-x='${x0}'][data-y='${y0}']`);
-                        if (c)
-                            c.classList.add('active');
-                        if (x0 === x1 && y0 === y1)
-                            break;
-                        e2 = 2 * err;
-                        if (e2 >= dy) {
-                            err += dy;
-                            x0 += sx;
-                        }
-                        if (e2 <= dx) {
-                            err += dx;
-                            y0 += sy;
-                        }
-                    }
-                }
-                gridDiv.appendChild(cell);
             }
         }
-        isFirstLoad = false;
-        updateOutput();
+        else {
+            // Midpoint circle outline
+            let x = r, y = 0, err = 0;
+            while (x >= y) {
+                plotCirclePoints(cx, cy, x, y);
+                y++;
+                if (err <= 0) {
+                    err += 2 * y + 1;
+                }
+                else {
+                    x--;
+                    err -= 2 * x + 1;
+                }
+            }
+        }
+    }
+    function plotCirclePoints(cx, cy, x, y) {
+        const pts = [
+            [cx + x, cy + y], [cx + y, cy + x], [cx - y, cy + x], [cx - x, cy + y],
+            [cx - x, cy - y], [cx - y, cy - x], [cx + y, cy - x], [cx + x, cy - y]
+        ];
+        for (const [px, py] of pts) {
+            if (px >= 0 && px < tileWidth && py >= 0 && py < tileHeight) {
+                const c = gridDiv.querySelector(`.cell[data-x='${px}'][data-y='${py}']`);
+                if (c)
+                    c.classList.add('active');
+            }
+        }
+    }
+    // 塗りつぶし（バケツ）
+    function floodFill(sx, sy) {
+        const cells = gridDiv.querySelectorAll('.cell');
+        const get = (x, y) => {
+            var _a;
+            return ((_a = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`)) === null || _a === void 0 ? void 0 : _a.classList.contains('active')) ? 1 : 0;
+        };
+        const set = (x, y, v) => {
+            const c = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
+            if (c) {
+                if (v)
+                    c.classList.add('active');
+                else
+                    c.classList.remove('active');
+            }
+        };
+        const target = get(sx, sy);
+        const newValue = target ? 0 : 1;
+        if (get(sx, sy) === newValue)
+            return;
+        const visited = Array(tileHeight).fill(0).map(() => Array(tileWidth).fill(false));
+        const stack = [[sx, sy]];
+        while (stack.length) {
+            const [x, y] = stack.pop();
+            if (x < 0 || y < 0 || x >= tileWidth || y >= tileHeight)
+                continue;
+            if (visited[y][x])
+                continue;
+            if (get(x, y) !== target)
+                continue;
+            set(x, y, newValue);
+            visited[y][x] = true;
+            stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+        }
+    }
+    // Draw a star at (cx, cy) with radius r
+    function drawStar(cx, cy, r) {
+        // 5-pointed star
+        const points = [];
+        for (let i = 0; i < 5; i++) {
+            const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+            points.push([
+                Math.round(cx + r * Math.cos(angle)),
+                Math.round(cy + r * Math.sin(angle))
+            ]);
+        }
+        // Draw star lines
+        for (let i = 0; i < 5; i++) {
+            drawLine(cx, cy, points[i][0], points[i][1]);
+            drawLine(points[i][0], points[i][1], points[(i + 2) % 5][0], points[(i + 2) % 5][1]);
+        }
+    }
+    // When tool controls change, update tool (for immediate feedback if needed)
+    starSizeInput.oninput = () => {
+        if (currentTool === 'star') {
+            // Optionally, could preview star size on hover, but for now do nothing
+        }
+    };
+    circleSizeInput.oninput = () => {
+        if (currentTool === 'circle') {
+            // Optionally, could preview circle size on hover, but for now do nothing
+        }
+    };
+    circleFillInput.onchange = () => {
+        if (currentTool === 'circle') {
+            // Optionally, could preview fill on hover, but for now do nothing
+        }
+    };
+    // ブレゼンハムの線分アルゴリズム
+    function drawLine(x0, y0, x1, y1) {
+        let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+        let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+        let err = dx + dy, e2;
+        while (true) {
+            const c = gridDiv.querySelector(`.cell[data-x='${x0}'][data-y='${y0}']`);
+            if (c)
+                c.classList.add('active');
+            if (x0 === x1 && y0 === y1)
+                break;
+            e2 = 2 * err;
+            if (e2 >= dy) {
+                err += dy;
+                x0 += sx;
+            }
+            if (e2 <= dx) {
+                err += dx;
+                y0 += sy;
+            }
+        }
     }
     function clearGrid() {
         const cells = gridDiv.querySelectorAll(".cell");

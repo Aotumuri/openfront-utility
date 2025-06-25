@@ -157,6 +157,13 @@ document.addEventListener("DOMContentLoaded", () => {
             updateOutput();
           }
         };
+        gridDiv.appendChild(cell);
+      }
+    }
+    isFirstLoad = false;
+    updateOutput();
+  }
+
   // ツール切り替えUI
   function selectTool(tool: 'pen' | 'fill' | 'star' | 'circle') {
     currentTool = tool;
@@ -290,12 +297,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e2 >= dy) { err += dy; x0 += sx; }
       if (e2 <= dx) { err += dx; y0 += sy; }
     }
-  }
-        gridDiv.appendChild(cell);
-      }
-    }
-    isFirstLoad = false;
-    updateOutput();
   }
 
   function clearGrid() {
