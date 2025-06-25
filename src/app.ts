@@ -21,10 +21,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const loadBtn = document.getElementById("loadBtn") as HTMLButtonElement;
   const tileWidthInput = document.getElementById("tileWidth") as HTMLInputElement;
+  const tileWidthValue = document.getElementById("tileWidth-value") as HTMLSpanElement;
   const tileHeightInput = document.getElementById("tileHeight") as HTMLInputElement;
+  const tileHeightValue = document.getElementById("tileHeight-value") as HTMLSpanElement;
   const scaleInput = document.getElementById("scale") as HTMLInputElement;
+  const scaleValue = document.getElementById("scale-value") as HTMLSpanElement;
   const patternNameInput = document.getElementById("patternName") as HTMLInputElement;
-  const generateGridBtn = document.getElementById("generateGridBtn") as HTMLButtonElement;
   const clearGridBtn = document.getElementById("clearGridBtn") as HTMLButtonElement;
   const gridDiv = document.getElementById("grid")!;
   const outputTextarea = document.getElementById("output") as HTMLTextAreaElement;
@@ -44,8 +46,19 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleState = null;
   };
 
-  scaleInput.addEventListener("change", updateOutput);
-  patternNameInput.addEventListener("change", updateOutput);
+  tileWidthInput.addEventListener("input", ()=>{
+    tileWidthValue.textContent = tileWidthInput.value;
+    generateGrid();
+  });
+  tileHeightInput.addEventListener("input", ()=>{
+    tileHeightValue.textContent = tileHeightInput.value;
+    generateGrid();
+  });
+  scaleInput.addEventListener("input", () => {
+    scaleValue.textContent = String(1 << parseInt(scaleInput.value));
+    updateOutput();
+  });
+  patternNameInput.addEventListener("input", updateOutput);
 
   // 初期パターン
   const initialPattern: number[][] = [
@@ -74,20 +87,47 @@ document.addEventListener("DOMContentLoaded", () => {
     return pattern;
   }
 
+  let currentHeight = 0;
+  let currentWidth = 0;
   function generateGrid(pattern?: number[][]) {
     tileWidth = parseInt(tileWidthInput.value);
     tileHeight = parseInt(tileHeightInput.value);
     gridDiv.style.gridTemplateColumns = `repeat(${tileWidth}, 20px)`;
     gridDiv.innerHTML = "";
-    const usePattern = pattern || (isFirstLoad ? initialPattern : getCurrentPattern());
+    const usePattern = pattern || (isFirstLoad ? initialPattern : undefined);
+
+    // Remove extra rows
+    for (let y = tileHeight; y < currentHeight; y++) {
+      // console.log(`Removing row ${y}`);
+      for (const div of gridDiv.querySelectorAll(`.cell[data-y="${y}"]`)) {
+        div.remove();
+      }
+    }
+
+    // Remove extra columns
+    for (let x = tileWidth; x < currentWidth; x++) {
+      // console.log(`Removing column ${x}`);
+      for (const div of gridDiv.querySelectorAll(`.cell[data-x="${x}"]`)) {
+        div.remove();
+      }
+    }
+    currentWidth = tileWidth;
+    currentHeight = tileHeight;
+
     for (let y = 0; y < tileHeight; y++) {
       for (let x = 0; x < tileWidth; x++) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.dataset.x = x.toString();
-        cell.dataset.y = y.toString();
-        if (usePattern[y] && usePattern[y][x] === 1) {
+        let cell: HTMLDivElement | null = gridDiv.querySelector(`div.cell[data-x='${x}'][data-y='${y}']`);
+        if (cell == null) {
+          // Create missing cell
+          cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.x = x.toString();
+          cell.dataset.y = y.toString();
+        }
+        if (usePattern && usePattern[y] && usePattern[y][x] === 1) {
           cell.classList.add("active");
+        } else {
+          cell.classList.remove("active");
         }
         cell.onclick = () => {
           if (currentTool === 'pen') {
@@ -393,7 +433,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // イベントバインド
   loadBtn.onclick = loadFromBase64;
-  generateGridBtn.onclick = () => generateGrid();
   clearGridBtn.onclick = clearGrid;
   copyOutputBtn.onclick = copyOutput;
   downloadBinBtn.onclick = downloadBin;
