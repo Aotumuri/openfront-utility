@@ -44,6 +44,9 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleState = null;
   };
 
+  scaleInput.addEventListener("change", updateOutput);
+  patternNameInput.addEventListener("change", updateOutput);
+
   // 初期パターン
   const initialPattern: number[][] = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -262,6 +265,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function generatePatternBase64(pattern: number[][], width: number, height: number, scale: number): string {
+    if (scale !== (scale & 0x07)) throw new Error(`Invalid scale: ${scale}`);
+    if (width !== (width & 0x7f)) throw new Error(`Invalid width: ${width}`);
+    if (height !== (height & 0x3f)) throw new Error(`Invalid height: ${height}`);
     const version = 0;
     const header = new Uint8Array(3);
     header[0] = version;
@@ -283,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const full = new Uint8Array(header.length + data.length);
     full.set(header, 0);
     full.set(data, header.length);
-    return btoa(String.fromCharCode(...full));
+    return btoa(String.fromCharCode(...full)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=$/g, "");
   }
 
   function updateOutput() {
@@ -291,26 +297,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const name = patternNameInput.value;
     const scale = parseInt(scaleInput.value);
     const base64 = generatePatternBase64(pattern, tileWidth, tileHeight, scale);
-    const formatted = `"${name}": "${base64}"`;
+    const formatted = JSON.stringify({ [base64]: { name } });
     outputTextarea.value = formatted;
-    renderPreview(pattern);
+    renderPreview(base64);
   }
 
-  function renderPreview(pattern: number[][]) {
-    previewDiv.style.gridTemplateColumns = `repeat(${tileWidth * 3}, 10px)`;
+  function renderPreview(pattern: string) {
+    const decoder = new PatternDecoder(pattern);
+    const width = 300;
+    const height = 80;
+    previewDiv.style.gridTemplateColumns = `repeat(${width}, 4px)`;
     previewDiv.innerHTML = "";
-    for (let dy = 0; dy < 3; dy++) {
-      for (let y = 0; y < tileHeight; y++) {
-        for (let dx = 0; dx < 3; dx++) {
-          for (let x = 0; x < tileWidth; x++) {
-            const cell = document.createElement("div");
-            cell.className = "preview-cell";
-            if (pattern[y][x] === 1) {
-              cell.classList.add("active");
-            }
-            previewDiv.appendChild(cell);
-          }
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const cell = document.createElement("div");
+        cell.className = "preview-cell";
+        if (decoder.isSet(x, y)) {
+          cell.classList.add("active");
         }
+        previewDiv.appendChild(cell);
       }
     }
   }
@@ -326,24 +331,19 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     // デコードした値でboxを更新
-    tileWidthInput.value = decoder.getTileWidth().toString();
-    tileHeightInput.value = decoder.getTileHeight().toString();
-    scaleInput.value = decoder.getScale().toString();
     tileWidth = decoder.getTileWidth();
     tileHeight = decoder.getTileHeight();
-    // scaleは無視して、パレット（グリッド）にはデータをそのまま展開
-    const pattern: number[][] = [];
+    const scale = decoder.getScale();
+    tileWidthInput.value = tileWidth.toString();
+    tileHeightInput.value = tileHeight.toString();
+    scaleInput.value = scale.toString();
+    const pattern: number[][] = new Array(tileHeight);
     for (let y = 0; y < tileHeight; y++) {
-      const row: number[] = [];
+      const row: number[] = new Array(tileWidth);
       for (let x = 0; x < tileWidth; x++) {
-        // scaleを無視してデータをそのまま展開
-        const idx = y * tileWidth + x;
-        const byteIndex = Math.floor(idx / 8);
-        const bitOffset = idx % 8;
-        const byte = (decoder as any).bytes[(decoder as any).dataStart + byteIndex];
-        row.push(byte !== undefined && (byte & (1 << bitOffset)) !== 0 ? 1 : 0);
+        row[x] = decoder.isSet(x << scale, y << scale) ? 1 : 0;
       }
-      pattern.push(row);
+      pattern[y] = row;
     }
     generateGrid(pattern);
   }
