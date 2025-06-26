@@ -93,8 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tileWidth = parseInt(tileWidthInput.value);
     tileHeight = parseInt(tileHeightInput.value);
     gridDiv.style.gridTemplateColumns = `repeat(${tileWidth}, 20px)`;
-    gridDiv.innerHTML = "";
-    const usePattern = pattern || (isFirstLoad ? initialPattern : undefined);
+    const usePattern = pattern || (isFirstLoad ? initialPattern : getCurrentPattern());
 
     // Remove extra rows
     for (let y = tileHeight; y < currentHeight; y++) {
@@ -114,17 +113,24 @@ document.addEventListener("DOMContentLoaded", () => {
     currentWidth = tileWidth;
     currentHeight = tileHeight;
 
+    let lastCell: HTMLDivElement | undefined;
     for (let y = 0; y < tileHeight; y++) {
       for (let x = 0; x < tileWidth; x++) {
-        let cell: HTMLDivElement | null = gridDiv.querySelector(`div.cell[data-x='${x}'][data-y='${y}']`);
-        if (cell == null) {
+        let cell: HTMLDivElement | null = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
+        if (cell === null) {
           // Create missing cell
           cell = document.createElement("div");
           cell.className = "cell";
           cell.dataset.x = x.toString();
           cell.dataset.y = y.toString();
+          if (lastCell !== undefined) {
+            gridDiv.insertBefore(cell, lastCell.nextSibling);
+          } else {
+            gridDiv.appendChild(cell);
+          }
         }
-        if (usePattern && usePattern[y] && usePattern[y][x] === 1) {
+        lastCell = cell;
+        if (usePattern[y] && usePattern[y][x] === 1) {
           cell.classList.add("active");
         } else {
           cell.classList.remove("active");
@@ -157,7 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
             updateOutput();
           }
         };
-        gridDiv.appendChild(cell);
       }
     }
     isFirstLoad = false;
