@@ -28,7 +28,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const outputTextarea = document.getElementById("output");
     const copyOutputBtn = document.getElementById("copyOutputBtn");
     const downloadBinBtn = document.getElementById("downloadBinBtn");
-    const previewDiv = document.getElementById("preview");
+    const previewCanvas = document.getElementById("preview");
+    const previewContext = previewCanvas.getContext("2d");
+    if (!previewContext)
+        throw new Error("2D context not supported");
+    // Shift pattern buttons
+    const shiftUpBtn = document.getElementById("shiftUpBtn");
+    const shiftLeftBtn = document.getElementById("shiftLeftBtn");
+    const shiftRightBtn = document.getElementById("shiftRightBtn");
+    const shiftDownBtn = document.getElementById("shiftDownBtn");
     let tileWidth = parseInt(tileWidthInput.value);
     let tileHeight = parseInt(tileHeightInput.value);
     let isMouseDown = false;
@@ -65,6 +73,88 @@ document.addEventListener("DOMContentLoaded", () => {
         [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
+    function getCell(x, y) {
+        const cell = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
+        if (cell === null)
+            throw new Error(`Missing cell (${x}, ${y})`);
+        return cell;
+    }
+    shiftLeftBtn.addEventListener("click", () => {
+        for (let y = 0; y < tileHeight; y++) {
+            const firstCell = getCell(tileWidth - 1, y);
+            let firstActive = firstCell.classList.contains("active");
+            let active = firstActive;
+            for (let x = tileWidth - 2; x >= 0; x--) {
+                const nextCell = getCell(x, y);
+                let nextActive = nextCell.classList.contains("active");
+                if (active !== nextActive) {
+                    nextCell.classList.toggle("active", active);
+                    active = nextActive;
+                }
+            }
+            if (firstActive !== active) {
+                firstCell.classList.toggle("active", active);
+            }
+        }
+        updateOutput();
+    });
+    shiftRightBtn.addEventListener("click", () => {
+        for (let y = 0; y < tileHeight; y++) {
+            const firstCell = getCell(0, y);
+            let firstActive = firstCell.classList.contains("active");
+            let active = firstActive;
+            for (let x = 1; x < tileWidth; x++) {
+                const nextCell = getCell(x, y);
+                let nextActive = nextCell.classList.contains("active");
+                if (active !== nextActive) {
+                    nextCell.classList.toggle("active", active);
+                    active = nextActive;
+                }
+            }
+            if (firstActive !== active) {
+                firstCell.classList.toggle("active", active);
+            }
+        }
+        updateOutput();
+    });
+    shiftDownBtn.addEventListener("click", () => {
+        for (let x = 0; x < tileWidth; x++) {
+            const firstCell = getCell(x, 0);
+            let firstActive = firstCell.classList.contains("active");
+            let active = firstActive;
+            for (let y = 1; y < tileWidth; y++) {
+                const nextCell = getCell(x, y);
+                let nextActive = nextCell.classList.contains("active");
+                if (active !== nextActive) {
+                    nextCell.classList.toggle("active", active);
+                    active = nextActive;
+                }
+            }
+            if (firstActive !== active) {
+                firstCell.classList.toggle("active", active);
+            }
+        }
+        updateOutput();
+    });
+    shiftUpBtn.addEventListener("click", () => {
+        for (let x = 0; x < tileWidth; x++) {
+            const firstCell = getCell(x, tileHeight - 1);
+            let firstActive = firstCell.classList.contains("active");
+            let active = firstActive;
+            for (let y = tileHeight - 2; y >= 0; y--) {
+                const nextCell = getCell(x, y);
+                let nextActive = nextCell.classList.contains("active");
+                if (active !== nextActive) {
+                    nextCell.classList.toggle("active", active);
+                    active = nextActive;
+                }
+            }
+            if (firstActive !== active) {
+                firstCell.classList.toggle("active", active);
+            }
+        }
+        updateOutput();
+    });
     function getCurrentPattern() {
         const pattern = [];
         for (let y = 0; y < tileHeight; y++) {
@@ -160,6 +250,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         isFirstLoad = false;
         updateOutput();
+    }
+    // Read the pattern from the window hash
+    const hash = window.location.hash;
+    if (hash.startsWith("#")) {
+        base64Input.value = hash.slice(1);
+        setTimeout(loadFromBase64, 0);
     }
     // ツール切り替えUI
     function selectTool(tool) {
@@ -349,7 +445,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const full = new Uint8Array(header.length + data.length);
         full.set(header, 0);
         full.set(data, header.length);
-        return btoa(String.fromCharCode(...full)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=$/g, "");
+        return btoa(String.fromCharCode(...full)).replace(/\+/g, "-").replace(/\//g, "_").replace(/\=/g, "");
     }
     function updateOutput() {
         const pattern = getCurrentPattern();
@@ -359,23 +455,30 @@ document.addEventListener("DOMContentLoaded", () => {
         const formatted = JSON.stringify({ [base64]: { name } });
         outputTextarea.value = formatted;
         renderPreview(base64);
+        // Store the pattern in the window hash
+        history.replaceState(null, '', '#' + base64);
     }
     function renderPreview(pattern) {
         const decoder = new PatternDecoder(pattern);
-        const width = 300;
-        const height = 80;
-        previewDiv.style.gridTemplateColumns = `repeat(${width}, 4px)`;
-        previewDiv.innerHTML = "";
+        const width = 1600;
+        const height = 900;
+        previewCanvas.width = width;
+        previewCanvas.height = height;
+        // Draw the image
+        const imageData = previewContext.createImageData(width, height);
+        const data = imageData.data;
+        let i = 0;
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                const cell = document.createElement("div");
-                cell.className = "preview-cell";
-                if (decoder.isSet(x, y)) {
-                    cell.classList.add("active");
-                }
-                previewDiv.appendChild(cell);
+                const value = decoder.isSet(x, y) ? 0 : 255; // black if set
+                const alpha = 255 - value;
+                data[i++] = value; // R
+                data[i++] = value; // G
+                data[i++] = value; // B
+                data[i++] = alpha;
             }
         }
+        previewContext.putImageData(imageData, 0, 0);
     }
     function loadFromBase64() {
         const base64 = base64Input.value;
@@ -395,6 +498,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const scale = decoder.getScale();
         tileWidthInput.value = tileWidth.toString();
         tileHeightInput.value = tileHeight.toString();
+        tileWidthValue.textContent = tileWidthInput.value;
+        tileHeightValue.textContent = tileHeightInput.value;
         scaleInput.value = scale.toString();
         const pattern = new Array(tileHeight);
         for (let y = 0; y < tileHeight; y++) {
