@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const firstCell = getCell(x, 0);
       let firstActive = firstCell.classList.contains("active");
       let active = firstActive;
-      for (let y = 1; y < tileWidth; y++) {
+      for (let y = 1; y < tileHeight; y++) {
         const nextCell = getCell(x, y);
         let nextActive = nextCell.classList.contains("active");
         if (active !== nextActive) {
