@@ -37,6 +37,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewContext = previewCanvas.getContext("2d")!;
   if (!previewContext) throw new Error("2D context not supported");
 
+  // Shift pattern buttons
+  const shiftUpBtn = document.getElementById("shiftUpBtn") as HTMLButtonElement;
+  const shiftLeftBtn = document.getElementById("shiftLeftBtn") as HTMLButtonElement;
+  const shiftRightBtn = document.getElementById("shiftRightBtn") as HTMLButtonElement;
+  const shiftDownBtn = document.getElementById("shiftDownBtn") as HTMLButtonElement;
+
   let tileWidth = parseInt(tileWidthInput.value);
   let tileHeight = parseInt(tileHeightInput.value);
   let isMouseDown = false;
@@ -76,6 +82,89 @@ document.addEventListener("DOMContentLoaded", () => {
     [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   ];
+
+  function getCell(x: number, y: number) {
+    const cell = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
+    if (cell === null) throw new Error(`Missing cell (${x}, ${y})`);
+    return cell;
+  }
+
+  shiftLeftBtn.addEventListener("click", () => {
+    for (let y = 0; y < tileHeight; y++) {
+      const firstCell = getCell(tileWidth - 1, y);
+      let firstActive = firstCell.classList.contains("active");
+      let active = firstActive;
+      for (let x = tileWidth - 2; x >= 0; x--) {
+        const nextCell = getCell(x, y);
+        let nextActive = nextCell.classList.contains("active");
+        if (active !== nextActive) {
+          nextCell.classList.toggle("active", active);
+          active = nextActive;
+        }
+      }
+      if (firstActive !== active) {
+        firstCell.classList.toggle("active", active);
+      }
+    }
+    updateOutput();
+  });
+  shiftRightBtn.addEventListener("click", () => {
+    for (let y = 0; y < tileHeight; y++) {
+      const firstCell = getCell(0, y);
+      let firstActive = firstCell.classList.contains("active");
+      let active = firstActive;
+      for (let x = 1; x < tileWidth; x++) {
+        const nextCell = getCell(x, y);
+        let nextActive = nextCell.classList.contains("active");
+        if (active !== nextActive) {
+          nextCell.classList.toggle("active", active);
+          active = nextActive;
+        }
+      }
+      if (firstActive !== active) {
+        firstCell.classList.toggle("active", active);
+      }
+    }
+    updateOutput();
+  });
+  shiftDownBtn.addEventListener("click", () => {
+    for (let x = 0; x < tileWidth; x++) {
+      const firstCell = getCell(x, 0);
+      let firstActive = firstCell.classList.contains("active");
+      let active = firstActive;
+      for (let y = 1; y < tileWidth; y++) {
+        const nextCell = getCell(x, y);
+        let nextActive = nextCell.classList.contains("active");
+        if (active !== nextActive) {
+          nextCell.classList.toggle("active", active);
+          active = nextActive;
+        }
+      }
+      if (firstActive !== active) {
+        firstCell.classList.toggle("active", active);
+      }
+    }
+    updateOutput();
+  });
+  shiftUpBtn.addEventListener("click", () => {
+    for (let x = 0; x < tileWidth; x++) {
+      const firstCell = getCell(x, tileHeight - 1);
+      let firstActive = firstCell.classList.contains("active");
+      let active = firstActive;
+      for (let y = tileHeight - 2; y >= 0; y--) {
+        const nextCell = getCell(x, y);
+        let nextActive = nextCell.classList.contains("active");
+        if (active !== nextActive) {
+          nextCell.classList.toggle("active", active);
+          active = nextActive;
+        }
+      }
+      if (firstActive !== active) {
+        firstCell.classList.toggle("active", active);
+      }
+    }
+    updateOutput();
+  });
 
   function getCurrentPattern(): number[][] {
     const pattern: number[][] = [];
