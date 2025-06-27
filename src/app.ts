@@ -353,8 +353,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderPreview(pattern: string) {
     const decoder = new PatternDecoder(pattern);
-    const width = Math.floor(window.innerWidth * 0.8);
-    const height = 500;
+    const width = 1600;
+    const height = 900;
     previewCanvas.width = width;
     previewCanvas.height = height;
 
