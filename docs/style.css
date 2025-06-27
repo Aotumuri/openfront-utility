@@ -15,8 +15,7 @@ body {
   font-family: sans-serif;
   padding: 20px;
 }
-.grid,
-.preview-grid {
+.grid {
   display: grid;
   margin-bottom: 20px;
   user-select: none;

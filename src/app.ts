@@ -32,7 +32,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const outputTextarea = document.getElementById("output") as HTMLTextAreaElement;
   const copyOutputBtn = document.getElementById("copyOutputBtn") as HTMLButtonElement;
   const downloadBinBtn = document.getElementById("downloadBinBtn") as HTMLButtonElement;
-  const previewDiv = document.getElementById("preview")!;
+  const previewCanvas = document.getElementById("preview") as HTMLCanvasElement;
+
+  const previewContext = previewCanvas.getContext("2d")!;
+  if (!previewContext) throw new Error("2D context not supported");
 
   let tileWidth = parseInt(tileWidthInput.value);
   let tileHeight = parseInt(tileHeightInput.value);
@@ -350,20 +353,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderPreview(pattern: string) {
     const decoder = new PatternDecoder(pattern);
-    const width = 300;
-    const height = 80;
-    previewDiv.style.gridTemplateColumns = `repeat(${width}, 4px)`;
-    previewDiv.innerHTML = "";
+    const width = Math.floor(window.innerWidth * 0.8);
+    const height = 500;
+    previewCanvas.width = width;
+    previewCanvas.height = height;
+
+    // Draw the image
+    const imageData = previewContext.createImageData(width, height);
+    const data = imageData.data;
+    let i = 0;
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        const cell = document.createElement("div");
-        cell.className = "preview-cell";
-        if (decoder.isSet(x, y)) {
-          cell.classList.add("active");
-        }
-        previewDiv.appendChild(cell);
+        const value = decoder.isSet(x, y) ? 0 : 255; // black if set
+        const alpha = 255 - value;
+        data[i++] = value; // R
+        data[i++] = value; // G
+        data[i++] = value; // B
+        data[i++] = alpha;
       }
     }
+
+    previewContext.putImageData(imageData, 0, 0);
   }
 
   function loadFromBase64() {
