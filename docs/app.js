@@ -418,17 +418,19 @@ document.addEventListener("DOMContentLoaded", () => {
         updateOutput();
     }
     function generatePatternBase64(pattern, width, height, scale) {
+        const w_bin = width - 2;
+        const h_bin = height - 2;
         if (scale !== (scale & 0x07))
             throw new Error(`Invalid scale: ${scale}`);
-        if (width !== (width & 0x7f))
+        if (w_bin !== (w_bin & 0x7f))
             throw new Error(`Invalid width: ${width}`);
-        if (height !== (height & 0x3f))
+        if (h_bin !== (h_bin & 0x3f))
             throw new Error(`Invalid height: ${height}`);
         const version = 0;
         const header = new Uint8Array(3);
         header[0] = version;
-        header[1] = (scale & 0x7) | (((width - 2) & 0x1f) << 3);
-        header[2] = (((width - 2) & 0x60) >> 5) | (((height - 2) & 0x3f) << 2);
+        header[1] = (scale & 0x7) | ((w_bin & 0x1f) << 3);
+        header[2] = ((w_bin & 0x60) >> 5) | ((h_bin & 0x3f) << 2);
         const totalBits = width * height;
         const totalBytes = Math.ceil(totalBits / 8);
         const data = new Uint8Array(totalBytes);
