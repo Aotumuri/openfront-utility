@@ -164,6 +164,12 @@ document.addEventListener("DOMContentLoaded", () => {
         isFirstLoad = false;
         updateOutput();
     }
+    // Read the pattern from the window hash
+    const hash = window.location.hash;
+    if (hash.startsWith("#")) {
+        base64Input.value = hash.slice(1);
+        setTimeout(loadFromBase64, 0);
+    }
     // ツール切り替えUI
     function selectTool(tool) {
         currentTool = tool;
@@ -362,6 +368,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const formatted = JSON.stringify({ [base64]: { name } });
         outputTextarea.value = formatted;
         renderPreview(base64);
+        // Store the pattern in the window hash
+        history.replaceState(null, '', '#' + base64);
     }
     function renderPreview(pattern) {
         const decoder = new PatternDecoder(pattern);
