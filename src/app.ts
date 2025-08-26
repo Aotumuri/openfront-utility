@@ -697,6 +697,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tileWidthValue.textContent = tileWidthInput.value;
     tileHeightValue.textContent = tileHeightInput.value;
     scaleInput.value = scale.toString();
+    scaleValue.textContent = String(1 << parseInt(scaleInput.value));
     const pattern: number[][] = new Array(tileHeight);
     for (let y = 0; y < tileHeight; y++) {
       const row: number[] = new Array(tileWidth);
