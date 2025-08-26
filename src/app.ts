@@ -93,9 +93,6 @@ document.addEventListener("DOMContentLoaded", () => {
   ) as HTMLSpanElement;
   const scaleInput = document.getElementById("scale") as HTMLInputElement;
   const scaleValue = document.getElementById("scale-value") as HTMLSpanElement;
-  const patternNameInput = document.getElementById(
-    "patternName"
-  ) as HTMLInputElement;
   const clearGridBtn = document.getElementById(
     "clearGridBtn"
   ) as HTMLButtonElement;
@@ -105,9 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
   ) as HTMLTextAreaElement;
   const copyOutputBtn = document.getElementById(
     "copyOutputBtn"
-  ) as HTMLButtonElement;
-  const downloadBinBtn = document.getElementById(
-    "downloadBinBtn"
   ) as HTMLButtonElement;
   const previewCanvas = document.getElementById("preview") as HTMLCanvasElement;
 
@@ -150,7 +144,6 @@ document.addEventListener("DOMContentLoaded", () => {
     scaleValue.textContent = String(1 << parseInt(scaleInput.value));
     updateOutput();
   });
-  patternNameInput.addEventListener("input", updateOutput);
 
   // 初期パターン
   const initialPattern: number[][] = [
@@ -642,11 +635,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateOutput() {
     const pattern = getCurrentPattern();
-    const name = patternNameInput.value;
     const scale = parseInt(scaleInput.value);
     const base64 = generatePatternBase64(pattern, tileWidth, tileHeight, scale);
-    const formatted = JSON.stringify({ [base64]: { name } });
-    outputTextarea.value = formatted;
+    outputTextarea.value = base64;
     renderPreview(base64);
 
     // Store the pattern in the window hash
@@ -714,49 +705,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.execCommand("copy");
   }
 
-  function downloadBin() {
-    const pattern = getCurrentPattern();
-    const height = pattern.length;
-    const width = pattern[0]?.length || 0;
-    const scale = parseInt(scaleInput.value) || 1;
-    const header = new Uint8Array(3);
-    header[0] = 1; // version
-    header[1] = (scale & 0x7) | ((width & 0x1f) << 3);
-    header[2] = ((width & 0x60) >> 5) | ((height & 0x3f) << 2);
-    const totalBits = width * height;
-    const totalBytes = Math.ceil(totalBits / 8);
-    const data = new Uint8Array(totalBytes);
-    let bitIndex = 0;
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        if (pattern[y][x]) {
-          const byteIndex = Math.floor(bitIndex / 8);
-          const bitOffset = bitIndex % 8;
-          data[byteIndex] |= 1 << bitOffset;
-        }
-        bitIndex++;
-      }
-    }
-    const full = new Uint8Array(header.length + data.length);
-    full.set(header, 0);
-    full.set(data, header.length);
-    const blob = new Blob([full], { type: "application/octet-stream" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const name = patternNameInput.value.trim() || "pattern";
-    a.download = name.replace(/\s+/g, "_") + ".bin";
-    a.href = url;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
   // イベントバインド
   loadBtn.onclick = loadFromBase64;
   clearGridBtn.onclick = clearGrid;
   copyOutputBtn.onclick = copyOutput;
-  downloadBinBtn.onclick = downloadBin;
 
   // 初期グリッド生成
   generateGrid();
