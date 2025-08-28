@@ -595,8 +595,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     function renderPreview(pattern) {
         const decoder = new PatternDecoder(pattern);
-        const width = 800;
-        const height = 450;
+        const width = 512;
+        const height = 512;
         previewCanvas.width = width;
         previewCanvas.height = height;
         // Draw the image
