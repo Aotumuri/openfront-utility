@@ -1,6 +1,6 @@
 # Pattern JSON Generator + Preview (TypeScript版)
 
-このプロジェクトは、パターンデータをJSONおよびBase64形式で生成・プレビューできるツールです。
+このプロジェクトは、Openfront.ioのパターンをBase64形式で生成・プレビューできるツールです。
 
 - TypeScriptで実装
 - GitHub Pages対応（`docs`ディレクトリにビルド成果物を出力）
