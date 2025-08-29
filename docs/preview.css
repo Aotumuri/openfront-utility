@@ -1,0 +1,27 @@
+body {
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+    .pattern-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .pattern-item {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    .pattern-name {
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .pattern-code {
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-word;
+      color: #333;
+    }
