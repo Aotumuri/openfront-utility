@@ -49,3 +49,17 @@ textarea {
 button {
   margin: 5px 5px 5px 0;
 }
+
+/* Color picker styling */
+input[type="color"] {
+  width: 40px;
+  height: 30px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+input[type="color"]:hover {
+  border-color: #999;
+}
