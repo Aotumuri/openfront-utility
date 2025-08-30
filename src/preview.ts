@@ -1,16 +1,14 @@
 /// <reference lib="es2017" />
-document.addEventListener("DOMContentLoaded", () => {
-  const container = document.getElementById("pattern-list")!;
-  const button = document.getElementById("load-button")! as HTMLButtonElement;
+function renderPatternsFromInput(container: HTMLElement) {
+  const input = (document.getElementById("json-input") as HTMLTextAreaElement).value;
+  try {
+    const parsed = JSON.parse(input);
+    localStorage.setItem("last-pattern-json", input);
+    const patterns = parsed.patterns;
 
-  button.addEventListener("click", () => {
-    const input = (document.getElementById("json-input") as HTMLTextAreaElement).value;
-    try {
-      const parsed = JSON.parse(input);
-      const patterns = parsed.patterns;
-
-      container.innerHTML = '';
-      Object.entries(patterns as Record<string, { name?: string; pattern: string }>).forEach(([key, { name, pattern }]) => {
+    container.innerHTML = "";
+    Object.entries(patterns as Record<string, { name?: string; pattern: string }>).
+      forEach(([key, { name, pattern }]) => {
         const div = document.createElement("div");
         div.className = "pattern-item";
 
@@ -49,8 +47,44 @@ document.addEventListener("DOMContentLoaded", () => {
         div.appendChild(nameEl);
         container.appendChild(div);
       });
-    } catch (err) {
-      alert('Invalid JSON');
+  } catch (err) {
+    alert("Invalid JSON");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const container = document.getElementById("pattern-list");
+  const button = document.getElementById("load-button") as HTMLButtonElement | null;
+  const textarea = document.getElementById("json-input") as HTMLTextAreaElement | null;
+
+  if (!container || !textarea) {
+    console.warn("Missing required elements: #pattern-list or #json-input");
+    return;
+  }
+
+  // Prefer hash -> then last saved -> else keep whatever is there
+  const hash = decodeURIComponent(location.hash);
+  if (hash.startsWith("#json=")) {
+    const json = hash.slice(6);
+    try {
+      textarea.value = json;
+      localStorage.setItem("last-pattern-json", json);
+    } catch {
+      console.warn("Failed to parse pattern JSON from URL hash");
     }
-  });
+  } else {
+    const lastInput = localStorage.getItem("last-pattern-json");
+    if (lastInput !== null) {
+      textarea.value = lastInput;
+    }
+  }
+
+  if (button) {
+    button.addEventListener("click", () => renderPatternsFromInput(container));
+  }
+
+  // Auto-render if a #json=... hash is present
+  if (hash.startsWith("#json=")) {
+    renderPatternsFromInput(container);
+  }
 });
