@@ -104,6 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "copyOutputBtn"
   ) as HTMLButtonElement;
   const previewCanvas = document.getElementById("preview") as HTMLCanvasElement;
+  const previewBgColorInput = document.getElementById("previewBgColor") as HTMLInputElement;
 
   const previewContext = previewCanvas.getContext("2d")!;
   if (!previewContext) throw new Error("2D context not supported");
@@ -630,8 +631,18 @@ document.addEventListener("DOMContentLoaded", () => {
     return btoa(String.fromCharCode(...full))
       .replace(/\+/g, "-")
       .replace(/\//g, "_")
-      .replace(/\=/g, "");
-  }
+            .replace(/\=/g, "");
+    }
+
+    // Helper function to convert hex color to RGB
+    function hexToRgb(hex: string) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 255, g: 255, b: 255 }; // fallback to white
+    }
 
   function updateOutput() {
     const pattern = getCurrentPattern();
@@ -651,17 +662,27 @@ document.addEventListener("DOMContentLoaded", () => {
     previewCanvas.width = width;
     previewCanvas.height = height;
 
+    // Get the selected background color
+    const bgColor = previewBgColorInput.value;
+    const bgRgb = hexToRgb(bgColor);
+
     // Draw the image
     const imageData = previewContext.createImageData(width, height);
     const data = imageData.data;
     let i = 0;
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        const value = decoder.isSet(x, y) ? 0 : 255; // black if set
         const alpha = 255;
-        data[i++] = value; // R
-        data[i++] = value; // G
-        data[i++] = value; // B
+        if (decoder.isSet(x, y)) {
+          data[i++] = 0;     // R
+          data[i++] = 0;     // G
+          data[i++] = 0;     // B
+        } else {
+          // Selected background color for unset pixels
+          data[i++] = bgRgb.r; // R
+          data[i++] = bgRgb.g; // G
+          data[i++] = bgRgb.b; // B
+        }
         data[i++] = alpha;
       }
     }
@@ -709,6 +730,11 @@ document.addEventListener("DOMContentLoaded", () => {
   loadBtn.onclick = loadFromBase64;
   clearGridBtn.onclick = clearGrid;
   copyOutputBtn.onclick = copyOutput;
+
+  // Color picker event listener
+  previewBgColorInput.addEventListener("change", () => {
+    updateOutput();
+  });
 
   // 初期グリッド生成
   generateGrid();
