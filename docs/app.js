@@ -77,8 +77,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const outputTextarea = document.getElementById("output");
     const copyOutputBtn = document.getElementById("copyOutputBtn");
     const previewCanvas = document.getElementById("preview");
-    const previewContext = previewCanvas.getContext("2d");
     const previewBgColorInput = document.getElementById("previewBgColor");
+    const previewContext = previewCanvas.getContext("2d");
     if (!previewContext)
         throw new Error("2D context not supported");
     // Shift pattern buttons
@@ -585,15 +585,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/\//g, "_")
             .replace(/\=/g, "");
     }
-    function updateOutput() {
-        const pattern = getCurrentPattern();
-        const scale = parseInt(scaleInput.value);
-        const base64 = generatePatternBase64(pattern, tileWidth, tileHeight, scale);
-        outputTextarea.value = base64;
-        renderPreview(base64);
-        // Store the pattern in the window hash
-        history.replaceState(null, "", "#" + base64);
-    }
     // Helper function to convert hex color to RGB
     function hexToRgb(hex) {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -603,18 +594,24 @@ document.addEventListener("DOMContentLoaded", () => {
             b: parseInt(result[3], 16)
         } : { r: 255, g: 255, b: 255 }; // fallback to white
     }
-    
+    function updateOutput() {
+        const pattern = getCurrentPattern();
+        const scale = parseInt(scaleInput.value);
+        const base64 = generatePatternBase64(pattern, tileWidth, tileHeight, scale);
+        outputTextarea.value = base64;
+        renderPreview(base64);
+        // Store the pattern in the window hash
+        history.replaceState(null, "", "#" + base64);
+    }
     function renderPreview(pattern) {
         const decoder = new PatternDecoder(pattern);
         const width = 512;
         const height = 512;
         previewCanvas.width = width;
         previewCanvas.height = height;
-        
         // Get the selected background color
         const bgColor = previewBgColorInput.value;
         const bgRgb = hexToRgb(bgColor);
-        
         // Draw the image
         const imageData = previewContext.createImageData(width, height);
         const data = imageData.data;
@@ -623,10 +620,11 @@ document.addEventListener("DOMContentLoaded", () => {
             for (let x = 0; x < width; x++) {
                 const alpha = 255;
                 if (decoder.isSet(x, y)) {
-                    data[i++] = 0;     // R
-                    data[i++] = 0;     // G
-                    data[i++] = 0;     // B
-                } else {
+                    data[i++] = 0; // R
+                    data[i++] = 0; // G
+                    data[i++] = 0; // B
+                }
+                else {
                     // Selected background color for unset pixels
                     data[i++] = bgRgb.r; // R
                     data[i++] = bgRgb.g; // G
@@ -677,7 +675,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadBtn.onclick = loadFromBase64;
     clearGridBtn.onclick = clearGrid;
     copyOutputBtn.onclick = copyOutput;
-    
     // Color picker event listener
     previewBgColorInput.addEventListener("change", () => {
         updateOutput();
