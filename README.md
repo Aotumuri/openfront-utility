@@ -1,29 +1,29 @@
-# Pattern JSON Generator + Preview (TypeScript版)
+# Pattern JSON Generator + Preview (TypeScript)
 
-このプロジェクトは、Openfront.ioのパターンをBase64形式で生成・プレビューできるツールです。
+This project is a tool for generating and previewing Openfront.io patterns in Base64 format.
 
-- TypeScriptで実装
-- GitHub Pages対応（`docs`ディレクトリにビルド成果物を出力）
-- `npm run build` でビルド、`npm start` でローカルサーバー起動
+- Implemented in TypeScript  
+- GitHub Pages ready (build outputs to the `docs` directory)  
+- Use `npm run build` to build, `npm start` to launch a local server  
 
-## セットアップ
+## Setup
 
 ```sh
 npm install
 ```
 
-## ビルド
+## Build
 
 ```sh
 npm run build
 ```
 
-## ローカルサーバー
+## Local Server
 
 ```sh
 npm start
 ```
 
-## 公開
+## Deployment
 
-`docs`ディレクトリの内容をGitHub Pagesで公開してください。
+Publish the contents of the docs directory with GitHub Pages.
