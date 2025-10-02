@@ -1,0 +1,51 @@
+.swatch-group {
+  display: inline-flex;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.shade-btn {
+  min-width: 48px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  background: #f7f7f7;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.2;
+  user-select: none;
+}
+.shade-btn:hover {
+  filter: brightness(0.97);
+}
+.shade-btn:focus {
+  outline: 2px solid #2684ff;
+  outline-offset: 1px;
+}
+
+#shade-white {
+  background: #ffffff;
+  color: #111;
+  border-color: #bbb;
+}
+#shade-black-weak {
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+}
+#shade-black-normal {
+  background: rgba(0, 0, 0, 0.58);
+  color: #fff;
+}
+#shade-black-strong {
+  background: rgba(0, 0, 0, 0.88);
+  color: #fff;
+}
+
+.shade-btn.is-active {
+  box-shadow: 0 0 0 2px #2684ff inset;
+  border-color: #2684ff;
+}
+
+.sep {
+  opacity: 0.5;
+}

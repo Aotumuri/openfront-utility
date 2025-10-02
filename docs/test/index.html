@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pattern JSON Generator + Preview</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../index.css" />
+    <link rel="stylesheet" href="test.css" />
+  </head>
+  <body>
+    <h1>Pattern JSON Generator + Preview</h1>
+    <div class="controls">
+      <div id="toolbox">
+        <button id="tool-pen" class="tool-btn" data-tool="pen">🖊️ Pen</button>
+        <button id="tool-fill" class="tool-btn" data-tool="fill">🪣 Fill</button>
+        <button id="tool-star" class="tool-btn" data-tool="star">⭐ Star</button>
+        <input type="range" id="star-size" min="2" max="10" value="3" style="width:80px;vertical-align:middle;" />
+        <button id="tool-circle" class="tool-btn" data-tool="circle">⚪ Circle</button>
+        <input type="range" id="circle-size" min="2" max="15" value="5" style="width:80px;vertical-align:middle;" />
+        <label style="margin-left:8px;vertical-align:middle;">
+          <input type="checkbox" id="circle-fill" checked /> Fill
+        </label>
+        <span class="sep" aria-hidden="true" style="margin:0 8px;">|</span>
+        <div id="shadebox" class="swatch-group" role="group" aria-label="Shade">
+          <button id="shade-white" class="shade-btn is-active" data-shade="white" title="White">White</button>
+          <button id="shade-black-weak" class="shade-btn" data-shade="black-weak" title="Black (Light)">Black (Light)</button>
+          <button id="shade-black-normal" class="shade-btn" data-shade="black-normal" title="Black (Normal)">Black (Normal)</button>
+          <button id="shade-black-strong" class="shade-btn" data-shade="black-strong" title="Black (Dark)">Black (Dark)</button>
+        </div>
+        <input type="hidden" id="currentShade" value="white" />
+      </div>
+      <div class="row">
+        <label for="base64Input">Base64:</label>
+        <input type="text" id="base64Input" style="width: 320px" />
+        <button id="loadBtn">Load</button>
+      </div>
+      <div class="row">
+        <input type="range" id="tileWidth" value="66" min="2" max="129" style="width: 200px" />
+        <label for="tileWidth">Width: <span id="tileWidth-value">66</span></label>
+      </div>
+      <div class="row">
+        <input type="range" id="tileHeight" value="10" min="2" max="65" style="width: 200px" />
+        <label for="tileHeight">Height: <span id="tileHeight-value">10</span></label>
+      </div>
+      <div class="row">
+        <input type="range" id="scale" value="1" min="0" max="7" style="width: 200px" />
+        <label for="scale">Scale: <span id="scale-value">2</span>x</label>
+      </div>
+      <div class="row">
+        <button id="clearGridBtn">Clear</button>
+      </div>
+      <div class="row">
+        <button id="shiftUpBtn">Shift Up</button>
+      </div>
+      <div class="row">
+        <button id="shiftLeftBtn">Shift Left</button>
+        <button id="shiftRightBtn">Shift Right</button>
+      </div>
+      <div class="row">
+        <button id="shiftDownBtn">Shift Down</button>
+      </div>
+    </div>
+    <div class="main-layout">
+      <div>
+        <div id="grid" class="grid"></div>
+        <div style="margin-top:10px;">
+          <button id="copyOutputBtn">Copy JSON</button>
+        </div>
+      </div>
+      <div class="side-panel">
+        <label for="output">Pattern JSON:</label>
+        <textarea id="output" readonly></textarea>
+        <h2 style="margin-top:20px;">Preview</h2>
+        <div style="margin-bottom:10px;">
+          <label for="previewBgColor">Background Color: </label>
+          <input type="color" id="previewBgColor" value="#ffffff" />
+        </div>
+        <canvas id="preview"></canvas>
+      </div>
+    </div>
+    <script type="module" src="app.js"></script>
+    <script type="module" src="index.js"></script>
+  </body>
+</html>
