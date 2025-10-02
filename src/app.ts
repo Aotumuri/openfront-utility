@@ -4,6 +4,35 @@
 // まずはイベントリスナーやDOM操作の雛形を用意
 
 document.addEventListener("DOMContentLoaded", () => {
+  type ColorPreset = {
+    name: string;
+    primaryColor: string;
+    secondaryColor: string;
+  };
+
+  type ColorPresetMap = Record<string, ColorPreset>;
+
+  const COLOR_PRESET_URL = "color-presets.json";
+  let colorPresets: ColorPresetMap = {};
+
+  async function loadColorPresets(): Promise<ColorPresetMap> {
+    if (Object.keys(colorPresets).length > 0) {
+      return colorPresets;
+    }
+    try {
+      const response = await fetch(COLOR_PRESET_URL, { cache: "no-cache" });
+      if (!response.ok) {
+        throw new Error(`Failed to load color presets: ${response.status}`);
+      }
+      const data = (await response.json()) as ColorPresetMap;
+      colorPresets = data;
+    } catch (error) {
+      console.warn("Failed to load color presets", error);
+      colorPresets = {};
+    }
+    return colorPresets;
+  }
+
   // Add grid guide style for better grid visibility
   function injectGridGuideStyle() {
     if (document.getElementById("grid-guide-style")) return;
@@ -104,10 +133,164 @@ document.addEventListener("DOMContentLoaded", () => {
     "copyOutputBtn"
   ) as HTMLButtonElement;
   const previewCanvas = document.getElementById("preview") as HTMLCanvasElement;
-  const previewBgColorInput = document.getElementById("previewBgColor") as HTMLInputElement;
+  const previewPrimaryColorInput = document.getElementById(
+    "previewPrimaryColor"
+  ) as HTMLInputElement;
+  const previewSecondaryColorInput = document.getElementById(
+    "previewSecondaryColor"
+  ) as HTMLInputElement;
+  const colorPresetContainer = document.getElementById(
+    "colorPresetContainer"
+  ) as HTMLDivElement;
+
+  if (!colorPresetContainer) {
+    throw new Error("Missing color preset container");
+  }
 
   const previewContext = previewCanvas.getContext("2d")!;
   if (!previewContext) throw new Error("2D context not supported");
+
+  let presetButtons: Record<string, HTMLButtonElement> = {};
+  let customPresetButton: HTMLButtonElement | null = null;
+  let selectedPresetKey: string | null = null;
+
+  function setSelectedPreset(key: string | null) {
+    selectedPresetKey = key;
+    Object.values(presetButtons).forEach((button) => {
+      const presetKey = button.dataset.presetKey ?? "";
+      button.classList.toggle("selected", presetKey === key);
+    });
+    if (customPresetButton) {
+      customPresetButton.classList.toggle("selected", key === null);
+    }
+  }
+
+  function updateCustomButtonSwatches() {
+    if (!customPresetButton) return;
+    const primarySwatch = customPresetButton.querySelector<HTMLElement>(
+      "[data-role='primary']"
+    );
+    const secondarySwatch = customPresetButton.querySelector<HTMLElement>(
+      "[data-role='secondary']"
+    );
+    if (primarySwatch) {
+      primarySwatch.style.backgroundColor = previewPrimaryColorInput.value;
+    }
+    if (secondarySwatch) {
+      secondarySwatch.style.backgroundColor = previewSecondaryColorInput.value;
+    }
+  }
+
+  function createPresetButton(key: string, preset: ColorPreset) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "color-preset-item";
+    button.dataset.presetKey = key;
+
+    const swatches = document.createElement("span");
+    swatches.className = "color-preset-swatches";
+
+    const primarySwatch = document.createElement("span");
+    primarySwatch.className = "color-preset-swatch";
+    primarySwatch.style.backgroundColor = preset.primaryColor;
+
+    const secondarySwatch = document.createElement("span");
+    secondarySwatch.className = "color-preset-swatch";
+    secondarySwatch.style.backgroundColor = preset.secondaryColor;
+
+    swatches.appendChild(primarySwatch);
+    swatches.appendChild(secondarySwatch);
+
+    const name = document.createElement("span");
+    name.className = "color-preset-name";
+    name.textContent = preset.name;
+
+    button.appendChild(swatches);
+    button.appendChild(name);
+
+    button.addEventListener("click", () => {
+      applyPreset(key);
+    });
+
+    return button;
+  }
+
+  function ensureCustomPresetButton() {
+    if (customPresetButton) return;
+    customPresetButton = document.createElement("button");
+    customPresetButton.type = "button";
+    customPresetButton.className = "color-preset-item is-custom selected";
+
+    const swatches = document.createElement("span");
+    swatches.className = "color-preset-swatches";
+
+    const primarySwatch = document.createElement("span");
+    primarySwatch.className = "color-preset-swatch";
+    primarySwatch.dataset.role = "primary";
+
+    const secondarySwatch = document.createElement("span");
+    secondarySwatch.className = "color-preset-swatch";
+    secondarySwatch.dataset.role = "secondary";
+
+    swatches.appendChild(primarySwatch);
+    swatches.appendChild(secondarySwatch);
+
+    const name = document.createElement("span");
+    name.className = "color-preset-name";
+    name.textContent = "custom";
+
+    customPresetButton.appendChild(swatches);
+    customPresetButton.appendChild(name);
+
+    customPresetButton.addEventListener("click", () => {
+      setSelectedPreset(null);
+      updateCustomButtonSwatches();
+      updateOutput();
+    });
+
+    updateCustomButtonSwatches();
+  }
+
+  function populateColorPresetOptions(presets: ColorPresetMap) {
+    ensureCustomPresetButton();
+    presetButtons = {};
+    colorPresetContainer.innerHTML = "";
+    if (customPresetButton) {
+      colorPresetContainer.appendChild(customPresetButton);
+    }
+
+    const entries = Object.entries(presets).sort((a, b) =>
+      a[1].name.localeCompare(b[1].name)
+    );
+
+    for (const [key, preset] of entries) {
+      const button = createPresetButton(key, preset);
+      presetButtons[key] = button;
+      colorPresetContainer.appendChild(button);
+    }
+
+    if (colorPresetContainer.children.length === 0) {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.className = "color-preset-placeholder";
+      emptyMessage.textContent = "No presets available";
+      colorPresetContainer.appendChild(emptyMessage);
+    }
+  }
+
+  function applyPreset(
+    key: string,
+    options: { skipUpdate?: boolean } = {}
+  ) {
+    const preset = colorPresets[key];
+    if (!preset) return;
+    previewPrimaryColorInput.value = preset.primaryColor;
+    previewSecondaryColorInput.value = preset.secondaryColor;
+    setSelectedPreset(key);
+    updateCustomButtonSwatches();
+    if (!options.skipUpdate) {
+      updateOutput();
+    }
+  }
 
   // Shift pattern buttons
   const shiftUpBtn = document.getElementById("shiftUpBtn") as HTMLButtonElement;
@@ -637,11 +820,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // Helper function to convert hex color to RGB
     function hexToRgb(hex: string) {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      } : { r: 255, g: 255, b: 255 }; // fallback to white
+      return result
+        ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+          }
+        : { r: 255, g: 255, b: 255 };
     }
 
   function updateOutput() {
@@ -662,9 +847,10 @@ document.addEventListener("DOMContentLoaded", () => {
     previewCanvas.width = width;
     previewCanvas.height = height;
 
-    // Get the selected background color
-    const bgColor = previewBgColorInput.value;
-    const bgRgb = hexToRgb(bgColor);
+    const primaryColor = previewPrimaryColorInput.value;
+    const secondaryColor = previewSecondaryColorInput.value;
+    const primaryRgb = hexToRgb(primaryColor);
+    const secondaryRgb = hexToRgb(secondaryColor);
 
     // Draw the image
     const imageData = previewContext.createImageData(width, height);
@@ -674,14 +860,13 @@ document.addEventListener("DOMContentLoaded", () => {
       for (let x = 0; x < width; x++) {
         const alpha = 255;
         if (decoder.isSet(x, y)) {
-          data[i++] = 0;     // R
-          data[i++] = 0;     // G
-          data[i++] = 0;     // B
+          data[i++] = primaryRgb.r;
+          data[i++] = primaryRgb.g;
+          data[i++] = primaryRgb.b;
         } else {
-          // Selected background color for unset pixels
-          data[i++] = bgRgb.r; // R
-          data[i++] = bgRgb.g; // G
-          data[i++] = bgRgb.b; // B
+          data[i++] = secondaryRgb.r;
+          data[i++] = secondaryRgb.g;
+          data[i++] = secondaryRgb.b;
         }
         data[i++] = alpha;
       }
@@ -726,15 +911,54 @@ document.addEventListener("DOMContentLoaded", () => {
     document.execCommand("copy");
   }
 
+  const handleCustomColorInput = () => {
+    if (colorPresetContainer.classList.contains("loading")) {
+      updateCustomButtonSwatches();
+      updateOutput();
+      return;
+    }
+    setSelectedPreset(null);
+    updateCustomButtonSwatches();
+    updateOutput();
+  };
+
+  previewPrimaryColorInput.addEventListener("input", handleCustomColorInput);
+  previewSecondaryColorInput.addEventListener("input", handleCustomColorInput);
+
+  void (async () => {
+    colorPresetContainer.classList.add("loading");
+    const presets = await loadColorPresets();
+    colorPresets = presets;
+    colorPresetContainer.classList.remove("loading");
+
+    if (Object.keys(presets).length > 0) {
+      populateColorPresetOptions(colorPresets);
+      if (colorPresets.black_white) {
+        applyPreset("black_white", { skipUpdate: true });
+      } else {
+        setSelectedPreset(null);
+      }
+    } else {
+      ensureCustomPresetButton();
+      colorPresetContainer.innerHTML = "";
+      if (customPresetButton) {
+        colorPresetContainer.appendChild(customPresetButton);
+      }
+      const message = document.createElement("div");
+      message.className = "color-preset-placeholder";
+      message.textContent = "No presets available";
+      colorPresetContainer.appendChild(message);
+      setSelectedPreset(null);
+    }
+
+    updateCustomButtonSwatches();
+    updateOutput();
+  })();
+
   // イベントバインド
   loadBtn.onclick = loadFromBase64;
   clearGridBtn.onclick = clearGrid;
   copyOutputBtn.onclick = copyOutput;
-
-  // Color picker event listener
-  previewBgColorInput.addEventListener("change", () => {
-    updateOutput();
-  });
 
   // 初期グリッド生成
   generateGrid();

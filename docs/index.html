@@ -63,9 +63,19 @@
         <label for="output">Pattern JSON:</label>
         <textarea id="output" readonly></textarea>
         <h2 style="margin-top:20px;">Preview</h2>
+        <div class="color-preset-section" style="margin-bottom:10px;">
+          <div class="color-preset-header">Color Preset:</div>
+          <div id="colorPresetContainer" class="color-preset-container loading">
+            <div class="color-preset-placeholder">Loading presets...</div>
+          </div>
+        </div>
         <div style="margin-bottom:10px;">
-          <label for="previewBgColor">Background Color: </label>
-          <input type="color" id="previewBgColor" value="#ffffff" />
+          <label for="previewPrimaryColor">Primary Color: </label>
+          <input type="color" id="previewPrimaryColor" value="#000000" />
+        </div>
+        <div style="margin-bottom:10px;">
+          <label for="previewSecondaryColor">Secondary Color: </label>
+          <input type="color" id="previewSecondaryColor" value="#ffffff" />
         </div>
         <canvas id="preview"></canvas>
       </div>
