@@ -244,11 +244,19 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleState = null;
     };
     tileWidthInput.addEventListener("input", () => {
-        tileWidthValue.textContent = tileWidthInput.value;
+        tileWidthValue.value = tileWidthInput.value;
         generateGrid();
     });
     tileHeightInput.addEventListener("input", () => {
-        tileHeightValue.textContent = tileHeightInput.value;
+        tileHeightValue.value = tileHeightInput.value;
+        generateGrid();
+    });
+    tileWidthValue.addEventListener("input", () => {
+        tileWidthInput.value = tileWidthValue.value;
+        generateGrid();
+    });
+    tileHeightValue.addEventListener("input", () => {
+        tileHeightInput.value = tileHeightValue.value;
         generateGrid();
     });
     scaleInput.addEventListener("input", () => {
@@ -802,8 +810,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const scale = decoder.getScale();
         tileWidthInput.value = tileWidth.toString();
         tileHeightInput.value = tileHeight.toString();
-        tileWidthValue.textContent = tileWidthInput.value;
-        tileHeightValue.textContent = tileHeightInput.value;
+        tileWidthValue.value = tileWidthInput.value;
+        tileHeightValue.value = tileHeightInput.value;
         scaleInput.value = scale.toString();
         scaleValue.textContent = String(1 << parseInt(scaleInput.value));
         const pattern = new Array(tileHeight);
