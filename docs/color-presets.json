@@ -29,11 +29,6 @@
     "primaryColor": "#000000",
     "secondaryColor": "#FFFFFF"
   },
-  "white_black": {
-    "name": "white_black",
-    "primaryColor": "#FFFFFF",
-    "secondaryColor": "#000000"
-  },
   "green_black": {
     "name": "green_black",
     "primaryColor": "#00ff00",
