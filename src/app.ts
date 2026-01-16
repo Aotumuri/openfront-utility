@@ -107,12 +107,6 @@ document.addEventListener("DOMContentLoaded", () => {
     circleFillInput,
   });
 
-  const drawingTools = createDrawingTools({
-    gridDiv,
-    getTileWidth: () => parseInt(tileWidthInput.value),
-    getTileHeight: () => parseInt(tileHeightInput.value),
-  });
-
   let updateOutput = () => {};
   const gridManager = createGridManager({
     gridDiv,
@@ -127,9 +121,15 @@ document.addEventListener("DOMContentLoaded", () => {
     initialPattern,
     guideState,
     toolState,
-    drawingTools,
     onPatternChange: () => updateOutput(),
   });
+  const drawingTools = createDrawingTools({
+    getTileWidth: gridManager.getTileWidth,
+    getTileHeight: gridManager.getTileHeight,
+    isCellActive: gridManager.isCellActive,
+    setCellActive: gridManager.setCellActive,
+  });
+  gridManager.setDrawingTools(drawingTools);
   handleGuideChange = () => gridManager.generateGrid();
 
   const renderPreview = createPreviewRenderer({

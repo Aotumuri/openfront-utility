@@ -15,7 +15,7 @@ type GridManagerOptions = {
   initialPattern: number[][];
   guideState: GuideState;
   toolState: ToolState;
-  drawingTools: DrawingTools;
+  drawingTools?: DrawingTools;
   onPatternChange: () => void;
 };
 
@@ -25,6 +25,9 @@ export type GridManager = {
   clearGrid: () => void;
   getTileWidth: () => number;
   getTileHeight: () => number;
+  isCellActive: (x: number, y: number) => boolean;
+  setCellActive: (x: number, y: number, active: boolean) => void;
+  setDrawingTools: (tools: DrawingTools) => void;
 };
 
 export function createGridManager(options: GridManagerOptions): GridManager {
@@ -41,10 +44,11 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     initialPattern,
     guideState,
     toolState,
-    drawingTools,
+    drawingTools: initialDrawingTools,
     onPatternChange,
   } = options;
 
+  let drawingTools: DrawingTools | null = initialDrawingTools ?? null;
   let tileWidth = parseInt(tileWidthInput.value);
   let tileHeight = parseInt(tileHeightInput.value);
   let isMouseDown = false;
@@ -52,6 +56,8 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   let isFirstLoad = true;
   let currentHeight = 0;
   let currentWidth = 0;
+  let patternState: number[][] = [];
+  let cellMatrix: HTMLDivElement[][] = [];
 
   document.body.onmousedown = () => (isMouseDown = true);
   document.body.onmouseup = () => {
@@ -76,123 +82,118 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     generateGrid();
   });
 
-  function getCell(x: number, y: number) {
-    const cell = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
-    if (cell === null) throw new Error(`Missing cell (${x}, ${y})`);
-    return cell;
-  }
+  const isInBounds = (x: number, y: number) =>
+    x >= 0 && y >= 0 && x < tileWidth && y < tileHeight;
 
-  shiftLeftBtn.addEventListener("click", () => {
+  const setCellActive = (x: number, y: number, active: boolean) => {
+    if (!isInBounds(x, y)) return;
+    patternState[y][x] = active ? 1 : 0;
+    const cell = cellMatrix[y]?.[x];
+    if (cell) {
+      cell.classList.toggle("active", active);
+    }
+  };
+
+  const isCellActive = (x: number, y: number) => {
+    if (!isInBounds(x, y)) return false;
+    return patternState[y][x] === 1;
+  };
+
+  const setDrawingTools = (tools: DrawingTools) => {
+    drawingTools = tools;
+  };
+
+  const applyPattern = (nextPattern: number[][]) => {
     for (let y = 0; y < tileHeight; y++) {
-      const firstCell = getCell(tileWidth - 1, y);
-      let firstActive = firstCell.classList.contains("active");
-      let active = firstActive;
-      for (let x = tileWidth - 2; x >= 0; x--) {
-        const nextCell = getCell(x, y);
-        let nextActive = nextCell.classList.contains("active");
-        if (active !== nextActive) {
-          nextCell.classList.toggle("active", active);
-          active = nextActive;
-        }
-      }
-      if (firstActive !== active) {
-        firstCell.classList.toggle("active", active);
+      for (let x = 0; x < tileWidth; x++) {
+        setCellActive(x, y, nextPattern[y]?.[x] === 1);
       }
     }
+  };
+
+  shiftLeftBtn.addEventListener("click", () => {
+    const nextPattern: number[][] = [];
+    for (let y = 0; y < tileHeight; y++) {
+      const row = patternState[y] ?? [];
+      nextPattern[y] = row.slice(1).concat(row[0] ?? 0);
+    }
+    applyPattern(nextPattern);
     onPatternChange();
   });
 
   shiftRightBtn.addEventListener("click", () => {
+    const nextPattern: number[][] = [];
     for (let y = 0; y < tileHeight; y++) {
-      const firstCell = getCell(0, y);
-      let firstActive = firstCell.classList.contains("active");
-      let active = firstActive;
-      for (let x = 1; x < tileWidth; x++) {
-        const nextCell = getCell(x, y);
-        let nextActive = nextCell.classList.contains("active");
-        if (active !== nextActive) {
-          nextCell.classList.toggle("active", active);
-          active = nextActive;
-        }
-      }
-      if (firstActive !== active) {
-        firstCell.classList.toggle("active", active);
-      }
+      const row = patternState[y] ?? [];
+      const last = row[row.length - 1] ?? 0;
+      nextPattern[y] = [last, ...row.slice(0, -1)];
     }
+    applyPattern(nextPattern);
     onPatternChange();
   });
 
   shiftDownBtn.addEventListener("click", () => {
+    const nextPattern: number[][] = Array.from({ length: tileHeight }, () =>
+      new Array(tileWidth).fill(0)
+    );
     for (let x = 0; x < tileWidth; x++) {
-      const firstCell = getCell(x, 0);
-      let firstActive = firstCell.classList.contains("active");
-      let active = firstActive;
+      const bottomValue = patternState[tileHeight - 1]?.[x] ?? 0;
+      nextPattern[0][x] = bottomValue;
       for (let y = 1; y < tileHeight; y++) {
-        const nextCell = getCell(x, y);
-        let nextActive = nextCell.classList.contains("active");
-        if (active !== nextActive) {
-          nextCell.classList.toggle("active", active);
-          active = nextActive;
-        }
-      }
-      if (firstActive !== active) {
-        firstCell.classList.toggle("active", active);
+        nextPattern[y][x] = patternState[y - 1]?.[x] ?? 0;
       }
     }
+    applyPattern(nextPattern);
     onPatternChange();
   });
 
   shiftUpBtn.addEventListener("click", () => {
+    const nextPattern: number[][] = Array.from({ length: tileHeight }, () =>
+      new Array(tileWidth).fill(0)
+    );
     for (let x = 0; x < tileWidth; x++) {
-      const firstCell = getCell(x, tileHeight - 1);
-      let firstActive = firstCell.classList.contains("active");
-      let active = firstActive;
-      for (let y = tileHeight - 2; y >= 0; y--) {
-        const nextCell = getCell(x, y);
-        let nextActive = nextCell.classList.contains("active");
-        if (active !== nextActive) {
-          nextCell.classList.toggle("active", active);
-          active = nextActive;
-        }
-      }
-      if (firstActive !== active) {
-        firstCell.classList.toggle("active", active);
+      const topValue = patternState[0]?.[x] ?? 0;
+      nextPattern[tileHeight - 1][x] = topValue;
+      for (let y = 0; y < tileHeight - 1; y++) {
+        nextPattern[y][x] = patternState[y + 1]?.[x] ?? 0;
       }
     }
+    applyPattern(nextPattern);
     onPatternChange();
   });
 
   function getCurrentPattern(): number[][] {
-    const pattern: number[][] = [];
-    for (let y = 0; y < tileHeight; y++) {
-      const row: number[] = [];
-      for (let x = 0; x < tileWidth; x++) {
-        const cell = gridDiv.querySelector(
-          `.cell[data-x='${x}'][data-y='${y}']`
-        );
-        row.push(cell && cell.classList.contains("active") ? 1 : 0);
-      }
-      pattern.push(row);
-    }
-    return pattern;
+    return patternState;
   }
 
   function generateGrid(pattern?: number[][]) {
     tileWidth = parseInt(tileWidthInput.value);
     tileHeight = parseInt(tileHeightInput.value);
     gridDiv.style.gridTemplateColumns = `repeat(${tileWidth}, 20px)`;
-    const usePattern =
-      pattern || (isFirstLoad ? initialPattern : getCurrentPattern());
+    const basePattern =
+      pattern || (isFirstLoad ? initialPattern : patternState);
+    patternState = Array.from({ length: tileHeight }, (_, y) =>
+      Array.from({ length: tileWidth }, (_, x) =>
+        basePattern[y] && basePattern[y][x] === 1 ? 1 : 0
+      )
+    );
+
+    const nextCellMatrix: HTMLDivElement[][] = Array.from(
+      { length: tileHeight },
+      () => []
+    );
 
     for (let y = tileHeight; y < currentHeight; y++) {
-      for (const div of gridDiv.querySelectorAll(`.cell[data-y="${y}"]`)) {
-        div.remove();
-      }
+      const row = cellMatrix[y];
+      if (!row) continue;
+      row.forEach((cell) => cell.remove());
     }
 
-    for (let x = tileWidth; x < currentWidth; x++) {
-      for (const div of gridDiv.querySelectorAll(`.cell[data-x="${x}"]`)) {
-        div.remove();
+    for (let y = 0; y < Math.min(tileHeight, currentHeight); y++) {
+      const row = cellMatrix[y];
+      if (!row) continue;
+      for (let x = tileWidth; x < currentWidth; x++) {
+        row[x]?.remove();
       }
     }
     currentWidth = tileWidth;
@@ -214,30 +215,39 @@ export function createGridManager(options: GridManagerOptions): GridManager {
       }
     }
 
+    const applyPenBrush = (cx: number, cy: number, activate: boolean) => {
+      const size = toolState.getPenSize();
+      const radius = Math.floor(size / 2);
+      for (let by = cy - radius; by <= cy + radius; by++) {
+        if (by < 0 || by >= tileHeight) continue;
+        for (let bx = cx - radius; bx <= cx + radius; bx++) {
+          if (bx < 0 || bx >= tileWidth) continue;
+          setCellActive(bx, by, activate);
+        }
+      }
+    };
+
     for (let y = 0; y < tileHeight; y++) {
       for (let x = 0; x < tileWidth; x++) {
-        let cell: HTMLDivElement | null = gridDiv.querySelector(
-          `.cell[data-x='${x}'][data-y='${y}']`
-        );
+        let cell: HTMLDivElement | null = cellMatrix[y]?.[x] ?? null;
         if (cell === null) {
           cell = document.createElement("div");
           cell.className = "cell";
           cell.dataset.x = x.toString();
           cell.dataset.y = y.toString();
-          if (lastCell !== undefined) {
-            gridDiv.insertBefore(cell, lastCell.nextSibling);
-          } else {
-            gridDiv.appendChild(cell);
-          }
         }
+        if (lastCell !== undefined) {
+          if (cell.previousSibling !== lastCell) {
+            gridDiv.insertBefore(cell, lastCell.nextSibling);
+          }
+        } else if (!cell.parentElement) {
+          gridDiv.appendChild(cell);
+        }
+        nextCellMatrix[y][x] = cell;
         lastCell = cell;
 
         cell.classList.remove("guide-v", "guide-h", "center-v", "center-h");
-        if (usePattern[y] && usePattern[y][x] === 1) {
-          cell.classList.add("active");
-        } else {
-          cell.classList.remove("active");
-        }
+        cell.classList.toggle("active", patternState[y][x] === 1);
 
         if (guideState.isBlackEnabled()) {
           if (x !== 0 && x % 5 === 0) cell.classList.add("guide-v");
@@ -248,37 +258,20 @@ export function createGridManager(options: GridManagerOptions): GridManager {
           if (centerH.indexOf(y) !== -1) cell.classList.add("center-h");
         }
 
-        const applyPenBrush = (cx: number, cy: number, activate: boolean) => {
-          const size = toolState.getPenSize();
-          const radius = Math.floor(size / 2);
-          for (let by = cy - radius; by <= cy + radius; by++) {
-            if (by < 0 || by >= tileHeight) continue;
-            for (let bx = cx - radius; bx <= cx + radius; bx++) {
-              if (bx < 0 || bx >= tileWidth) continue;
-              const target = gridDiv.querySelector(
-                `.cell[data-x='${bx}'][data-y='${by}']`
-              );
-              if (target) {
-                target.classList.toggle("active", activate);
-              }
-            }
-          }
-        };
-
         cell.onclick = () => {
           const tool = toolState.getCurrentTool();
           if (tool === "pen") {
-            const shouldActivate = !cell.classList.contains("active");
+            const shouldActivate = !isCellActive(x, y);
             applyPenBrush(x, y, shouldActivate);
           } else if (tool === "fill") {
-            drawingTools.floodFill(x, y);
+            drawingTools?.floodFill(x, y);
           } else if (tool === "star") {
             const r = toolState.getStarRadius();
-            drawingTools.drawStar(x, y, r);
+            drawingTools?.drawStar(x, y, r);
           } else if (tool === "circle") {
             const r = toolState.getCircleRadius();
             const fill = toolState.isCircleFilled();
-            drawingTools.drawCircle(x, y, r, fill);
+            drawingTools?.drawCircle(x, y, r, fill);
           }
           onPatternChange();
         };
@@ -287,7 +280,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
           const tool = toolState.getCurrentTool();
           if (isMouseDown && tool === "pen") {
             if (toggleState === null) {
-              toggleState = !cell.classList.contains("active");
+              toggleState = !isCellActive(x, y);
             }
             applyPenBrush(x, y, toggleState);
             onPatternChange();
@@ -295,13 +288,17 @@ export function createGridManager(options: GridManagerOptions): GridManager {
         };
       }
     }
+    cellMatrix = nextCellMatrix;
     isFirstLoad = false;
     onPatternChange();
   }
 
   function clearGrid() {
-    const cells = gridDiv.querySelectorAll(".cell");
-    cells.forEach((cell) => cell.classList.remove("active"));
+    for (let y = 0; y < tileHeight; y++) {
+      for (let x = 0; x < tileWidth; x++) {
+        setCellActive(x, y, false);
+      }
+    }
     onPatternChange();
   }
 
@@ -311,5 +308,8 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     clearGrid,
     getTileWidth: () => tileWidth,
     getTileHeight: () => tileHeight,
+    isCellActive,
+    setCellActive,
+    setDrawingTools,
   };
 }

@@ -5,13 +5,14 @@ export type DrawingTools = {
 };
 
 type DrawingOptions = {
-  gridDiv: HTMLElement;
   getTileWidth: () => number;
   getTileHeight: () => number;
+  isCellActive: (x: number, y: number) => boolean;
+  setCellActive: (x: number, y: number, active: boolean) => void;
 };
 
 export function createDrawingTools(options: DrawingOptions): DrawingTools {
-  const { gridDiv, getTileWidth, getTileHeight } = options;
+  const { getTileWidth, getTileHeight, isCellActive, setCellActive } = options;
 
   function plotCirclePoints(
     cx: number,
@@ -33,10 +34,7 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
     ];
     for (const [px, py] of pts) {
       if (px >= 0 && px < width && py >= 0 && py < height) {
-        const c = gridDiv.querySelector(
-          `.cell[data-x='${px}'][data-y='${py}']`
-        );
-        if (c) c.classList.add("active");
+        setCellActive(px, py, true);
       }
     }
   }
@@ -51,10 +49,7 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
             const px = cx + x;
             const py = cy + y;
             if (px >= 0 && px < width && py >= 0 && py < height) {
-              const c = gridDiv.querySelector(
-                `.cell[data-x='${px}'][data-y='${py}']`
-              );
-              if (c) c.classList.add("active");
+              setCellActive(px, py, true);
             }
           }
         }
@@ -84,8 +79,7 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
     let err = dx + dy,
       e2;
     while (true) {
-      const c = gridDiv.querySelector(`.cell[data-x='${x0}'][data-y='${y0}']`);
-      if (c) c.classList.add("active");
+      setCellActive(x0, y0, true);
       if (x0 === x1 && y0 === y1) break;
       e2 = 2 * err;
       if (e2 >= dy) {
@@ -120,22 +114,13 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
   }
 
   function floodFill(sx: number, sy: number) {
-    gridDiv.querySelectorAll(".cell");
     const width = getTileWidth();
     const height = getTileHeight();
     const get = (x: number, y: number) => {
-      return gridDiv
-        .querySelector(`.cell[data-x='${x}'][data-y='${y}']`)
-        ?.classList.contains("active")
-        ? 1
-        : 0;
+      return isCellActive(x, y) ? 1 : 0;
     };
     const set = (x: number, y: number, v: 0 | 1) => {
-      const c = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
-      if (c) {
-        if (v) c.classList.add("active");
-        else c.classList.remove("active");
-      }
+      setCellActive(x, y, v === 1);
     };
     const target = get(sx, sy);
     const newValue = target ? 0 : 1;

@@ -1,5 +1,5 @@
 export function createDrawingTools(options) {
-    const { gridDiv, getTileWidth, getTileHeight } = options;
+    const { getTileWidth, getTileHeight, isCellActive, setCellActive } = options;
     function plotCirclePoints(cx, cy, x, y, width, height) {
         const pts = [
             [cx + x, cy + y],
@@ -13,9 +13,7 @@ export function createDrawingTools(options) {
         ];
         for (const [px, py] of pts) {
             if (px >= 0 && px < width && py >= 0 && py < height) {
-                const c = gridDiv.querySelector(`.cell[data-x='${px}'][data-y='${py}']`);
-                if (c)
-                    c.classList.add("active");
+                setCellActive(px, py, true);
             }
         }
     }
@@ -29,9 +27,7 @@ export function createDrawingTools(options) {
                         const px = cx + x;
                         const py = cy + y;
                         if (px >= 0 && px < width && py >= 0 && py < height) {
-                            const c = gridDiv.querySelector(`.cell[data-x='${px}'][data-y='${py}']`);
-                            if (c)
-                                c.classList.add("active");
+                            setCellActive(px, py, true);
                         }
                     }
                 }
@@ -57,9 +53,7 @@ export function createDrawingTools(options) {
         let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
         let err = dx + dy, e2;
         while (true) {
-            const c = gridDiv.querySelector(`.cell[data-x='${x0}'][data-y='${y0}']`);
-            if (c)
-                c.classList.add("active");
+            setCellActive(x0, y0, true);
             if (x0 === x1 && y0 === y1)
                 break;
             e2 = 2 * err;
@@ -88,24 +82,13 @@ export function createDrawingTools(options) {
         }
     }
     function floodFill(sx, sy) {
-        gridDiv.querySelectorAll(".cell");
         const width = getTileWidth();
         const height = getTileHeight();
         const get = (x, y) => {
-            var _a;
-            return ((_a = gridDiv
-                .querySelector(`.cell[data-x='${x}'][data-y='${y}']`)) === null || _a === void 0 ? void 0 : _a.classList.contains("active"))
-                ? 1
-                : 0;
+            return isCellActive(x, y) ? 1 : 0;
         };
         const set = (x, y, v) => {
-            const c = gridDiv.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
-            if (c) {
-                if (v)
-                    c.classList.add("active");
-                else
-                    c.classList.remove("active");
-            }
+            setCellActive(x, y, v === 1);
         };
         const target = get(sx, sy);
         const newValue = target ? 0 : 1;
