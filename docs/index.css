@@ -350,6 +350,16 @@ textarea {
   min-width: 180px;
 }
 
+#discordOutput {
+  min-height: 40px;
+  height: 40px;
+}
+
+.discord-row textarea {
+  flex: 1;
+  min-width: 180px;
+}
+
 .select-input {
   width: 100%;
 }

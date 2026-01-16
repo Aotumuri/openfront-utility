@@ -36,7 +36,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const shiftDownBtn = document.getElementById("shiftDownBtn");
     const gridDiv = document.getElementById("grid");
     const outputTextarea = document.getElementById("output");
+    const discordOutputTextarea = document.getElementById("discordOutput");
     const copyOutputBtn = document.getElementById("copyOutputBtn");
+    const copyDiscordBtn = document.getElementById("copyDiscordBtn");
     const previewCanvas = document.getElementById("preview");
     const previewPrimaryColorInput = document.getElementById("previewPrimaryColor");
     const previewSecondaryColorInput = document.getElementById("previewSecondaryColor");
@@ -122,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const scale = parseInt(scaleInput.value);
         const base64 = generatePatternBase64(pattern, gridManager.getTileWidth(), gridManager.getTileHeight(), scale);
         outputTextarea.value = base64;
+        discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${previewPrimaryColorInput.value}\nSecondary ${previewSecondaryColorInput.value}`;
         renderPreview(base64);
         window.history.replaceState(null, "", "#" + base64);
         if (!isApplyingHistory) {
@@ -154,13 +157,21 @@ document.addEventListener("DOMContentLoaded", () => {
         secondaryColorInput: previewSecondaryColorInput,
         onChange: () => updateOutput(),
     });
-    function copyOutput() {
-        outputTextarea.select();
+    function copyTextarea(textarea) {
+        textarea.focus();
+        textarea.select();
         document.execCommand("copy");
+    }
+    function copyOutput() {
+        copyTextarea(outputTextarea);
+    }
+    function copyDiscordOutput() {
+        copyTextarea(discordOutputTextarea);
     }
     loadBtn.onclick = loadFromBase64;
     clearGridBtn.onclick = gridManager.clearGrid;
     copyOutputBtn.onclick = copyOutput;
+    copyDiscordBtn.onclick = copyDiscordOutput;
     undoBtn.onclick = () => {
         const base64 = historyManager.undo();
         if (!base64)

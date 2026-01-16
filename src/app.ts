@@ -72,8 +72,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const outputTextarea = document.getElementById(
     "output"
   ) as HTMLTextAreaElement;
+  const discordOutputTextarea = document.getElementById(
+    "discordOutput"
+  ) as HTMLTextAreaElement;
   const copyOutputBtn = document.getElementById(
     "copyOutputBtn"
+  ) as HTMLButtonElement;
+  const copyDiscordBtn = document.getElementById(
+    "copyDiscordBtn"
   ) as HTMLButtonElement;
   const previewCanvas = document.getElementById("preview") as HTMLCanvasElement;
   const previewPrimaryColorInput = document.getElementById(
@@ -181,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
       scale
     );
     outputTextarea.value = base64;
+    discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${previewPrimaryColorInput.value}\nSecondary ${previewSecondaryColorInput.value}`;
     renderPreview(base64);
     window.history.replaceState(null, "", "#" + base64);
     if (!isApplyingHistory) {
@@ -218,14 +225,24 @@ document.addEventListener("DOMContentLoaded", () => {
     onChange: () => updateOutput(),
   });
 
-  function copyOutput() {
-    outputTextarea.select();
+  function copyTextarea(textarea: HTMLTextAreaElement) {
+    textarea.focus();
+    textarea.select();
     document.execCommand("copy");
+  }
+
+  function copyOutput() {
+    copyTextarea(outputTextarea);
+  }
+
+  function copyDiscordOutput() {
+    copyTextarea(discordOutputTextarea);
   }
 
   loadBtn.onclick = loadFromBase64;
   clearGridBtn.onclick = gridManager.clearGrid;
   copyOutputBtn.onclick = copyOutput;
+  copyDiscordBtn.onclick = copyDiscordOutput;
   undoBtn.onclick = () => {
     const base64 = historyManager.undo();
     if (!base64) return;
