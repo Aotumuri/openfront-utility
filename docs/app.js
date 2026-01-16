@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const previewCanvas = document.getElementById("preview");
     const previewPrimaryColorInput = document.getElementById("previewPrimaryColor");
     const previewSecondaryColorInput = document.getElementById("previewSecondaryColor");
+    const swapColorsBtn = document.getElementById("swapColorsBtn");
     const colorPresetContainer = document.getElementById("colorPresetContainer");
     if (!colorPresetContainer) {
         throw new Error("Missing color preset container");
@@ -142,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
         base64Input.value = hash.slice(1);
         setTimeout(loadFromBase64, 0);
     }
-    initColorPresetControls({
+    const colorPresetControls = initColorPresetControls({
         container: colorPresetContainer,
         primaryColorInput: previewPrimaryColorInput,
         secondaryColorInput: previewSecondaryColorInput,
@@ -166,6 +167,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!base64)
             return;
         applyHistoryState(base64);
+    };
+    swapColorsBtn.onclick = () => {
+        const primary = previewPrimaryColorInput.value;
+        previewPrimaryColorInput.value = previewSecondaryColorInput.value;
+        previewSecondaryColorInput.value = primary;
+        colorPresetControls.setCustomSelection();
+        updateOutput();
     };
     gridManager.generateGrid();
 });

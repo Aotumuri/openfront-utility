@@ -218,4 +218,12 @@ export function initColorPresetControls(options: ColorPresetOptions) {
     updateCustomButtonSwatches();
     onChange();
   })();
+
+  const setCustomSelection = () => {
+    ensureCustomPresetButton();
+    setSelectedPreset(null);
+    updateCustomButtonSwatches();
+  };
+
+  return { setCustomSelection };
 }

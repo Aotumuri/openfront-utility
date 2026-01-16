@@ -76,6 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewSecondaryColorInput = document.getElementById(
     "previewSecondaryColor"
   ) as HTMLInputElement;
+  const swapColorsBtn = document.getElementById(
+    "swapColorsBtn"
+  ) as HTMLButtonElement;
   const colorPresetContainer = document.getElementById(
     "colorPresetContainer"
   ) as HTMLDivElement;
@@ -200,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(loadFromBase64, 0);
   }
 
-  initColorPresetControls({
+  const colorPresetControls = initColorPresetControls({
     container: colorPresetContainer,
     primaryColorInput: previewPrimaryColorInput,
     secondaryColorInput: previewSecondaryColorInput,
@@ -224,6 +227,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const base64 = historyManager.redo();
     if (!base64) return;
     applyHistoryState(base64);
+  };
+  swapColorsBtn.onclick = () => {
+    const primary = previewPrimaryColorInput.value;
+    previewPrimaryColorInput.value = previewSecondaryColorInput.value;
+    previewSecondaryColorInput.value = primary;
+    colorPresetControls.setCustomSelection();
+    updateOutput();
   };
 
   gridManager.generateGrid();
