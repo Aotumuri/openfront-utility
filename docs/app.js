@@ -9,6 +9,7 @@ import { createPreviewRenderer } from "./app/previewRenderer.js";
 import { createToolState } from "./app/toolState.js";
 import { createHistoryManager } from "./app/undoRedo.js";
 document.addEventListener("DOMContentLoaded", () => {
+    var _a, _b;
     const toolbox = document.getElementById("toolbox");
     const base64Input = document.getElementById("base64Input");
     const toolPenBtn = document.getElementById("tool-pen");
@@ -126,7 +127,11 @@ document.addEventListener("DOMContentLoaded", () => {
         outputTextarea.value = base64;
         discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${previewPrimaryColorInput.value}\nSecondary ${previewSecondaryColorInput.value}`;
         renderPreview(base64);
-        window.history.replaceState(null, "", "#" + base64);
+        const params = new URLSearchParams({
+            primary: previewPrimaryColorInput.value.replace("#", ""),
+            secondary: previewSecondaryColorInput.value.replace("#", ""),
+        });
+        window.history.replaceState(null, "", `#${base64}?${params.toString()}`);
         if (!isApplyingHistory) {
             historyManager.record(base64);
         }
@@ -146,15 +151,41 @@ document.addEventListener("DOMContentLoaded", () => {
         scaleValue,
         onPatternLoaded: (pattern) => gridManager.generateGrid(pattern),
     });
-    const hash = window.location.hash;
-    if (hash.startsWith("#")) {
-        base64Input.value = hash.slice(1);
-        setTimeout(loadFromBase64, 0);
+    const normalizeHex = (value) => {
+        if (!value)
+            return null;
+        const cleaned = value.trim().replace(/^#/, "");
+        if (!/^[0-9a-fA-F]{6}$/.test(cleaned))
+            return null;
+        return `#${cleaned.toLowerCase()}`;
+    };
+    const hashValue = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : "";
+    let initialColors = null;
+    if (hashValue) {
+        const [patternPart, queryPart] = hashValue.split("?");
+        if (patternPart) {
+            base64Input.value = patternPart;
+            setTimeout(loadFromBase64, 0);
+        }
+        if (queryPart) {
+            const params = new URLSearchParams(queryPart);
+            const primary = (_a = normalizeHex(params.get("primary"))) !== null && _a !== void 0 ? _a : normalizeHex(params.get("p"));
+            const secondary = (_b = normalizeHex(params.get("secondary"))) !== null && _b !== void 0 ? _b : normalizeHex(params.get("s"));
+            if (primary || secondary) {
+                initialColors = {
+                    primary: primary !== null && primary !== void 0 ? primary : previewPrimaryColorInput.value,
+                    secondary: secondary !== null && secondary !== void 0 ? secondary : previewSecondaryColorInput.value,
+                };
+            }
+        }
     }
     const colorPresetControls = initColorPresetControls({
         container: colorPresetContainer,
         primaryColorInput: previewPrimaryColorInput,
         secondaryColorInput: previewSecondaryColorInput,
+        initialColors,
         onChange: () => updateOutput(),
     });
     function copyTextarea(textarea) {

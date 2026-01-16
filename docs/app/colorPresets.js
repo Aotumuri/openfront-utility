@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 const COLOR_PRESET_URL = "color-presets.json";
 export function initColorPresetControls(options) {
-    const { container, primaryColorInput, secondaryColorInput, onChange } = options;
+    const { container, primaryColorInput, secondaryColorInput, onChange, initialColors, } = options;
     let colorPresets = {};
     let presetButtons = {};
     let customPresetButton = null;
@@ -56,6 +56,16 @@ export function initColorPresetControls(options) {
         if (secondarySwatch) {
             secondarySwatch.style.backgroundColor = secondaryColorInput.value;
         }
+    }
+    function applyInitialColors() {
+        if (!initialColors)
+            return false;
+        ensureCustomPresetButton();
+        primaryColorInput.value = initialColors.primary;
+        secondaryColorInput.value = initialColors.secondary;
+        setSelectedPreset(null);
+        updateCustomButtonSwatches();
+        return true;
     }
     function createPresetButton(key, preset) {
         const button = document.createElement("button");
@@ -161,7 +171,10 @@ export function initColorPresetControls(options) {
         container.classList.remove("loading");
         if (Object.keys(presets).length > 0) {
             populateColorPresetOptions(colorPresets);
-            if (colorPresets.black_white) {
+            if (applyInitialColors()) {
+                // Use colors from URL or initial state.
+            }
+            else if (colorPresets.black_white) {
                 applyPreset("black_white", { skipUpdate: true });
             }
             else {
@@ -174,6 +187,7 @@ export function initColorPresetControls(options) {
             if (customPresetButton) {
                 container.appendChild(customPresetButton);
             }
+            applyInitialColors();
             const message = document.createElement("div");
             message.className = "color-preset-placeholder";
             message.textContent = "No presets available";

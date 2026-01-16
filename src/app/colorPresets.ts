@@ -11,12 +11,22 @@ type ColorPresetOptions = {
   primaryColorInput: HTMLInputElement;
   secondaryColorInput: HTMLInputElement;
   onChange: () => void;
+  initialColors?: {
+    primary: string;
+    secondary: string;
+  } | null;
 };
 
 const COLOR_PRESET_URL = "color-presets.json";
 
 export function initColorPresetControls(options: ColorPresetOptions) {
-  const { container, primaryColorInput, secondaryColorInput, onChange } = options;
+  const {
+    container,
+    primaryColorInput,
+    secondaryColorInput,
+    onChange,
+    initialColors,
+  } = options;
   let colorPresets: ColorPresetMap = {};
   let presetButtons: Record<string, HTMLButtonElement> = {};
   let customPresetButton: HTMLButtonElement | null = null;
@@ -65,6 +75,16 @@ export function initColorPresetControls(options: ColorPresetOptions) {
     if (secondarySwatch) {
       secondarySwatch.style.backgroundColor = secondaryColorInput.value;
     }
+  }
+
+  function applyInitialColors() {
+    if (!initialColors) return false;
+    ensureCustomPresetButton();
+    primaryColorInput.value = initialColors.primary;
+    secondaryColorInput.value = initialColors.secondary;
+    setSelectedPreset(null);
+    updateCustomButtonSwatches();
+    return true;
   }
 
   function createPresetButton(key: string, preset: ColorPreset) {
@@ -197,7 +217,9 @@ export function initColorPresetControls(options: ColorPresetOptions) {
 
     if (Object.keys(presets).length > 0) {
       populateColorPresetOptions(colorPresets);
-      if (colorPresets.black_white) {
+      if (applyInitialColors()) {
+        // Use colors from URL or initial state.
+      } else if (colorPresets.black_white) {
         applyPreset("black_white", { skipUpdate: true });
       } else {
         setSelectedPreset(null);
@@ -208,6 +230,7 @@ export function initColorPresetControls(options: ColorPresetOptions) {
       if (customPresetButton) {
         container.appendChild(customPresetButton);
       }
+      applyInitialColors();
       const message = document.createElement("div");
       message.className = "color-preset-placeholder";
       message.textContent = "No presets available";

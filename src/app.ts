@@ -189,7 +189,11 @@ document.addEventListener("DOMContentLoaded", () => {
     outputTextarea.value = base64;
     discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${previewPrimaryColorInput.value}\nSecondary ${previewSecondaryColorInput.value}`;
     renderPreview(base64);
-    window.history.replaceState(null, "", "#" + base64);
+    const params = new URLSearchParams({
+      primary: previewPrimaryColorInput.value.replace("#", ""),
+      secondary: previewSecondaryColorInput.value.replace("#", ""),
+    });
+    window.history.replaceState(null, "", `#${base64}?${params.toString()}`);
     if (!isApplyingHistory) {
       historyManager.record(base64);
     }
@@ -212,16 +216,43 @@ document.addEventListener("DOMContentLoaded", () => {
     onPatternLoaded: (pattern) => gridManager.generateGrid(pattern),
   });
 
-  const hash = window.location.hash;
-  if (hash.startsWith("#")) {
-    base64Input.value = hash.slice(1);
-    setTimeout(loadFromBase64, 0);
+  const normalizeHex = (value: string | null) => {
+    if (!value) return null;
+    const cleaned = value.trim().replace(/^#/, "");
+    if (!/^[0-9a-fA-F]{6}$/.test(cleaned)) return null;
+    return `#${cleaned.toLowerCase()}`;
+  };
+
+  const hashValue = window.location.hash.startsWith("#")
+    ? window.location.hash.slice(1)
+    : "";
+  let initialColors: { primary: string; secondary: string } | null = null;
+  if (hashValue) {
+    const [patternPart, queryPart] = hashValue.split("?");
+    if (patternPart) {
+      base64Input.value = patternPart;
+      setTimeout(loadFromBase64, 0);
+    }
+    if (queryPart) {
+      const params = new URLSearchParams(queryPart);
+      const primary =
+        normalizeHex(params.get("primary")) ?? normalizeHex(params.get("p"));
+      const secondary =
+        normalizeHex(params.get("secondary")) ?? normalizeHex(params.get("s"));
+      if (primary || secondary) {
+        initialColors = {
+          primary: primary ?? previewPrimaryColorInput.value,
+          secondary: secondary ?? previewSecondaryColorInput.value,
+        };
+      }
+    }
   }
 
   const colorPresetControls = initColorPresetControls({
     container: colorPresetContainer,
     primaryColorInput: previewPrimaryColorInput,
     secondaryColorInput: previewSecondaryColorInput,
+    initialColors,
     onChange: () => updateOutput(),
   });
 
