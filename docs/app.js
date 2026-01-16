@@ -38,13 +38,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const gridDiv = document.getElementById("grid");
     const outputTextarea = document.getElementById("output");
     const discordOutputTextarea = document.getElementById("discordOutput");
+    const previewLinkTextarea = document.getElementById("previewLinkOutput");
     const copyOutputBtn = document.getElementById("copyOutputBtn");
     const copyDiscordBtn = document.getElementById("copyDiscordBtn");
+    const copyPreviewLinkBtn = document.getElementById("copyPreviewLinkBtn");
     const previewCanvas = document.getElementById("preview");
     const previewPrimaryColorInput = document.getElementById("previewPrimaryColor");
     const previewSecondaryColorInput = document.getElementById("previewSecondaryColor");
     const swapColorsBtn = document.getElementById("swapColorsBtn");
     const colorPresetContainer = document.getElementById("colorPresetContainer");
+    const layoutTabsInput = document.getElementById("layout-tabs");
+    const viewPreviewInput = document.getElementById("view-preview");
+    const previewPanel = document.querySelector(".preview-panel");
     if (!colorPresetContainer) {
         throw new Error("Missing color preset container");
     }
@@ -126,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const base64 = generatePatternBase64(pattern, gridManager.getTileWidth(), gridManager.getTileHeight(), scale);
         outputTextarea.value = base64;
         discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${previewPrimaryColorInput.value}\nSecondary ${previewSecondaryColorInput.value}`;
+        previewLinkTextarea.value = buildPreviewLink();
         renderPreview(base64);
         const params = new URLSearchParams({
             primary: previewPrimaryColorInput.value.replace("#", ""),
@@ -163,6 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ? window.location.hash.slice(1)
         : "";
     let initialColors = null;
+    let shouldFocusPreview = false;
     if (hashValue) {
         const [patternPart, queryPart] = hashValue.split("?");
         if (patternPart) {
@@ -179,6 +186,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     secondary: secondary !== null && secondary !== void 0 ? secondary : previewSecondaryColorInput.value,
                 };
             }
+            const previewFlag = params.get("preview");
+            if (previewFlag !== null &&
+                previewFlag !== "0" &&
+                previewFlag !== "false") {
+                shouldFocusPreview = true;
+            }
         }
     }
     const colorPresetControls = initColorPresetControls({
@@ -188,21 +201,53 @@ document.addEventListener("DOMContentLoaded", () => {
         initialColors,
         onChange: () => updateOutput(),
     });
-    function copyTextarea(textarea) {
-        textarea.focus();
-        textarea.select();
-        document.execCommand("copy");
+    function copyText(value) {
+        var _a;
+        const fallbackCopy = () => {
+            const temp = document.createElement("textarea");
+            temp.value = value;
+            temp.style.position = "fixed";
+            temp.style.opacity = "0";
+            document.body.appendChild(temp);
+            temp.focus();
+            temp.select();
+            document.execCommand("copy");
+            temp.remove();
+        };
+        if ((_a = navigator.clipboard) === null || _a === void 0 ? void 0 : _a.writeText) {
+            navigator.clipboard.writeText(value).catch(fallbackCopy);
+            return;
+        }
+        fallbackCopy();
     }
     function copyOutput() {
-        copyTextarea(outputTextarea);
+        copyText(outputTextarea.value);
     }
     function copyDiscordOutput() {
-        copyTextarea(discordOutputTextarea);
+        copyText(discordOutputTextarea.value);
+    }
+    function buildPreviewLink() {
+        const base64 = outputTextarea.value.trim();
+        const params = new URLSearchParams({
+            primary: previewPrimaryColorInput.value.replace("#", ""),
+            secondary: previewSecondaryColorInput.value.replace("#", ""),
+            preview: "1",
+        });
+        const hash = base64 ? `#${base64}?${params.toString()}` : "";
+        const url = new URL(window.location.href);
+        url.hash = hash;
+        return url.toString();
+    }
+    function copyPreviewLink() {
+        const link = buildPreviewLink();
+        previewLinkTextarea.value = link;
+        copyText(link);
     }
     loadBtn.onclick = loadFromBase64;
     clearGridBtn.onclick = gridManager.clearGrid;
     copyOutputBtn.onclick = copyOutput;
     copyDiscordBtn.onclick = copyDiscordOutput;
+    copyPreviewLinkBtn.onclick = copyPreviewLink;
     undoBtn.onclick = () => {
         const base64 = historyManager.undo();
         if (!base64)
@@ -223,4 +268,16 @@ document.addEventListener("DOMContentLoaded", () => {
         updateOutput();
     };
     gridManager.generateGrid();
+    if (shouldFocusPreview) {
+        if (layoutTabsInput) {
+            layoutTabsInput.checked = true;
+        }
+        if (viewPreviewInput) {
+            viewPreviewInput.checked = true;
+        }
+        const scrollTarget = previewPanel !== null && previewPanel !== void 0 ? previewPanel : previewCanvas;
+        setTimeout(() => {
+            scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 0);
+    }
 });

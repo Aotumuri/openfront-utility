@@ -359,6 +359,16 @@ textarea {
   min-width: 180px;
 }
 
+#previewLinkOutput {
+  min-height: 40px;
+  height: 40px;
+}
+
+.preview-link-row textarea {
+  flex: 1;
+  min-width: 180px;
+}
+
 .select-input {
   width: 100%;
 }

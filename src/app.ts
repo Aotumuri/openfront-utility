@@ -75,11 +75,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const discordOutputTextarea = document.getElementById(
     "discordOutput"
   ) as HTMLTextAreaElement;
+  const previewLinkTextarea = document.getElementById(
+    "previewLinkOutput"
+  ) as HTMLTextAreaElement;
   const copyOutputBtn = document.getElementById(
     "copyOutputBtn"
   ) as HTMLButtonElement;
   const copyDiscordBtn = document.getElementById(
     "copyDiscordBtn"
+  ) as HTMLButtonElement;
+  const copyPreviewLinkBtn = document.getElementById(
+    "copyPreviewLinkBtn"
   ) as HTMLButtonElement;
   const previewCanvas = document.getElementById("preview") as HTMLCanvasElement;
   const previewPrimaryColorInput = document.getElementById(
@@ -94,6 +100,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const colorPresetContainer = document.getElementById(
     "colorPresetContainer"
   ) as HTMLDivElement;
+  const layoutTabsInput = document.getElementById(
+    "layout-tabs"
+  ) as HTMLInputElement | null;
+  const viewPreviewInput = document.getElementById(
+    "view-preview"
+  ) as HTMLInputElement | null;
+  const previewPanel = document.querySelector(
+    ".preview-panel"
+  ) as HTMLElement | null;
 
   if (!colorPresetContainer) {
     throw new Error("Missing color preset container");
@@ -188,6 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     outputTextarea.value = base64;
     discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${previewPrimaryColorInput.value}\nSecondary ${previewSecondaryColorInput.value}`;
+    previewLinkTextarea.value = buildPreviewLink();
     renderPreview(base64);
     const params = new URLSearchParams({
       primary: previewPrimaryColorInput.value.replace("#", ""),
@@ -227,6 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ? window.location.hash.slice(1)
     : "";
   let initialColors: { primary: string; secondary: string } | null = null;
+  let shouldFocusPreview = false;
   if (hashValue) {
     const [patternPart, queryPart] = hashValue.split("?");
     if (patternPart) {
@@ -245,6 +262,14 @@ document.addEventListener("DOMContentLoaded", () => {
           secondary: secondary ?? previewSecondaryColorInput.value,
         };
       }
+      const previewFlag = params.get("preview");
+      if (
+        previewFlag !== null &&
+        previewFlag !== "0" &&
+        previewFlag !== "false"
+      ) {
+        shouldFocusPreview = true;
+      }
     }
   }
 
@@ -256,24 +281,58 @@ document.addEventListener("DOMContentLoaded", () => {
     onChange: () => updateOutput(),
   });
 
-  function copyTextarea(textarea: HTMLTextAreaElement) {
-    textarea.focus();
-    textarea.select();
-    document.execCommand("copy");
+  function copyText(value: string) {
+    const fallbackCopy = () => {
+      const temp = document.createElement("textarea");
+      temp.value = value;
+      temp.style.position = "fixed";
+      temp.style.opacity = "0";
+      document.body.appendChild(temp);
+      temp.focus();
+      temp.select();
+      document.execCommand("copy");
+      temp.remove();
+    };
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(value).catch(fallbackCopy);
+      return;
+    }
+    fallbackCopy();
   }
 
   function copyOutput() {
-    copyTextarea(outputTextarea);
+    copyText(outputTextarea.value);
   }
 
   function copyDiscordOutput() {
-    copyTextarea(discordOutputTextarea);
+    copyText(discordOutputTextarea.value);
+  }
+
+  function buildPreviewLink() {
+    const base64 = outputTextarea.value.trim();
+    const params = new URLSearchParams({
+      primary: previewPrimaryColorInput.value.replace("#", ""),
+      secondary: previewSecondaryColorInput.value.replace("#", ""),
+      preview: "1",
+    });
+    const hash = base64 ? `#${base64}?${params.toString()}` : "";
+    const url = new URL(window.location.href);
+    url.hash = hash;
+    return url.toString();
+  }
+
+  function copyPreviewLink() {
+    const link = buildPreviewLink();
+    previewLinkTextarea.value = link;
+    copyText(link);
   }
 
   loadBtn.onclick = loadFromBase64;
   clearGridBtn.onclick = gridManager.clearGrid;
   copyOutputBtn.onclick = copyOutput;
   copyDiscordBtn.onclick = copyDiscordOutput;
+  copyPreviewLinkBtn.onclick = copyPreviewLink;
   undoBtn.onclick = () => {
     const base64 = historyManager.undo();
     if (!base64) return;
@@ -293,4 +352,17 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   gridManager.generateGrid();
+
+  if (shouldFocusPreview) {
+    if (layoutTabsInput) {
+      layoutTabsInput.checked = true;
+    }
+    if (viewPreviewInput) {
+      viewPreviewInput.checked = true;
+    }
+    const scrollTarget = previewPanel ?? previewCanvas;
+    setTimeout(() => {
+      scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  }
 });
