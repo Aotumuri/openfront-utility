@@ -3,10 +3,14 @@ import { createDrawingTools } from "./app/drawingTools.js";
 import { setupGridGuides } from "./app/gridGuides.js";
 import { createGridManager } from "./app/gridManager.js";
 import { initialPattern } from "./app/initialPattern.js";
-import { generatePatternBase64 } from "./app/patternEncoding.js";
+import {
+  decodePatternBase64,
+  generatePatternBase64,
+} from "./app/patternEncoding.js";
 import { createPatternLoader } from "./app/patternLoader.js";
 import { createPreviewRenderer } from "./app/previewRenderer.js";
 import { createToolState } from "./app/toolState.js";
+import { createHistoryManager } from "./app/undoRedo.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const toolbox = document.getElementById("toolbox");
@@ -46,6 +50,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearGridBtn = document.getElementById(
     "clearGridBtn"
   ) as HTMLButtonElement;
+  const undoBtn = document.getElementById("undoBtn") as HTMLButtonElement;
+  const redoBtn = document.getElementById("redoBtn") as HTMLButtonElement;
   const shiftUpBtn = document.getElementById("shiftUpBtn") as HTMLButtonElement;
   const shiftLeftBtn = document.getElementById(
     "shiftLeftBtn"
@@ -126,6 +132,34 @@ document.addEventListener("DOMContentLoaded", () => {
     secondaryColorInput: previewSecondaryColorInput,
   });
 
+  const historyManager = createHistoryManager();
+  let isApplyingHistory = false;
+
+  const updateHistoryButtons = () => {
+    undoBtn.disabled = !historyManager.canUndo();
+    redoBtn.disabled = !historyManager.canRedo();
+  };
+
+  const applyHistoryState = (base64: string) => {
+    let decoded;
+    try {
+      decoded = decodePatternBase64(base64);
+    } catch (error) {
+      console.warn("Failed to decode history state", error);
+      return;
+    }
+    const { pattern, tileWidth, tileHeight, scale } = decoded;
+    tileWidthInput.value = tileWidth.toString();
+    tileHeightInput.value = tileHeight.toString();
+    tileWidthValue.value = tileWidthInput.value;
+    tileHeightValue.value = tileHeightInput.value;
+    scaleInput.value = scale.toString();
+    scaleValue.textContent = String(1 << parseInt(scaleInput.value));
+    isApplyingHistory = true;
+    gridManager.generateGrid(pattern);
+    isApplyingHistory = false;
+  };
+
   updateOutput = () => {
     const pattern = gridManager.getCurrentPattern();
     const scale = parseInt(scaleInput.value);
@@ -137,7 +171,11 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     outputTextarea.value = base64;
     renderPreview(base64);
-    history.replaceState(null, "", "#" + base64);
+    window.history.replaceState(null, "", "#" + base64);
+    if (!isApplyingHistory) {
+      historyManager.record(base64);
+    }
+    updateHistoryButtons();
   };
 
   scaleInput.addEventListener("input", () => {
@@ -177,6 +215,16 @@ document.addEventListener("DOMContentLoaded", () => {
   loadBtn.onclick = loadFromBase64;
   clearGridBtn.onclick = gridManager.clearGrid;
   copyOutputBtn.onclick = copyOutput;
+  undoBtn.onclick = () => {
+    const base64 = historyManager.undo();
+    if (!base64) return;
+    applyHistoryState(base64);
+  };
+  redoBtn.onclick = () => {
+    const base64 = historyManager.redo();
+    if (!base64) return;
+    applyHistoryState(base64);
+  };
 
   gridManager.generateGrid();
 });

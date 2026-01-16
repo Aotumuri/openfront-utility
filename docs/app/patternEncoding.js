@@ -33,3 +33,18 @@ export function generatePatternBase64(pattern, width, height, scale) {
         .replace(/\//g, "_")
         .replace(/\=/g, "");
 }
+export function decodePatternBase64(base64) {
+    const decoder = new PatternDecoder(base64);
+    const tileWidth = decoder.getTileWidth();
+    const tileHeight = decoder.getTileHeight();
+    const scale = decoder.getScale();
+    const pattern = new Array(tileHeight);
+    for (let y = 0; y < tileHeight; y++) {
+        const row = new Array(tileWidth);
+        for (let x = 0; x < tileWidth; x++) {
+            row[x] = decoder.isSet(x << scale, y << scale) ? 1 : 0;
+        }
+        pattern[y] = row;
+    }
+    return { pattern, tileWidth, tileHeight, scale };
+}
