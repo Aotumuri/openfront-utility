@@ -1,5 +1,5 @@
 export function createGridManager(options) {
-    const { gridDiv, tileWidthInput, tileHeightInput, tileWidthValue, tileHeightValue, shiftUpBtn, shiftDownBtn, shiftLeftBtn, shiftRightBtn, initialPattern, guideState, toolState, drawingTools: initialDrawingTools, onPatternChange, } = options;
+    const { gridDiv, tileWidthInput, tileHeightInput, tileWidthValue, tileHeightValue, gridScaleInput, shiftUpBtn, shiftDownBtn, shiftLeftBtn, shiftRightBtn, initialPattern, guideState, toolState, drawingTools: initialDrawingTools, onPatternChange, } = options;
     let drawingTools = initialDrawingTools !== null && initialDrawingTools !== void 0 ? initialDrawingTools : null;
     let tileWidth = parseInt(tileWidthInput.value);
     let tileHeight = parseInt(tileHeightInput.value);
@@ -10,6 +10,18 @@ export function createGridManager(options) {
     let currentWidth = 0;
     let patternState = [];
     let cellMatrix = [];
+    const baseCellSize = 20;
+    const getGridScale = () => {
+        if (!gridScaleInput)
+            return 1;
+        const nextScale = parseFloat(gridScaleInput.value);
+        return Number.isFinite(nextScale) && nextScale > 0 ? nextScale : 1;
+    };
+    const applyGridSizing = () => {
+        const cellSize = baseCellSize * getGridScale();
+        gridDiv.style.setProperty("--cell-size", `${cellSize}px`);
+        gridDiv.style.gridTemplateColumns = `repeat(${tileWidth}, var(--cell-size))`;
+    };
     document.body.onmousedown = () => (isMouseDown = true);
     document.body.onmouseup = () => {
         isMouseDown = false;
@@ -30,6 +42,9 @@ export function createGridManager(options) {
     tileHeightValue.addEventListener("input", () => {
         tileHeightInput.value = tileHeightValue.value;
         generateGrid();
+    });
+    gridScaleInput === null || gridScaleInput === void 0 ? void 0 : gridScaleInput.addEventListener("change", () => {
+        applyGridSizing();
     });
     const isInBounds = (x, y) => x >= 0 && y >= 0 && x < tileWidth && y < tileHeight;
     const setCellActive = (x, y, active) => {
@@ -112,7 +127,7 @@ export function createGridManager(options) {
         var _a, _b, _c;
         tileWidth = parseInt(tileWidthInput.value);
         tileHeight = parseInt(tileHeightInput.value);
-        gridDiv.style.gridTemplateColumns = `repeat(${tileWidth}, 20px)`;
+        applyGridSizing();
         const basePattern = pattern || (isFirstLoad ? initialPattern : patternState);
         patternState = Array.from({ length: tileHeight }, (_, y) => Array.from({ length: tileWidth }, (_, x) => basePattern[y] && basePattern[y][x] === 1 ? 1 : 0));
         const nextCellMatrix = Array.from({ length: tileHeight }, () => []);

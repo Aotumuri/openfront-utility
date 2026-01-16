@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
   <head>
@@ -16,94 +15,188 @@
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
-    <h1>Pattern JSON Generator + Preview</h1>
-    <div class="controls">
-      <div id="toolbox">
-        <button id="tool-pen" class="tool-btn" data-tool="pen">🖊️ Pen</button>
-        <input
-          type="range"
-          id="pen-size"
-          min="1"
-          max="9"
-          step="2"
-          value="1"
-          style="width:80px;vertical-align:middle;"
-          aria-label="Pen size"
-          title="Pen size"
-        />
-        <button id="tool-fill" class="tool-btn" data-tool="fill">🪣 Fill</button>
-        <button id="tool-star" class="tool-btn" data-tool="star">⭐ Star</button>
-        <input type="range" id="star-size" min="2" max="10" value="3" style="width:80px;vertical-align:middle;" />
-        <button id="tool-circle" class="tool-btn" data-tool="circle">⚪ Circle</button>
-        <input type="range" id="circle-size" min="2" max="15" value="5" style="width:80px;vertical-align:middle;" />
-        <label style="margin-left:8px;vertical-align:middle;">
-          <input type="checkbox" id="circle-fill" checked /> Fill
-        </label>
-      </div>
-      <div class="row">
-        <label for="base64Input">Base64:</label>
-        <input type="text" id="base64Input" style="width: 320px" />
-        <button id="loadBtn">Load</button>
-      </div>
-      <div class="row">
-        <input type="range" id="tileWidth" value="66" min="2" max="129" style="width: 200px" />
-        <label for="tileWidth">Width: <input type="number" min="2" max="129" id="tileWidth-value" value=66></input></label>
-      </div>
-      <div class="row">
-        <input type="range" id="tileHeight" value="10" min="2" max="65" style="width: 200px" />
-        <label for="tileHeight">Height: <input type="number" min="2" max="129" id="tileHeight-value" value=10></input></label>
-      </div>
-      <div class="row">
-        <input type="range" id="scale" value="1" min="0" max="7" style="width: 200px" />
-        <label for="scale">Scale: <span id="scale-value">2</span>x</label>
-      </div>
-      <div class="row">
-        <button id="clearGridBtn">Clear</button>
-      </div>
-      <div class="row">
-        <button id="undoBtn" disabled>Undo</button>
-        <button id="redoBtn" disabled>Redo</button>
-      </div>
-      <div class="row">
-        <button id="shiftUpBtn">Shift Up</button>
-      </div>
-      <div class="row">
-        <button id="shiftLeftBtn">Shift Left</button>
-        <button id="shiftRightBtn">Shift Right</button>
-      </div>
-      <div class="row">
-        <button id="shiftDownBtn">Shift Down</button>
-      </div>
-    </div>
-    <div class="main-layout">
-      <div>
-        <div id="grid" class="grid"></div>
-        <div style="margin-top:10px;">
-          <button id="copyOutputBtn">Copy JSON</button>
+    <div class="page">
+      <header class="page-header">
+        <div class="title-block">
+          <p class="eyebrow">Pattern Utility</p>
+          <h1>Pattern JSON Generator + Preview</h1>
+          <p class="subtitle">
+            Draw a tile grid, export JSON, and preview palette swaps instantly.
+          </p>
         </div>
+      </header>
+
+      <div class="controls">
+        <section class="panel controls-panel tabbed-panel">
+          <input type="radio" name="control-tab" id="tab-tools" checked />
+          <input type="radio" name="control-tab" id="tab-actions" />
+          <input type="radio" name="control-tab" id="tab-grid" />
+          <div class="tab-controls">
+            <label for="tab-tools" class="tab-button">Tools</label>
+            <label for="tab-actions" class="tab-button">Actions</label>
+            <label for="tab-grid" class="tab-button">Grid</label>
+          </div>
+          <div class="tab-panels">
+            <div class="tab-panel tools">
+              <div id="toolbox" class="toolbox">
+                <div class="tool-group">
+                  <button id="tool-pen" class="tool-btn" data-tool="pen">🖊️ Pen</button>
+                  <input
+                    type="range"
+                    id="pen-size"
+                    min="1"
+                    max="9"
+                    step="2"
+                    value="1"
+                    class="tool-range"
+                    aria-label="Pen size"
+                    title="Pen size"
+                  />
+                </div>
+                <div class="tool-group">
+                  <button id="tool-fill" class="tool-btn" data-tool="fill">🪣 Fill</button>
+                </div>
+                <div class="tool-group">
+                  <button id="tool-star" class="tool-btn" data-tool="star">⭐ Star</button>
+                  <input type="range" id="star-size" min="2" max="10" value="3" class="tool-range" />
+                </div>
+                <div class="tool-group">
+                  <button id="tool-circle" class="tool-btn" data-tool="circle">⚪ Circle</button>
+                  <input type="range" id="circle-size" min="2" max="15" value="5" class="tool-range" />
+                  <label class="tool-toggle">
+                    <input type="checkbox" id="circle-fill" checked />
+                    Fill
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="tab-panel actions">
+              <div class="row action-row">
+                <button id="clearGridBtn">Clear</button>
+                <button id="undoBtn" disabled>Undo</button>
+                <button id="redoBtn" disabled>Redo</button>
+              </div>
+              <div class="shift-pad">
+                <button id="shiftUpBtn">Shift Up</button>
+                <button id="shiftLeftBtn">Shift Left</button>
+                <button id="shiftRightBtn">Shift Right</button>
+                <button id="shiftDownBtn">Shift Down</button>
+              </div>
+            </div>
+            <div class="tab-panel grid">
+              <div class="row slider-row">
+                <label for="tileWidth">Width</label>
+                <input type="range" id="tileWidth" value="66" min="2" max="129" class="range-input" />
+                <input type="number" min="2" max="129" id="tileWidth-value" value="66" class="number-input" />
+              </div>
+              <div class="row slider-row">
+                <label for="tileHeight">Height</label>
+                <input type="range" id="tileHeight" value="10" min="2" max="65" class="range-input" />
+                <input type="number" min="2" max="129" id="tileHeight-value" value="10" class="number-input" />
+              </div>
+              <div class="row slider-row">
+                <label for="scale">Scale</label>
+                <input type="range" id="scale" value="1" min="0" max="7" class="range-input" />
+                <div class="scale-badge"><span id="scale-value">2</span>x</div>
+              </div>
+              <div class="row slider-row grid-size-row">
+                <label for="gridScale">Grid Size</label>
+                <select id="gridScale" class="select-input">
+                  <option value="0.25">x0.25</option>
+                  <option value="0.5">x0.5</option>
+                  <option value="1" selected>x1</option>
+                  <option value="2">x2</option>
+                  <option value="3">x3</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel controls-panel tabbed-panel io-panel">
+          <input type="radio" name="io-tab" id="tab-export" checked />
+          <input type="radio" name="io-tab" id="tab-import" />
+          <div class="tab-controls">
+            <label for="tab-export" class="tab-button">Export</label>
+            <label for="tab-import" class="tab-button">Import</label>
+          </div>
+            <div class="tab-panels">
+              <div class="tab-panel export" id="panel-export">
+                <label class="panel-title" for="output">Pattern JSON</label>
+                <div class="row export-row">
+                  <textarea id="output" readonly></textarea>
+                  <button id="copyOutputBtn" class="btn-primary">Copy JSON</button>
+                </div>
+              </div>
+            <div class="tab-panel import" id="panel-import">
+              <label class="panel-title" for="base64Input">Base64 Import</label>
+              <div class="row input-row">
+                <input
+                  type="text"
+                  id="base64Input"
+                  class="text-input"
+                  placeholder="Paste Base64 pattern"
+                />
+                <button id="loadBtn" class="btn-primary">Load</button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-      <div class="side-panel">
-        <label for="output">Pattern JSON:</label>
-        <textarea id="output" readonly></textarea>
-        <h2 style="margin-top:20px;">Preview</h2>
-        <div class="color-preset-section" style="margin-bottom:10px;">
-          <div class="color-preset-header">Color Preset:</div>
-          <div id="colorPresetContainer" class="color-preset-container loading">
-            <div class="color-preset-placeholder">Loading presets...</div>
+
+      <div class="layout-shell">
+        <input type="radio" name="layout-mode" id="layout-tabs" />
+        <input type="radio" name="layout-mode" id="layout-split" checked />
+        <input type="radio" name="view-tab" id="view-canvas" checked />
+        <input type="radio" name="view-tab" id="view-preview" />
+        <div class="layout-toolbar">
+          <div class="layout-group">
+            <div class="tab-controls">
+              <label for="layout-tabs" class="tab-button">Tabs</label>
+              <label for="layout-split" class="tab-button">Side by side</label>
+            </div>
+          </div>
+          <div class="layout-group view-tabs">
+            <div class="tab-controls">
+              <label for="view-canvas" class="tab-button">Canvas</label>
+              <label for="view-preview" class="tab-button">Preview</label>
+            </div>
           </div>
         </div>
-        <div style="margin-bottom:10px;">
-          <label for="previewPrimaryColor">Primary Color: </label>
-          <input type="color" id="previewPrimaryColor" value="#000000" />
+        <div class="main-layout">
+          <section class="panel grid-panel canvas-panel">
+            <div class="panel-title">Canvas</div>
+            <div class="grid-wrap">
+              <div id="grid" class="grid"></div>
+            </div>
+          </section>
+
+          <section class="panel side-panel preview-panel">
+            <div class="side-panel-section">
+              <div class="panel-title">Preview</div>
+              <details class="color-preset-details">
+                <summary class="color-preset-header">Color Preset</summary>
+                <div class="color-preset-section">
+                  <div id="colorPresetContainer" class="color-preset-container loading">
+                    <div class="color-preset-placeholder">Loading presets...</div>
+                  </div>
+                  <div class="row color-row">
+                    <label for="previewPrimaryColor">Primary</label>
+                    <input type="color" id="previewPrimaryColor" value="#000000" />
+                  </div>
+                  <div class="row color-row">
+                    <label for="previewSecondaryColor">Secondary</label>
+                    <input type="color" id="previewSecondaryColor" value="#ffffff" />
+                  </div>
+                  <div class="row">
+                    <button id="swapColorsBtn">Swap Colors</button>
+                  </div>
+                </div>
+              </details>
+              <canvas id="preview"></canvas>
+            </div>
+          </section>
         </div>
-        <div style="margin-bottom:10px;">
-          <label for="previewSecondaryColor">Secondary Color: </label>
-          <input type="color" id="previewSecondaryColor" value="#ffffff" />
-        </div>
-        <div class="row">
-          <button id="swapColorsBtn">Swap Colors</button>
-        </div>
-        <canvas id="preview"></canvas>
       </div>
     </div>
     <script type="module" src="app.js"></script>

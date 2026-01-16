@@ -8,6 +8,7 @@ type GridManagerOptions = {
   tileHeightInput: HTMLInputElement;
   tileWidthValue: HTMLInputElement;
   tileHeightValue: HTMLInputElement;
+  gridScaleInput?: HTMLSelectElement;
   shiftUpBtn: HTMLButtonElement;
   shiftDownBtn: HTMLButtonElement;
   shiftLeftBtn: HTMLButtonElement;
@@ -37,6 +38,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     tileHeightInput,
     tileWidthValue,
     tileHeightValue,
+    gridScaleInput,
     shiftUpBtn,
     shiftDownBtn,
     shiftLeftBtn,
@@ -58,6 +60,19 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   let currentWidth = 0;
   let patternState: number[][] = [];
   let cellMatrix: HTMLDivElement[][] = [];
+  const baseCellSize = 20;
+
+  const getGridScale = () => {
+    if (!gridScaleInput) return 1;
+    const nextScale = parseFloat(gridScaleInput.value);
+    return Number.isFinite(nextScale) && nextScale > 0 ? nextScale : 1;
+  };
+
+  const applyGridSizing = () => {
+    const cellSize = baseCellSize * getGridScale();
+    gridDiv.style.setProperty("--cell-size", `${cellSize}px`);
+    gridDiv.style.gridTemplateColumns = `repeat(${tileWidth}, var(--cell-size))`;
+  };
 
   document.body.onmousedown = () => (isMouseDown = true);
   document.body.onmouseup = () => {
@@ -80,6 +95,9 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   tileHeightValue.addEventListener("input", () => {
     tileHeightInput.value = tileHeightValue.value;
     generateGrid();
+  });
+  gridScaleInput?.addEventListener("change", () => {
+    applyGridSizing();
   });
 
   const isInBounds = (x: number, y: number) =>
@@ -169,7 +187,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   function generateGrid(pattern?: number[][]) {
     tileWidth = parseInt(tileWidthInput.value);
     tileHeight = parseInt(tileHeightInput.value);
-    gridDiv.style.gridTemplateColumns = `repeat(${tileWidth}, 20px)`;
+    applyGridSizing();
     const basePattern =
       pattern || (isFirstLoad ? initialPattern : patternState);
     patternState = Array.from({ length: tileHeight }, (_, y) =>

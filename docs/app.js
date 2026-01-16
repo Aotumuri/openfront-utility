@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tileHeightValue = document.getElementById("tileHeight-value");
     const scaleInput = document.getElementById("scale");
     const scaleValue = document.getElementById("scale-value");
+    const gridScaleInput = document.getElementById("gridScale");
     const clearGridBtn = document.getElementById("clearGridBtn");
     const undoBtn = document.getElementById("undoBtn");
     const redoBtn = document.getElementById("redoBtn");
@@ -66,6 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tileHeightInput,
         tileWidthValue,
         tileHeightValue,
+        gridScaleInput,
         shiftUpBtn,
         shiftDownBtn,
         shiftLeftBtn,

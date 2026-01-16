@@ -50,6 +50,9 @@ document.addEventListener("DOMContentLoaded", () => {
   ) as HTMLInputElement;
   const scaleInput = document.getElementById("scale") as HTMLInputElement;
   const scaleValue = document.getElementById("scale-value") as HTMLSpanElement;
+  const gridScaleInput = document.getElementById(
+    "gridScale"
+  ) as HTMLSelectElement;
   const clearGridBtn = document.getElementById(
     "clearGridBtn"
   ) as HTMLButtonElement;
@@ -114,6 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tileHeightInput,
     tileWidthValue,
     tileHeightValue,
+    gridScaleInput,
     shiftUpBtn,
     shiftDownBtn,
     shiftLeftBtn,
