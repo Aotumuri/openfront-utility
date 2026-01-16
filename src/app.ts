@@ -18,6 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
     "base64Input"
   ) as HTMLInputElement;
   const toolPenBtn = document.getElementById("tool-pen") as HTMLButtonElement;
+  const penSizeInput = document.getElementById(
+    "pen-size"
+  ) as HTMLInputElement;
   const toolFillBtn = document.getElementById("tool-fill") as HTMLButtonElement;
   const toolStarBtn = document.getElementById("tool-star") as HTMLButtonElement;
   const toolCircleBtn = document.getElementById(
@@ -98,6 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
     toolFillBtn,
     toolStarBtn,
     toolCircleBtn,
+    penSizeInput,
     starSizeInput,
     circleSizeInput,
     circleFillInput,

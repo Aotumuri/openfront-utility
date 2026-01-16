@@ -248,10 +248,28 @@ export function createGridManager(options: GridManagerOptions): GridManager {
           if (centerH.indexOf(y) !== -1) cell.classList.add("center-h");
         }
 
+        const applyPenBrush = (cx: number, cy: number, activate: boolean) => {
+          const size = toolState.getPenSize();
+          const radius = Math.floor(size / 2);
+          for (let by = cy - radius; by <= cy + radius; by++) {
+            if (by < 0 || by >= tileHeight) continue;
+            for (let bx = cx - radius; bx <= cx + radius; bx++) {
+              if (bx < 0 || bx >= tileWidth) continue;
+              const target = gridDiv.querySelector(
+                `.cell[data-x='${bx}'][data-y='${by}']`
+              );
+              if (target) {
+                target.classList.toggle("active", activate);
+              }
+            }
+          }
+        };
+
         cell.onclick = () => {
           const tool = toolState.getCurrentTool();
           if (tool === "pen") {
-            cell.classList.toggle("active");
+            const shouldActivate = !cell.classList.contains("active");
+            applyPenBrush(x, y, shouldActivate);
           } else if (tool === "fill") {
             drawingTools.floodFill(x, y);
           } else if (tool === "star") {
@@ -271,11 +289,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
             if (toggleState === null) {
               toggleState = !cell.classList.contains("active");
             }
-            if (toggleState) {
-              cell.classList.add("active");
-            } else {
-              cell.classList.remove("active");
-            }
+            applyPenBrush(x, y, toggleState);
             onPatternChange();
           }
         };

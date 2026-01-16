@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const toolbox = document.getElementById("toolbox");
     const base64Input = document.getElementById("base64Input");
     const toolPenBtn = document.getElementById("tool-pen");
+    const penSizeInput = document.getElementById("pen-size");
     const toolFillBtn = document.getElementById("tool-fill");
     const toolStarBtn = document.getElementById("tool-star");
     const toolCircleBtn = document.getElementById("tool-circle");
@@ -53,6 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
         toolFillBtn,
         toolStarBtn,
         toolCircleBtn,
+        penSizeInput,
         starSizeInput,
         circleSizeInput,
         circleFillInput,

@@ -1,5 +1,5 @@
 export function createToolState(options) {
-    const { toolPenBtn, toolFillBtn, toolStarBtn, toolCircleBtn, starSizeInput, circleSizeInput, circleFillInput, } = options;
+    const { toolPenBtn, toolFillBtn, toolStarBtn, toolCircleBtn, penSizeInput, starSizeInput, circleSizeInput, circleFillInput, } = options;
     let currentTool = "pen";
     function selectTool(tool) {
         currentTool = tool;
@@ -23,6 +23,11 @@ export function createToolState(options) {
             // No preview behavior yet.
         }
     };
+    penSizeInput.oninput = () => {
+        if (currentTool === "pen") {
+            // No preview behavior yet.
+        }
+    };
     circleSizeInput.oninput = () => {
         if (currentTool === "circle") {
             // No preview behavior yet.
@@ -35,6 +40,7 @@ export function createToolState(options) {
     };
     return {
         getCurrentTool: () => currentTool,
+        getPenSize: () => parseInt(penSizeInput.value),
         getStarRadius: () => parseInt(starSizeInput.value),
         getCircleRadius: () => parseInt(circleSizeInput.value),
         isCircleFilled: () => circleFillInput.checked,

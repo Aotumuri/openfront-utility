@@ -5,6 +5,7 @@ type ToolStateOptions = {
   toolFillBtn: HTMLButtonElement;
   toolStarBtn: HTMLButtonElement;
   toolCircleBtn: HTMLButtonElement;
+  penSizeInput: HTMLInputElement;
   starSizeInput: HTMLInputElement;
   circleSizeInput: HTMLInputElement;
   circleFillInput: HTMLInputElement;
@@ -12,6 +13,7 @@ type ToolStateOptions = {
 
 export type ToolState = {
   getCurrentTool: () => ToolKind;
+  getPenSize: () => number;
   getStarRadius: () => number;
   getCircleRadius: () => number;
   isCircleFilled: () => boolean;
@@ -23,6 +25,7 @@ export function createToolState(options: ToolStateOptions): ToolState {
     toolFillBtn,
     toolStarBtn,
     toolCircleBtn,
+    penSizeInput,
     starSizeInput,
     circleSizeInput,
     circleFillInput,
@@ -52,6 +55,11 @@ export function createToolState(options: ToolStateOptions): ToolState {
       // No preview behavior yet.
     }
   };
+  penSizeInput.oninput = () => {
+    if (currentTool === "pen") {
+      // No preview behavior yet.
+    }
+  };
   circleSizeInput.oninput = () => {
     if (currentTool === "circle") {
       // No preview behavior yet.
@@ -65,6 +73,7 @@ export function createToolState(options: ToolStateOptions): ToolState {
 
   return {
     getCurrentTool: () => currentTool,
+    getPenSize: () => parseInt(penSizeInput.value),
     getStarRadius: () => parseInt(starSizeInput.value),
     getCircleRadius: () => parseInt(circleSizeInput.value),
     isCircleFilled: () => circleFillInput.checked,

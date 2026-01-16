@@ -20,6 +20,17 @@
     <div class="controls">
       <div id="toolbox">
         <button id="tool-pen" class="tool-btn" data-tool="pen">🖊️ Pen</button>
+        <input
+          type="range"
+          id="pen-size"
+          min="1"
+          max="9"
+          step="2"
+          value="1"
+          style="width:80px;vertical-align:middle;"
+          aria-label="Pen size"
+          title="Pen size"
+        />
         <button id="tool-fill" class="tool-btn" data-tool="fill">🪣 Fill</button>
         <button id="tool-star" class="tool-btn" data-tool="star">⭐ Star</button>
         <input type="range" id="star-size" min="2" max="10" value="3" style="width:80px;vertical-align:middle;" />
