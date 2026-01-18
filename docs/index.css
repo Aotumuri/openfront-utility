@@ -483,9 +483,9 @@ input[type="color"]:hover {
 .cell {
   width: var(--cell-size);
   height: var(--cell-size);
-  border: 1px solid rgba(31, 42, 46, 0.18);
+  border: 1px solid #9aa8b5;
   cursor: pointer;
-  background: #f1f4f6;
+  background: #ffffff;
 }
 
 .cell.active {
