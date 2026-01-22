@@ -27,14 +27,14 @@ export function createPreviewRenderer(options) {
             for (let x = 0; x < width; x++) {
                 const alpha = 255;
                 if (decoder.isSet(x, y)) {
-                    data[i++] = primaryRgb.r;
-                    data[i++] = primaryRgb.g;
-                    data[i++] = primaryRgb.b;
-                }
-                else {
                     data[i++] = secondaryRgb.r;
                     data[i++] = secondaryRgb.g;
                     data[i++] = secondaryRgb.b;
+                }
+                else {
+                    data[i++] = primaryRgb.r;
+                    data[i++] = primaryRgb.g;
+                    data[i++] = primaryRgb.b;
                 }
                 data[i++] = alpha;
             }

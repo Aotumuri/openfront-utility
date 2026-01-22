@@ -65,10 +65,7 @@ function resolvePalette(
     }
   }
 
-  const fallback =
-    paletteMap["default_color"] ??
-    paletteMap["black_white"] ??
-    paletteMap["white_black"];
+  const fallback = paletteMap["default_color"];
 
   if (fallback) {
     return { palette: fallback, activeName: fallback.name };
@@ -118,7 +115,7 @@ function buildMetaSection(pattern: PatternPayload) {
 
 function renderPatternsFromInput(
   container: HTMLElement,
-  textarea: HTMLTextAreaElement
+  textarea: HTMLTextAreaElement,
 ) {
   const input = textarea.value;
   try {
@@ -190,7 +187,7 @@ function renderPatternsFromInput(
           for (let y = 0; y < canvas.height; y++) {
             for (let x = 0; x < canvas.width; x++) {
               const isSet = decoder.isSet(x, y);
-              const color = isSet ? primaryColor : secondaryColor;
+              const color = isSet ? secondaryColor : primaryColor;
               data[i++] = color.r;
               data[i++] = color.g;
               data[i++] = color.b;
@@ -282,8 +279,12 @@ function renderPatternsFromInput(
 
 document.addEventListener("DOMContentLoaded", () => {
   const container = document.getElementById("pattern-list");
-  const button = document.getElementById("load-button") as HTMLButtonElement | null;
-  const textarea = document.getElementById("json-input") as HTMLTextAreaElement | null;
+  const button = document.getElementById(
+    "load-button",
+  ) as HTMLButtonElement | null;
+  const textarea = document.getElementById(
+    "json-input",
+  ) as HTMLTextAreaElement | null;
 
   if (!container || !textarea) {
     console.warn("Missing required elements: #pattern-list or #json-input");
@@ -307,7 +308,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (button) {
-    button.addEventListener("click", () => renderPatternsFromInput(container, textarea));
+    button.addEventListener("click", () =>
+      renderPatternsFromInput(container, textarea),
+    );
   }
 
   if (textarea.value.trim().length > 0) {

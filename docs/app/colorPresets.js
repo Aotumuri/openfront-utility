@@ -174,8 +174,8 @@ export function initColorPresetControls(options) {
             if (applyInitialColors()) {
                 // Use colors from URL or initial state.
             }
-            else if (colorPresets.black_white) {
-                applyPreset("black_white", { skipUpdate: true });
+            else if (colorPresets.default_color) {
+                applyPreset("default_color", { skipUpdate: true });
             }
             else {
                 setSelectedPreset(null);

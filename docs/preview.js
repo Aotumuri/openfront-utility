@@ -13,7 +13,7 @@ function hexToRgb(hex) {
         : { r: 255, g: 255, b: 255 };
 }
 function resolvePalette(pattern, paletteMap) {
-    var _a, _b, _c;
+    var _a;
     const references = (_a = pattern.colorPalettes) !== null && _a !== void 0 ? _a : [];
     for (const reference of references) {
         if (!(reference === null || reference === void 0 ? void 0 : reference.name) || reference.isArchived)
@@ -31,7 +31,7 @@ function resolvePalette(pattern, paletteMap) {
             return { palette, activeName: reference.name };
         }
     }
-    const fallback = (_c = (_b = paletteMap["default_color"]) !== null && _b !== void 0 ? _b : paletteMap["black_white"]) !== null && _c !== void 0 ? _c : paletteMap["white_black"];
+    const fallback = paletteMap["default_color"];
     if (fallback) {
         return { palette: fallback, activeName: fallback.name };
     }
@@ -127,7 +127,7 @@ function renderPatternsFromInput(container, textarea) {
                     for (let y = 0; y < canvas.height; y++) {
                         for (let x = 0; x < canvas.width; x++) {
                             const isSet = decoder.isSet(x, y);
-                            const color = isSet ? primaryColor : secondaryColor;
+                            const color = isSet ? secondaryColor : primaryColor;
                             data[i++] = color.r;
                             data[i++] = color.g;
                             data[i++] = color.b;
