@@ -1,0 +1,48 @@
+export function createToolState(options) {
+    const { toolPenBtn, toolFillBtn, toolStarBtn, toolCircleBtn, penSizeInput, starSizeInput, circleSizeInput, circleFillInput, } = options;
+    let currentTool = "pen";
+    function selectTool(tool) {
+        currentTool = tool;
+        [toolPenBtn, toolFillBtn, toolStarBtn, toolCircleBtn].forEach((btn) => btn.classList.remove("selected"));
+        if (tool === "pen")
+            toolPenBtn.classList.add("selected");
+        if (tool === "fill")
+            toolFillBtn.classList.add("selected");
+        if (tool === "star")
+            toolStarBtn.classList.add("selected");
+        if (tool === "circle")
+            toolCircleBtn.classList.add("selected");
+    }
+    toolPenBtn.onclick = () => selectTool("pen");
+    toolFillBtn.onclick = () => selectTool("fill");
+    toolStarBtn.onclick = () => selectTool("star");
+    toolCircleBtn.onclick = () => selectTool("circle");
+    selectTool("pen");
+    starSizeInput.oninput = () => {
+        if (currentTool === "star") {
+            // No preview behavior yet.
+        }
+    };
+    penSizeInput.oninput = () => {
+        if (currentTool === "pen") {
+            // No preview behavior yet.
+        }
+    };
+    circleSizeInput.oninput = () => {
+        if (currentTool === "circle") {
+            // No preview behavior yet.
+        }
+    };
+    circleFillInput.onchange = () => {
+        if (currentTool === "circle") {
+            // No preview behavior yet.
+        }
+    };
+    return {
+        getCurrentTool: () => currentTool,
+        getPenSize: () => parseInt(penSizeInput.value),
+        getStarRadius: () => parseInt(starSizeInput.value),
+        getCircleRadius: () => parseInt(circleSizeInput.value),
+        isCircleFilled: () => circleFillInput.checked,
+    };
+}
