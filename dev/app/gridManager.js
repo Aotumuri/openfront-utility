@@ -47,29 +47,31 @@ export function createGridManager(options) {
         applyGridSizing();
     });
     const isInBounds = (x, y) => x >= 0 && y >= 0 && x < tileWidth && y < tileHeight;
-    const setCellActive = (x, y, active) => {
+    const setCellValue = (x, y, value) => {
         var _a;
         if (!isInBounds(x, y))
             return;
-        patternState[y][x] = active ? 1 : 0;
+        const nextValue = Math.max(0, Math.min(3, Math.floor(value)));
+        patternState[y][x] = nextValue;
         const cell = (_a = cellMatrix[y]) === null || _a === void 0 ? void 0 : _a[x];
         if (cell) {
-            cell.classList.toggle("active", active);
+            cell.dataset.value = nextValue.toString();
         }
     };
-    const isCellActive = (x, y) => {
+    const getCellValue = (x, y) => {
+        var _a;
         if (!isInBounds(x, y))
-            return false;
-        return patternState[y][x] === 1;
+            return 0;
+        return (_a = patternState[y][x]) !== null && _a !== void 0 ? _a : 0;
     };
     const setDrawingTools = (tools) => {
         drawingTools = tools;
     };
     const applyPattern = (nextPattern) => {
-        var _a;
+        var _a, _b;
         for (let y = 0; y < tileHeight; y++) {
             for (let x = 0; x < tileWidth; x++) {
-                setCellActive(x, y, ((_a = nextPattern[y]) === null || _a === void 0 ? void 0 : _a[x]) === 1);
+                setCellValue(x, y, (_b = (_a = nextPattern[y]) === null || _a === void 0 ? void 0 : _a[x]) !== null && _b !== void 0 ? _b : 0);
             }
         }
     };
@@ -124,12 +126,16 @@ export function createGridManager(options) {
         return patternState;
     }
     function generateGrid(pattern) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         tileWidth = parseInt(tileWidthInput.value);
         tileHeight = parseInt(tileHeightInput.value);
         applyGridSizing();
         const basePattern = pattern || (isFirstLoad ? initialPattern : patternState);
-        patternState = Array.from({ length: tileHeight }, (_, y) => Array.from({ length: tileWidth }, (_, x) => basePattern[y] && basePattern[y][x] === 1 ? 1 : 0));
+        patternState = Array.from({ length: tileHeight }, (_, y) => Array.from({ length: tileWidth }, (_, x) => {
+            var _a, _b;
+            const value = (_b = (_a = basePattern[y]) === null || _a === void 0 ? void 0 : _a[x]) !== null && _b !== void 0 ? _b : 0;
+            return value >= 0 && value <= 3 ? value : 0;
+        }));
         const nextCellMatrix = Array.from({ length: tileHeight }, () => []);
         for (let y = tileHeight; y < currentHeight; y++) {
             const row = cellMatrix[y];
@@ -164,7 +170,7 @@ export function createGridManager(options) {
                 centerH = [(tileHeight - 1) / 2, (tileHeight - 1) / 2 + 1];
             }
         }
-        const applyPenBrush = (cx, cy, activate) => {
+        const applyPenBrush = (cx, cy, value) => {
             const size = toolState.getPenSize();
             const radius = Math.floor(size / 2);
             for (let by = cy - radius; by <= cy + radius; by++) {
@@ -173,7 +179,7 @@ export function createGridManager(options) {
                 for (let bx = cx - radius; bx <= cx + radius; bx++) {
                     if (bx < 0 || bx >= tileWidth)
                         continue;
-                    setCellActive(bx, by, activate);
+                    setCellValue(bx, by, value);
                 }
             }
         };
@@ -197,7 +203,7 @@ export function createGridManager(options) {
                 nextCellMatrix[y][x] = cell;
                 lastCell = cell;
                 cell.classList.remove("guide-v", "guide-h", "center-v", "center-h");
-                cell.classList.toggle("active", patternState[y][x] === 1);
+                cell.dataset.value = ((_d = patternState[y][x]) !== null && _d !== void 0 ? _d : 0).toString();
                 if (guideState.isBlackEnabled()) {
                     if (x !== 0 && x % 5 === 0)
                         cell.classList.add("guide-v");
@@ -213,8 +219,10 @@ export function createGridManager(options) {
                 cell.onclick = () => {
                     const tool = toolState.getCurrentTool();
                     if (tool === "pen") {
-                        const shouldActivate = !isCellActive(x, y);
-                        applyPenBrush(x, y, shouldActivate);
+                        const activeColor = toolState.getActiveColor();
+                        const currentValue = getCellValue(x, y);
+                        const nextValue = currentValue === activeColor ? 0 : activeColor;
+                        applyPenBrush(x, y, nextValue);
                     }
                     else if (tool === "fill") {
                         drawingTools === null || drawingTools === void 0 ? void 0 : drawingTools.floodFill(x, y);
@@ -234,7 +242,9 @@ export function createGridManager(options) {
                     const tool = toolState.getCurrentTool();
                     if (isMouseDown && tool === "pen") {
                         if (toggleState === null) {
-                            toggleState = !isCellActive(x, y);
+                            const activeColor = toolState.getActiveColor();
+                            const currentValue = getCellValue(x, y);
+                            toggleState = currentValue === activeColor ? 0 : activeColor;
                         }
                         applyPenBrush(x, y, toggleState);
                         onPatternChange();
@@ -249,7 +259,7 @@ export function createGridManager(options) {
     function clearGrid() {
         for (let y = 0; y < tileHeight; y++) {
             for (let x = 0; x < tileWidth; x++) {
-                setCellActive(x, y, false);
+                setCellValue(x, y, 0);
             }
         }
         onPatternChange();
@@ -260,8 +270,8 @@ export function createGridManager(options) {
         clearGrid,
         getTileWidth: () => tileWidth,
         getTileHeight: () => tileHeight,
-        isCellActive,
-        setCellActive,
+        getCellValue,
+        setCellValue,
         setDrawingTools,
     };
 }

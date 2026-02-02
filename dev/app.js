@@ -9,7 +9,7 @@ import { createPreviewRenderer } from "./app/previewRenderer.js";
 import { createToolState } from "./app/toolState.js";
 import { createHistoryManager } from "./app/undoRedo.js";
 document.addEventListener("DOMContentLoaded", () => {
-    var _a, _b;
+    var _a, _b, _c, _d;
     const toolbox = document.getElementById("toolbox");
     const base64Input = document.getElementById("base64Input");
     const toolPenBtn = document.getElementById("tool-pen");
@@ -45,7 +45,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const previewCanvas = document.getElementById("preview");
     const previewPrimaryColorInput = document.getElementById("previewPrimaryColor");
     const previewSecondaryColorInput = document.getElementById("previewSecondaryColor");
+    const previewTertiaryColorInput = document.getElementById("previewTertiaryColor");
+    const previewQuaternaryColorInput = document.getElementById("previewQuaternaryColor");
     const swapColorsBtn = document.getElementById("swapColorsBtn");
+    const drawColorButtons = [
+        document.getElementById("draw-color-0"),
+        document.getElementById("draw-color-1"),
+        document.getElementById("draw-color-2"),
+        document.getElementById("draw-color-3"),
+    ];
     const colorPresetContainer = document.getElementById("colorPresetContainer");
     const layoutTabsInput = document.getElementById("layout-tabs");
     const viewPreviewInput = document.getElementById("view-preview");
@@ -67,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
         starSizeInput,
         circleSizeInput,
         circleFillInput,
+        colorButtons: drawColorButtons,
     });
     let updateOutput = () => { };
     const gridManager = createGridManager({
@@ -88,8 +97,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const drawingTools = createDrawingTools({
         getTileWidth: gridManager.getTileWidth,
         getTileHeight: gridManager.getTileHeight,
-        isCellActive: gridManager.isCellActive,
-        setCellActive: gridManager.setCellActive,
+        getCellValue: gridManager.getCellValue,
+        setCellValue: gridManager.setCellValue,
+        getActiveColor: toolState.getActiveColor,
     });
     gridManager.setDrawingTools(drawingTools);
     handleGuideChange = () => gridManager.generateGrid();
@@ -98,6 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
         context: previewContext,
         primaryColorInput: previewPrimaryColorInput,
         secondaryColorInput: previewSecondaryColorInput,
+        tertiaryColorInput: previewTertiaryColorInput,
+        quaternaryColorInput: previewQuaternaryColorInput,
     });
     const historyManager = createHistoryManager();
     let isApplyingHistory = false;
@@ -126,16 +138,34 @@ document.addEventListener("DOMContentLoaded", () => {
         isApplyingHistory = false;
     };
     updateOutput = () => {
+        const colors = [
+            previewPrimaryColorInput.value,
+            previewSecondaryColorInput.value,
+            previewTertiaryColorInput.value,
+            previewQuaternaryColorInput.value,
+        ];
+        gridDiv.style.setProperty("--palette-0", colors[0]);
+        gridDiv.style.setProperty("--palette-1", colors[1]);
+        gridDiv.style.setProperty("--palette-2", colors[2]);
+        gridDiv.style.setProperty("--palette-3", colors[3]);
+        drawColorButtons.forEach((btn, index) => {
+            const nextColor = colors[index];
+            if (nextColor) {
+                btn.style.backgroundColor = nextColor;
+            }
+        });
         const pattern = gridManager.getCurrentPattern();
         const scale = parseInt(scaleInput.value);
         const base64 = generatePatternBase64(pattern, gridManager.getTileWidth(), gridManager.getTileHeight(), scale);
         outputTextarea.value = base64;
-        discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${previewPrimaryColorInput.value}\nSecondary ${previewSecondaryColorInput.value}`;
+        discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${colors[0]}\nSecondary ${colors[1]}\nTertiary ${colors[2]}\nQuaternary ${colors[3]}`;
         previewLinkTextarea.value = buildPreviewLink();
         renderPreview(base64);
         const params = new URLSearchParams({
-            primary: previewPrimaryColorInput.value.replace("#", ""),
-            secondary: previewSecondaryColorInput.value.replace("#", ""),
+            primary: colors[0].replace("#", ""),
+            secondary: colors[1].replace("#", ""),
+            tertiary: colors[2].replace("#", ""),
+            quaternary: colors[3].replace("#", ""),
         });
         window.history.replaceState(null, "", `#${base64}?${params.toString()}`);
         if (!isApplyingHistory) {
@@ -180,10 +210,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const params = new URLSearchParams(queryPart);
             const primary = (_a = normalizeHex(params.get("primary"))) !== null && _a !== void 0 ? _a : normalizeHex(params.get("p"));
             const secondary = (_b = normalizeHex(params.get("secondary"))) !== null && _b !== void 0 ? _b : normalizeHex(params.get("s"));
-            if (primary || secondary) {
+            const tertiary = (_c = normalizeHex(params.get("tertiary"))) !== null && _c !== void 0 ? _c : normalizeHex(params.get("t"));
+            const quaternary = (_d = normalizeHex(params.get("quaternary"))) !== null && _d !== void 0 ? _d : normalizeHex(params.get("q"));
+            if (primary || secondary || tertiary || quaternary) {
                 initialColors = {
                     primary: primary !== null && primary !== void 0 ? primary : previewPrimaryColorInput.value,
                     secondary: secondary !== null && secondary !== void 0 ? secondary : previewSecondaryColorInput.value,
+                    tertiary: tertiary !== null && tertiary !== void 0 ? tertiary : previewTertiaryColorInput.value,
+                    quaternary: quaternary !== null && quaternary !== void 0 ? quaternary : previewQuaternaryColorInput.value,
                 };
             }
             const previewFlag = params.get("preview");
@@ -198,6 +232,8 @@ document.addEventListener("DOMContentLoaded", () => {
         container: colorPresetContainer,
         primaryColorInput: previewPrimaryColorInput,
         secondaryColorInput: previewSecondaryColorInput,
+        tertiaryColorInput: previewTertiaryColorInput,
+        quaternaryColorInput: previewQuaternaryColorInput,
         initialColors,
         onChange: () => updateOutput(),
     });
@@ -231,6 +267,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams({
             primary: previewPrimaryColorInput.value.replace("#", ""),
             secondary: previewSecondaryColorInput.value.replace("#", ""),
+            tertiary: previewTertiaryColorInput.value.replace("#", ""),
+            quaternary: previewQuaternaryColorInput.value.replace("#", ""),
             preview: "1",
         });
         const hash = base64 ? `#${base64}?${params.toString()}` : "";

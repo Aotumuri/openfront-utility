@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 const COLOR_PRESET_URL = "color-presets.json";
 export function initColorPresetControls(options) {
-    const { container, primaryColorInput, secondaryColorInput, onChange, initialColors, } = options;
+    const { container, primaryColorInput, secondaryColorInput, tertiaryColorInput, quaternaryColorInput, onChange, initialColors, } = options;
     let colorPresets = {};
     let presetButtons = {};
     let customPresetButton = null;
@@ -45,29 +45,52 @@ export function initColorPresetControls(options) {
             customPresetButton.classList.toggle("selected", key === null);
         }
     }
+    const resolvePresetColors = (preset) => {
+        var _a, _b;
+        return ({
+            primary: preset.primaryColor,
+            secondary: preset.secondaryColor,
+            tertiary: (_a = preset.tertiaryColor) !== null && _a !== void 0 ? _a : preset.primaryColor,
+            quaternary: (_b = preset.quaternaryColor) !== null && _b !== void 0 ? _b : preset.secondaryColor,
+        });
+    };
     function updateCustomButtonSwatches() {
         if (!customPresetButton)
             return;
         const primarySwatch = customPresetButton.querySelector("[data-role='primary']");
         const secondarySwatch = customPresetButton.querySelector("[data-role='secondary']");
+        const tertiarySwatch = customPresetButton.querySelector("[data-role='tertiary']");
+        const quaternarySwatch = customPresetButton.querySelector("[data-role='quaternary']");
         if (primarySwatch) {
             primarySwatch.style.backgroundColor = primaryColorInput.value;
         }
         if (secondarySwatch) {
             secondarySwatch.style.backgroundColor = secondaryColorInput.value;
         }
+        if (tertiarySwatch) {
+            tertiarySwatch.style.backgroundColor = tertiaryColorInput.value;
+        }
+        if (quaternarySwatch) {
+            quaternarySwatch.style.backgroundColor = quaternaryColorInput.value;
+        }
     }
     function applyInitialColors() {
+        var _a, _b;
         if (!initialColors)
             return false;
         ensureCustomPresetButton();
         primaryColorInput.value = initialColors.primary;
         secondaryColorInput.value = initialColors.secondary;
+        tertiaryColorInput.value =
+            (_a = initialColors.tertiary) !== null && _a !== void 0 ? _a : tertiaryColorInput.value;
+        quaternaryColorInput.value =
+            (_b = initialColors.quaternary) !== null && _b !== void 0 ? _b : quaternaryColorInput.value;
         setSelectedPreset(null);
         updateCustomButtonSwatches();
         return true;
     }
     function createPresetButton(key, preset) {
+        const colors = resolvePresetColors(preset);
         const button = document.createElement("button");
         button.type = "button";
         button.className = "color-preset-item";
@@ -76,12 +99,20 @@ export function initColorPresetControls(options) {
         swatches.className = "color-preset-swatches";
         const primarySwatch = document.createElement("span");
         primarySwatch.className = "color-preset-swatch";
-        primarySwatch.style.backgroundColor = preset.primaryColor;
+        primarySwatch.style.backgroundColor = colors.primary;
         const secondarySwatch = document.createElement("span");
         secondarySwatch.className = "color-preset-swatch";
-        secondarySwatch.style.backgroundColor = preset.secondaryColor;
+        secondarySwatch.style.backgroundColor = colors.secondary;
+        const tertiarySwatch = document.createElement("span");
+        tertiarySwatch.className = "color-preset-swatch";
+        tertiarySwatch.style.backgroundColor = colors.tertiary;
+        const quaternarySwatch = document.createElement("span");
+        quaternarySwatch.className = "color-preset-swatch";
+        quaternarySwatch.style.backgroundColor = colors.quaternary;
         swatches.appendChild(primarySwatch);
         swatches.appendChild(secondarySwatch);
+        swatches.appendChild(tertiarySwatch);
+        swatches.appendChild(quaternarySwatch);
         const name = document.createElement("span");
         name.className = "color-preset-name";
         name.textContent = preset.name;
@@ -106,8 +137,16 @@ export function initColorPresetControls(options) {
         const secondarySwatch = document.createElement("span");
         secondarySwatch.className = "color-preset-swatch";
         secondarySwatch.dataset.role = "secondary";
+        const tertiarySwatch = document.createElement("span");
+        tertiarySwatch.className = "color-preset-swatch";
+        tertiarySwatch.dataset.role = "tertiary";
+        const quaternarySwatch = document.createElement("span");
+        quaternarySwatch.className = "color-preset-swatch";
+        quaternarySwatch.dataset.role = "quaternary";
         swatches.appendChild(primarySwatch);
         swatches.appendChild(secondarySwatch);
+        swatches.appendChild(tertiarySwatch);
+        swatches.appendChild(quaternarySwatch);
         const name = document.createElement("span");
         name.className = "color-preset-name";
         name.textContent = "custom";
@@ -144,8 +183,11 @@ export function initColorPresetControls(options) {
         const preset = colorPresets[key];
         if (!preset)
             return;
-        primaryColorInput.value = preset.primaryColor;
-        secondaryColorInput.value = preset.secondaryColor;
+        const colors = resolvePresetColors(preset);
+        primaryColorInput.value = colors.primary;
+        secondaryColorInput.value = colors.secondary;
+        tertiaryColorInput.value = colors.tertiary;
+        quaternaryColorInput.value = colors.quaternary;
         setSelectedPreset(key);
         updateCustomButtonSwatches();
         if (!options.skipUpdate) {
@@ -164,6 +206,8 @@ export function initColorPresetControls(options) {
     };
     primaryColorInput.addEventListener("input", handleCustomColorInput);
     secondaryColorInput.addEventListener("input", handleCustomColorInput);
+    tertiaryColorInput.addEventListener("input", handleCustomColorInput);
+    quaternaryColorInput.addEventListener("input", handleCustomColorInput);
     void (() => __awaiter(this, void 0, void 0, function* () {
         container.classList.add("loading");
         const presets = yield loadColorPresets();

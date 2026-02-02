@@ -1,5 +1,5 @@
 export function createDrawingTools(options) {
-    const { getTileWidth, getTileHeight, isCellActive, setCellActive } = options;
+    const { getTileWidth, getTileHeight, getCellValue, setCellValue, getActiveColor } = options;
     function plotCirclePoints(cx, cy, x, y, width, height) {
         const pts = [
             [cx + x, cy + y],
@@ -13,11 +13,12 @@ export function createDrawingTools(options) {
         ];
         for (const [px, py] of pts) {
             if (px >= 0 && px < width && py >= 0 && py < height) {
-                setCellActive(px, py, true);
+                setCellValue(px, py, getActiveColor());
             }
         }
     }
     function drawCircle(cx, cy, r, fill) {
+        const activeColor = getActiveColor();
         const width = getTileWidth();
         const height = getTileHeight();
         if (fill) {
@@ -27,7 +28,7 @@ export function createDrawingTools(options) {
                         const px = cx + x;
                         const py = cy + y;
                         if (px >= 0 && px < width && py >= 0 && py < height) {
-                            setCellActive(px, py, true);
+                            setCellValue(px, py, activeColor);
                         }
                     }
                 }
@@ -49,11 +50,12 @@ export function createDrawingTools(options) {
         }
     }
     function drawLine(x0, y0, x1, y1) {
+        const activeColor = getActiveColor();
         let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
         let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
         let err = dx + dy, e2;
         while (true) {
-            setCellActive(x0, y0, true);
+            setCellValue(x0, y0, activeColor);
             if (x0 === x1 && y0 === y1)
                 break;
             e2 = 2 * err;
@@ -84,15 +86,13 @@ export function createDrawingTools(options) {
     function floodFill(sx, sy) {
         const width = getTileWidth();
         const height = getTileHeight();
-        const get = (x, y) => {
-            return isCellActive(x, y) ? 1 : 0;
-        };
+        const get = (x, y) => getCellValue(x, y);
         const set = (x, y, v) => {
-            setCellActive(x, y, v === 1);
+            setCellValue(x, y, v);
         };
         const target = get(sx, sy);
-        const newValue = target ? 0 : 1;
-        if (get(sx, sy) === newValue)
+        const newValue = getActiveColor();
+        if (target === newValue)
             return;
         const visited = Array(height)
             .fill(0)

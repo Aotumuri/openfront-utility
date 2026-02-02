@@ -1,4 +1,5 @@
 export function generatePatternBase64(pattern, width, height, scale) {
+    var _a, _b;
     const w_bin = width - 2;
     const h_bin = height - 2;
     if (scale !== (scale & 0x07))
@@ -7,22 +8,26 @@ export function generatePatternBase64(pattern, width, height, scale) {
         throw new Error(`Invalid width: ${width}`);
     if (h_bin !== (h_bin & 0x3f))
         throw new Error(`Invalid height: ${height}`);
-    const version = 0;
+    const version = 1;
+    const bitsPerCell = 2;
     const header = new Uint8Array(3);
     header[0] = version;
     header[1] = (scale & 0x7) | ((w_bin & 0x1f) << 3);
     header[2] = ((w_bin & 0x60) >> 5) | ((h_bin & 0x3f) << 2);
-    const totalBits = width * height;
+    const totalBits = width * height * bitsPerCell;
     const totalBytes = Math.ceil(totalBits / 8);
     const data = new Uint8Array(totalBytes);
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            const idx = y * width + x;
-            const byteIndex = Math.floor(idx / 8);
-            const bitOffset = idx % 8;
-            if (pattern[y][x]) {
-                data[byteIndex] |= 1 << bitOffset;
+            const value = (_b = (_a = pattern[y]) === null || _a === void 0 ? void 0 : _a[x]) !== null && _b !== void 0 ? _b : 0;
+            if (value < 0 || value > 3 || !Number.isInteger(value)) {
+                throw new Error(`Invalid cell value at ${x},${y}: ${value}`);
             }
+            const idx = y * width + x;
+            const bitIndex = idx * bitsPerCell;
+            const byteIndex = bitIndex >> 3;
+            const bitOffset = bitIndex & 7;
+            data[byteIndex] |= (value & 0x03) << bitOffset;
         }
     }
     const full = new Uint8Array(header.length + data.length);
@@ -42,7 +47,7 @@ export function decodePatternBase64(base64) {
     for (let y = 0; y < tileHeight; y++) {
         const row = new Array(tileWidth);
         for (let x = 0; x < tileWidth; x++) {
-            row[x] = decoder.isSet(x << scale, y << scale) ? 1 : 0;
+            row[x] = decoder.getValue(x << scale, y << scale);
         }
         pattern[y] = row;
     }
