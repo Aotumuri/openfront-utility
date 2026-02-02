@@ -7,12 +7,14 @@ export type DrawingTools = {
 type DrawingOptions = {
   getTileWidth: () => number;
   getTileHeight: () => number;
-  isCellActive: (x: number, y: number) => boolean;
-  setCellActive: (x: number, y: number, active: boolean) => void;
+  getCellValue: (x: number, y: number) => number;
+  setCellValue: (x: number, y: number, value: number) => void;
+  getActiveColor: () => number;
 };
 
 export function createDrawingTools(options: DrawingOptions): DrawingTools {
-  const { getTileWidth, getTileHeight, isCellActive, setCellActive } = options;
+  const { getTileWidth, getTileHeight, getCellValue, setCellValue, getActiveColor } =
+    options;
 
   function plotCirclePoints(
     cx: number,
@@ -34,12 +36,13 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
     ];
     for (const [px, py] of pts) {
       if (px >= 0 && px < width && py >= 0 && py < height) {
-        setCellActive(px, py, true);
+        setCellValue(px, py, getActiveColor());
       }
     }
   }
 
   function drawCircle(cx: number, cy: number, r: number, fill: boolean) {
+    const activeColor = getActiveColor();
     const width = getTileWidth();
     const height = getTileHeight();
     if (fill) {
@@ -49,7 +52,7 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
             const px = cx + x;
             const py = cy + y;
             if (px >= 0 && px < width && py >= 0 && py < height) {
-              setCellActive(px, py, true);
+              setCellValue(px, py, activeColor);
             }
           }
         }
@@ -72,6 +75,7 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
   }
 
   function drawLine(x0: number, y0: number, x1: number, y1: number) {
+    const activeColor = getActiveColor();
     let dx = Math.abs(x1 - x0),
       sx = x0 < x1 ? 1 : -1;
     let dy = -Math.abs(y1 - y0),
@@ -79,7 +83,7 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
     let err = dx + dy,
       e2;
     while (true) {
-      setCellActive(x0, y0, true);
+      setCellValue(x0, y0, activeColor);
       if (x0 === x1 && y0 === y1) break;
       e2 = 2 * err;
       if (e2 >= dy) {
@@ -116,15 +120,13 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
   function floodFill(sx: number, sy: number) {
     const width = getTileWidth();
     const height = getTileHeight();
-    const get = (x: number, y: number) => {
-      return isCellActive(x, y) ? 1 : 0;
-    };
-    const set = (x: number, y: number, v: 0 | 1) => {
-      setCellActive(x, y, v === 1);
+    const get = (x: number, y: number) => getCellValue(x, y);
+    const set = (x: number, y: number, v: number) => {
+      setCellValue(x, y, v);
     };
     const target = get(sx, sy);
-    const newValue = target ? 0 : 1;
-    if (get(sx, sy) === newValue) return;
+    const newValue = getActiveColor();
+    if (target === newValue) return;
     const visited = Array(height)
       .fill(0)
       .map(() => Array(width).fill(false));
@@ -134,7 +136,7 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
       if (x < 0 || y < 0 || x >= width || y >= height) continue;
       if (visited[y][x]) continue;
       if (get(x, y) !== target) continue;
-      set(x, y, newValue as 0 | 1);
+      set(x, y, newValue);
       visited[y][x] = true;
       stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
     }

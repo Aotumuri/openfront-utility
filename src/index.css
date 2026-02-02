@@ -14,6 +14,10 @@
   --shadow-card: 0 10px 24px rgba(18, 34, 40, 0.1);
   --shadow-soft: 0 18px 40px rgba(18, 34, 40, 0.12);
   --radius: 16px;
+  --palette-0: #ffffff;
+  --palette-1: #000000;
+  --palette-2: #6a7a84;
+  --palette-3: #9aa8b5;
 }
 
 * {
@@ -186,6 +190,32 @@ h1 {
   align-items: center;
   gap: 8px;
   padding: 2px;
+}
+
+.tool-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.color-swatch-list {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+  padding: 0;
+}
+
+.color-swatch.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(12, 124, 123, 0.2);
 }
 
 .tool-toggle {
@@ -485,11 +515,19 @@ input[type="color"]:hover {
   height: var(--cell-size);
   border: 1px solid #9aa8b5;
   cursor: pointer;
-  background: #ffffff;
+  background: var(--palette-0);
 }
 
-.cell.active {
-  background: #24313a;
+.cell[data-value="1"] {
+  background: var(--palette-1);
+}
+
+.cell[data-value="2"] {
+  background: var(--palette-2);
+}
+
+.cell[data-value="3"] {
+  background: var(--palette-3);
 }
 
 .preview-cell {
