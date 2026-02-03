@@ -243,23 +243,33 @@ document.addEventListener("DOMContentLoaded", () => {
         previewLinkTextarea.value = link;
         copyText(link);
     }
-    loadBtn.onclick = loadFromBase64;
-    clearGridBtn.onclick = gridManager.clearGrid;
-    copyOutputBtn.onclick = copyOutput;
-    copyDiscordBtn.onclick = copyDiscordOutput;
-    copyPreviewLinkBtn.onclick = copyPreviewLink;
-    undoBtn.onclick = () => {
+    const handleUndo = () => {
         const base64 = historyManager.undo();
         if (!base64)
             return;
         applyHistoryState(base64);
     };
-    redoBtn.onclick = () => {
+    const handleRedo = () => {
         const base64 = historyManager.redo();
         if (!base64)
             return;
         applyHistoryState(base64);
     };
+    const isEditableTarget = (target) => {
+        if (!(target instanceof HTMLElement))
+            return false;
+        if (target.isContentEditable)
+            return true;
+        const tagName = target.tagName.toLowerCase();
+        return tagName === "input" || tagName === "textarea" || tagName === "select";
+    };
+    loadBtn.onclick = loadFromBase64;
+    clearGridBtn.onclick = gridManager.clearGrid;
+    copyOutputBtn.onclick = copyOutput;
+    copyDiscordBtn.onclick = copyDiscordOutput;
+    copyPreviewLinkBtn.onclick = copyPreviewLink;
+    undoBtn.onclick = handleUndo;
+    redoBtn.onclick = handleRedo;
     swapColorsBtn.onclick = () => {
         const primary = previewPrimaryColorInput.value;
         previewPrimaryColorInput.value = previewSecondaryColorInput.value;
@@ -267,6 +277,22 @@ document.addEventListener("DOMContentLoaded", () => {
         colorPresetControls.setCustomSelection();
         updateOutput();
     };
+    document.addEventListener("keydown", (event) => {
+        if (event.defaultPrevented || isEditableTarget(event.target))
+            return;
+        const key = event.key.toLowerCase();
+        const isUndo = (event.metaKey || event.ctrlKey) && !event.shiftKey && key === "z";
+        const isRedo = (event.metaKey || event.ctrlKey) && event.shiftKey && key === "z";
+        if (isUndo) {
+            event.preventDefault();
+            handleUndo();
+            return;
+        }
+        if (isRedo) {
+            event.preventDefault();
+            handleRedo();
+        }
+    });
     gridManager.generateGrid();
     if (shouldFocusPreview) {
         if (layoutTabsInput) {
