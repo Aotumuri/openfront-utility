@@ -4,6 +4,8 @@ type PaletteDefinition = {
   name: string;
   primaryColor: string;
   secondaryColor: string;
+  tertiaryColor?: string;
+  quaternaryColor?: string;
 };
 
 type PaletteLookup = Record<string, PaletteDefinition>;
@@ -31,6 +33,8 @@ type PatternPayload = {
 
 const FALLBACK_PRIMARY = "#000000";
 const FALLBACK_SECONDARY = "#FFFFFF";
+const FALLBACK_TERTIARY = "#6a7a84";
+const FALLBACK_QUATERNARY = "#9aa8b5";
 
 function hexToRgb(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -76,6 +80,8 @@ function resolvePalette(
       name: "fallback",
       primaryColor: FALLBACK_PRIMARY,
       secondaryColor: FALLBACK_SECONDARY,
+      tertiaryColor: FALLBACK_TERTIARY,
+      quaternaryColor: FALLBACK_QUATERNARY,
     },
     activeName: "fallback",
   };
@@ -178,16 +184,20 @@ function renderPatternsFromInput(
           return false;
         }
         try {
-          const primaryColor = hexToRgb(paletteDef.primaryColor);
-          const secondaryColor = hexToRgb(paletteDef.secondaryColor);
+          const colors = [
+            hexToRgb(paletteDef.primaryColor),
+            hexToRgb(paletteDef.secondaryColor),
+            hexToRgb(paletteDef.tertiaryColor ?? paletteDef.primaryColor),
+            hexToRgb(paletteDef.quaternaryColor ?? paletteDef.secondaryColor),
+          ];
           const decoder = new PatternDecoder(patternCode);
           const imageData = ctx.createImageData(canvas.width, canvas.height);
           const data = imageData.data;
           let i = 0;
           for (let y = 0; y < canvas.height; y++) {
             for (let x = 0; x < canvas.width; x++) {
-              const isSet = decoder.isSet(x, y);
-              const color = isSet ? secondaryColor : primaryColor;
+              const value = decoder.getValue(x, y);
+              const color = colors[value] ?? colors[0];
               data[i++] = color.r;
               data[i++] = color.g;
               data[i++] = color.b;
@@ -242,8 +252,20 @@ function renderPatternsFromInput(
           secondarySwatch.className = "palette-swatch";
           secondarySwatch.style.backgroundColor = paletteOption.secondaryColor;
 
+          const tertiarySwatch = document.createElement("span");
+          tertiarySwatch.className = "palette-swatch";
+          tertiarySwatch.style.backgroundColor =
+            paletteOption.tertiaryColor ?? paletteOption.primaryColor;
+
+          const quaternarySwatch = document.createElement("span");
+          quaternarySwatch.className = "palette-swatch";
+          quaternarySwatch.style.backgroundColor =
+            paletteOption.quaternaryColor ?? paletteOption.secondaryColor;
+
           swatches.appendChild(primarySwatch);
           swatches.appendChild(secondarySwatch);
+          swatches.appendChild(tertiarySwatch);
+          swatches.appendChild(quaternarySwatch);
 
           const nameEl = document.createElement("span");
           nameEl.className = "palette-name";

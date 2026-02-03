@@ -5,6 +5,8 @@ type PreviewRendererOptions = {
   context: CanvasRenderingContext2D;
   primaryColorInput: HTMLInputElement;
   secondaryColorInput: HTMLInputElement;
+  tertiaryColorInput: HTMLInputElement;
+  quaternaryColorInput: HTMLInputElement;
 };
 
 function hexToRgb(hex: string): RgbColor {
@@ -19,7 +21,14 @@ function hexToRgb(hex: string): RgbColor {
 }
 
 export function createPreviewRenderer(options: PreviewRendererOptions) {
-  const { canvas, context, primaryColorInput, secondaryColorInput } = options;
+  const {
+    canvas,
+    context,
+    primaryColorInput,
+    secondaryColorInput,
+    tertiaryColorInput,
+    quaternaryColorInput,
+  } = options;
 
   return function renderPreview(pattern: string) {
     const decoder = new PatternDecoder(pattern);
@@ -28,10 +37,12 @@ export function createPreviewRenderer(options: PreviewRendererOptions) {
     canvas.width = width;
     canvas.height = height;
 
-    const primaryColor = primaryColorInput.value;
-    const secondaryColor = secondaryColorInput.value;
-    const primaryRgb = hexToRgb(primaryColor);
-    const secondaryRgb = hexToRgb(secondaryColor);
+    const colors = [
+      hexToRgb(primaryColorInput.value),
+      hexToRgb(secondaryColorInput.value),
+      hexToRgb(tertiaryColorInput.value),
+      hexToRgb(quaternaryColorInput.value),
+    ];
 
     const imageData = context.createImageData(width, height);
     const data = imageData.data;
@@ -39,15 +50,11 @@ export function createPreviewRenderer(options: PreviewRendererOptions) {
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const alpha = 255;
-        if (decoder.isSet(x, y)) {
-          data[i++] = secondaryRgb.r;
-          data[i++] = secondaryRgb.g;
-          data[i++] = secondaryRgb.b;
-        } else {
-          data[i++] = primaryRgb.r;
-          data[i++] = primaryRgb.g;
-          data[i++] = primaryRgb.b;
-        }
+        const value = decoder.getValue(x, y);
+        const color = colors[value] ?? colors[0];
+        data[i++] = color.r;
+        data[i++] = color.g;
+        data[i++] = color.b;
         data[i++] = alpha;
       }
     }

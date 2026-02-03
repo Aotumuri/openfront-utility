@@ -94,9 +94,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewSecondaryColorInput = document.getElementById(
     "previewSecondaryColor"
   ) as HTMLInputElement;
+  const previewTertiaryColorInput = document.getElementById(
+    "previewTertiaryColor"
+  ) as HTMLInputElement;
+  const previewQuaternaryColorInput = document.getElementById(
+    "previewQuaternaryColor"
+  ) as HTMLInputElement;
   const swapColorsBtn = document.getElementById(
     "swapColorsBtn"
   ) as HTMLButtonElement;
+  const drawColorButtons = [
+    document.getElementById("draw-color-0") as HTMLButtonElement,
+    document.getElementById("draw-color-1") as HTMLButtonElement,
+    document.getElementById("draw-color-2") as HTMLButtonElement,
+    document.getElementById("draw-color-3") as HTMLButtonElement,
+  ];
   const colorPresetContainer = document.getElementById(
     "colorPresetContainer"
   ) as HTMLDivElement;
@@ -129,6 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
     starSizeInput,
     circleSizeInput,
     circleFillInput,
+    colorButtons: drawColorButtons,
   });
 
   let updateOutput = () => {};
@@ -151,8 +164,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const drawingTools = createDrawingTools({
     getTileWidth: gridManager.getTileWidth,
     getTileHeight: gridManager.getTileHeight,
-    isCellActive: gridManager.isCellActive,
-    setCellActive: gridManager.setCellActive,
+    getCellValue: gridManager.getCellValue,
+    setCellValue: gridManager.setCellValue,
+    getActiveColor: toolState.getActiveColor,
   });
   gridManager.setDrawingTools(drawingTools);
   handleGuideChange = () => gridManager.generateGrid();
@@ -162,6 +176,8 @@ document.addEventListener("DOMContentLoaded", () => {
     context: previewContext,
     primaryColorInput: previewPrimaryColorInput,
     secondaryColorInput: previewSecondaryColorInput,
+    tertiaryColorInput: previewTertiaryColorInput,
+    quaternaryColorInput: previewQuaternaryColorInput,
   });
 
   const historyManager = createHistoryManager();
@@ -193,6 +209,22 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   updateOutput = () => {
+    const colors = [
+      previewPrimaryColorInput.value,
+      previewSecondaryColorInput.value,
+      previewTertiaryColorInput.value,
+      previewQuaternaryColorInput.value,
+    ];
+    gridDiv.style.setProperty("--palette-0", colors[0]);
+    gridDiv.style.setProperty("--palette-1", colors[1]);
+    gridDiv.style.setProperty("--palette-2", colors[2]);
+    gridDiv.style.setProperty("--palette-3", colors[3]);
+    drawColorButtons.forEach((btn, index) => {
+      const nextColor = colors[index];
+      if (nextColor) {
+        btn.style.backgroundColor = nextColor;
+      }
+    });
     const pattern = gridManager.getCurrentPattern();
     const scale = parseInt(scaleInput.value);
     const base64 = generatePatternBase64(
@@ -202,12 +234,14 @@ document.addEventListener("DOMContentLoaded", () => {
       scale
     );
     outputTextarea.value = base64;
-    discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${previewPrimaryColorInput.value}\nSecondary ${previewSecondaryColorInput.value}`;
+    discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${colors[0]}\nSecondary ${colors[1]}\nTertiary ${colors[2]}\nQuaternary ${colors[3]}`;
     previewLinkTextarea.value = buildPreviewLink();
     renderPreview(base64);
     const params = new URLSearchParams({
-      primary: previewPrimaryColorInput.value.replace("#", ""),
-      secondary: previewSecondaryColorInput.value.replace("#", ""),
+      primary: colors[0].replace("#", ""),
+      secondary: colors[1].replace("#", ""),
+      tertiary: colors[2].replace("#", ""),
+      quaternary: colors[3].replace("#", ""),
     });
     window.history.replaceState(null, "", `#${base64}?${params.toString()}`);
     if (!isApplyingHistory) {
@@ -242,7 +276,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const hashValue = window.location.hash.startsWith("#")
     ? window.location.hash.slice(1)
     : "";
-  let initialColors: { primary: string; secondary: string } | null = null;
+  let initialColors: {
+    primary: string;
+    secondary: string;
+    tertiary?: string;
+    quaternary?: string;
+  } | null = null;
   let shouldFocusPreview = false;
   if (hashValue) {
     const [patternPart, queryPart] = hashValue.split("?");
@@ -256,10 +295,16 @@ document.addEventListener("DOMContentLoaded", () => {
         normalizeHex(params.get("primary")) ?? normalizeHex(params.get("p"));
       const secondary =
         normalizeHex(params.get("secondary")) ?? normalizeHex(params.get("s"));
-      if (primary || secondary) {
+      const tertiary =
+        normalizeHex(params.get("tertiary")) ?? normalizeHex(params.get("t"));
+      const quaternary =
+        normalizeHex(params.get("quaternary")) ?? normalizeHex(params.get("q"));
+      if (primary || secondary || tertiary || quaternary) {
         initialColors = {
           primary: primary ?? previewPrimaryColorInput.value,
           secondary: secondary ?? previewSecondaryColorInput.value,
+          tertiary: tertiary ?? previewTertiaryColorInput.value,
+          quaternary: quaternary ?? previewQuaternaryColorInput.value,
         };
       }
       const previewFlag = params.get("preview");
@@ -277,6 +322,8 @@ document.addEventListener("DOMContentLoaded", () => {
     container: colorPresetContainer,
     primaryColorInput: previewPrimaryColorInput,
     secondaryColorInput: previewSecondaryColorInput,
+    tertiaryColorInput: previewTertiaryColorInput,
+    quaternaryColorInput: previewQuaternaryColorInput,
     initialColors,
     onChange: () => updateOutput(),
   });
@@ -314,6 +361,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams({
       primary: previewPrimaryColorInput.value.replace("#", ""),
       secondary: previewSecondaryColorInput.value.replace("#", ""),
+      tertiary: previewTertiaryColorInput.value.replace("#", ""),
+      quaternary: previewQuaternaryColorInput.value.replace("#", ""),
       preview: "1",
     });
     const hash = base64 ? `#${base64}?${params.toString()}` : "";

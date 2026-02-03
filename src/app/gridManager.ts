@@ -26,8 +26,8 @@ export type GridManager = {
   clearGrid: () => void;
   getTileWidth: () => number;
   getTileHeight: () => number;
-  isCellActive: (x: number, y: number) => boolean;
-  setCellActive: (x: number, y: number, active: boolean) => void;
+  getCellValue: (x: number, y: number) => number;
+  setCellValue: (x: number, y: number, value: number) => void;
   setDrawingTools: (tools: DrawingTools) => void;
 };
 
@@ -54,7 +54,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   let tileWidth = parseInt(tileWidthInput.value);
   let tileHeight = parseInt(tileHeightInput.value);
   let isMouseDown = false;
-  let toggleState: boolean | null = null;
+  let toggleState: number | null = null;
   let isFirstLoad = true;
   let currentHeight = 0;
   let currentWidth = 0;
@@ -103,18 +103,19 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   const isInBounds = (x: number, y: number) =>
     x >= 0 && y >= 0 && x < tileWidth && y < tileHeight;
 
-  const setCellActive = (x: number, y: number, active: boolean) => {
+  const setCellValue = (x: number, y: number, value: number) => {
     if (!isInBounds(x, y)) return;
-    patternState[y][x] = active ? 1 : 0;
+    const nextValue = Math.max(0, Math.min(3, Math.floor(value)));
+    patternState[y][x] = nextValue;
     const cell = cellMatrix[y]?.[x];
     if (cell) {
-      cell.classList.toggle("active", active);
+      cell.dataset.value = nextValue.toString();
     }
   };
 
-  const isCellActive = (x: number, y: number) => {
-    if (!isInBounds(x, y)) return false;
-    return patternState[y][x] === 1;
+  const getCellValue = (x: number, y: number) => {
+    if (!isInBounds(x, y)) return 0;
+    return patternState[y][x] ?? 0;
   };
 
   const setDrawingTools = (tools: DrawingTools) => {
@@ -124,7 +125,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   const applyPattern = (nextPattern: number[][]) => {
     for (let y = 0; y < tileHeight; y++) {
       for (let x = 0; x < tileWidth; x++) {
-        setCellActive(x, y, nextPattern[y]?.[x] === 1);
+        setCellValue(x, y, nextPattern[y]?.[x] ?? 0);
       }
     }
   };
@@ -191,9 +192,10 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     const basePattern =
       pattern || (isFirstLoad ? initialPattern : patternState);
     patternState = Array.from({ length: tileHeight }, (_, y) =>
-      Array.from({ length: tileWidth }, (_, x) =>
-        basePattern[y] && basePattern[y][x] === 1 ? 1 : 0
-      )
+      Array.from({ length: tileWidth }, (_, x) => {
+        const value = basePattern[y]?.[x] ?? 0;
+        return value >= 0 && value <= 3 ? value : 0;
+      })
     );
 
     const nextCellMatrix: HTMLDivElement[][] = Array.from(
@@ -233,14 +235,14 @@ export function createGridManager(options: GridManagerOptions): GridManager {
       }
     }
 
-    const applyPenBrush = (cx: number, cy: number, activate: boolean) => {
+    const applyPenBrush = (cx: number, cy: number, value: number) => {
       const size = toolState.getPenSize();
       const radius = Math.floor(size / 2);
       for (let by = cy - radius; by <= cy + radius; by++) {
         if (by < 0 || by >= tileHeight) continue;
         for (let bx = cx - radius; bx <= cx + radius; bx++) {
           if (bx < 0 || bx >= tileWidth) continue;
-          setCellActive(bx, by, activate);
+          setCellValue(bx, by, value);
         }
       }
     };
@@ -265,7 +267,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
         lastCell = cell;
 
         cell.classList.remove("guide-v", "guide-h", "center-v", "center-h");
-        cell.classList.toggle("active", patternState[y][x] === 1);
+        cell.dataset.value = (patternState[y][x] ?? 0).toString();
 
         if (guideState.isBlackEnabled()) {
           if (x !== 0 && x % 5 === 0) cell.classList.add("guide-v");
@@ -279,8 +281,10 @@ export function createGridManager(options: GridManagerOptions): GridManager {
         cell.onclick = () => {
           const tool = toolState.getCurrentTool();
           if (tool === "pen") {
-            const shouldActivate = !isCellActive(x, y);
-            applyPenBrush(x, y, shouldActivate);
+            const activeColor = toolState.getActiveColor();
+            const currentValue = getCellValue(x, y);
+            const nextValue = currentValue === activeColor ? 0 : activeColor;
+            applyPenBrush(x, y, nextValue);
           } else if (tool === "fill") {
             drawingTools?.floodFill(x, y);
           } else if (tool === "star") {
@@ -298,7 +302,9 @@ export function createGridManager(options: GridManagerOptions): GridManager {
           const tool = toolState.getCurrentTool();
           if (isMouseDown && tool === "pen") {
             if (toggleState === null) {
-              toggleState = !isCellActive(x, y);
+              const activeColor = toolState.getActiveColor();
+              const currentValue = getCellValue(x, y);
+              toggleState = currentValue === activeColor ? 0 : activeColor;
             }
             applyPenBrush(x, y, toggleState);
             onPatternChange();
@@ -314,7 +320,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   function clearGrid() {
     for (let y = 0; y < tileHeight; y++) {
       for (let x = 0; x < tileWidth; x++) {
-        setCellActive(x, y, false);
+        setCellValue(x, y, 0);
       }
     }
     onPatternChange();
@@ -326,8 +332,8 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     clearGrid,
     getTileWidth: () => tileWidth,
     getTileHeight: () => tileHeight,
-    isCellActive,
-    setCellActive,
+    getCellValue,
+    setCellValue,
     setDrawingTools,
   };
 }

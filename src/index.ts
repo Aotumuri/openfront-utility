@@ -5,6 +5,7 @@ class PatternDecoder {
   private tileWidth: number;
   private tileHeight: number;
   private scale: number;
+  private bitsPerCell: number;
 
   constructor(base64: string) {
     this.bytes = PatternDecoder.base64ToBytes(base64);
@@ -16,7 +17,11 @@ class PatternDecoder {
     }
 
     const version = this.bytes[0];
-    if (version !== 0) {
+    if (version === 0) {
+      this.bitsPerCell = 1;
+    } else if (version === 1) {
+      this.bitsPerCell = 2;
+    } else {
       throw new Error(`Unrecognized pattern version ${version}.`);
     }
 
@@ -27,7 +32,7 @@ class PatternDecoder {
     this.tileWidth = (((byte2 & 0x03) << 5) | ((byte1 >> 3) & 0x1f)) + 2;
     this.tileHeight = ((byte2 >> 2) & 0x3f) + 2;
 
-    const expectedBits = this.tileWidth * this.tileHeight;
+    const expectedBits = this.tileWidth * this.tileHeight * this.bitsPerCell;
     const expectedBytes = (expectedBits + 7) >> 3; // Equivalent to: ceil(expectedBits / 8);
     if (this.bytes.length - 3 < expectedBytes) {
       throw new Error(
@@ -56,14 +61,22 @@ class PatternDecoder {
   }
 
   isSet(x: number, y: number): boolean {
+    return this.getValue(x, y) > 0;
+  }
+
+  getValue(x: number, y: number): number {
     const px = (x >> this.scale) % this.tileWidth;
     const py = (y >> this.scale) % this.tileHeight;
     const idx = py * this.tileWidth + px;
-    const byteIndex = idx >> 3;
-    const bitIndex = idx & 7;
+    const bitIndex = idx * this.bitsPerCell;
+    const byteIndex = bitIndex >> 3;
+    const shift = bitIndex & 7;
     const byte = this.bytes[3 + byteIndex];
     if (byte === undefined) throw new Error("Invalid pattern");
-    return (byte & (1 << bitIndex)) !== 0;
+    if (this.bitsPerCell === 1) {
+      return (byte >> shift) & 0x01;
+    }
+    return (byte >> shift) & 0x03;
   }
 }
 

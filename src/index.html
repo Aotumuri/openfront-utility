@@ -68,6 +68,39 @@
                     Fill
                   </label>
                 </div>
+                <div class="tool-group">
+                  <span class="tool-label">Color</span>
+                  <div class="color-swatch-list">
+                    <button
+                      id="draw-color-0"
+                      class="color-swatch"
+                      type="button"
+                      data-color="0"
+                      aria-label="Draw color 1"
+                    ></button>
+                    <button
+                      id="draw-color-1"
+                      class="color-swatch"
+                      type="button"
+                      data-color="1"
+                      aria-label="Draw color 2"
+                    ></button>
+                    <button
+                      id="draw-color-2"
+                      class="color-swatch"
+                      type="button"
+                      data-color="2"
+                      aria-label="Draw color 3"
+                    ></button>
+                    <button
+                      id="draw-color-3"
+                      class="color-swatch"
+                      type="button"
+                      data-color="3"
+                      aria-label="Draw color 4"
+                    ></button>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="tab-panel actions">
@@ -194,6 +227,14 @@
                   <div class="row color-row">
                     <label for="previewSecondaryColor">Secondary</label>
                     <input type="color" id="previewSecondaryColor" value="#000000" />
+                  </div>
+                  <div class="row color-row">
+                    <label for="previewTertiaryColor">Tertiary</label>
+                    <input type="color" id="previewTertiaryColor" value="#6a7a84" />
+                  </div>
+                  <div class="row color-row">
+                    <label for="previewQuaternaryColor">Quaternary</label>
+                    <input type="color" id="previewQuaternaryColor" value="#9aa8b5" />
                   </div>
                   <div class="row">
                     <button id="swapColorsBtn">Swap Colors</button>
