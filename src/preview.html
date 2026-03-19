@@ -16,12 +16,20 @@
   <body>
     <div class="page">
       <header class="page-header">
-        <p class="eyebrow">Pattern Utility</p>
-        <h1>Pattern Preview List</h1>
-        <p class="preview-hint">
-          Paste JSON that includes both <code>patterns</code> and a
-          <code>colorPalettes</code> map to render palette-specific previews.
-        </p>
+        <div class="page-header-row">
+          <div>
+            <p class="eyebrow">Pattern Utility</p>
+            <h1>Pattern Preview List</h1>
+            <p class="preview-hint">
+              Paste JSON that includes both <code>patterns</code> and a
+              <code>colorPalettes</code> map to render palette-specific previews.
+            </p>
+          </div>
+          <nav class="page-nav">
+            <a class="nav-link" href="./index.html">Main Editor</a>
+            <a class="nav-link" href="./ai.html">Prompt AI</a>
+          </nav>
+        </div>
       </header>
 
       <section class="panel input-panel">
@@ -37,7 +45,6 @@
       <div class="pattern-list" id="pattern-list"></div>
     </div>
 
-    <script src="./index.js"></script>
-    <script src="./preview.js"></script>
+    <script type="module" src="./preview.js"></script>
   </body>
 </html>

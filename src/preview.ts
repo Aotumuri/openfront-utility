@@ -1,5 +1,7 @@
 /// <reference lib="es2017" />
 
+import { renderPatternToCanvas } from "./shared/patternRender.js";
+
 type PaletteDefinition = {
   name: string;
   primaryColor: string;
@@ -31,17 +33,6 @@ type PatternPayload = {
 
 const FALLBACK_PRIMARY = "#000000";
 const FALLBACK_SECONDARY = "#FFFFFF";
-
-function hexToRgb(hex: string) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
-    : { r: 255, g: 255, b: 255 };
-}
 
 function resolvePalette(
   pattern: PatternPayload,
@@ -178,23 +169,15 @@ function renderPatternsFromInput(
           return false;
         }
         try {
-          const primaryColor = hexToRgb(paletteDef.primaryColor);
-          const secondaryColor = hexToRgb(paletteDef.secondaryColor);
-          const decoder = new PatternDecoder(patternCode);
-          const imageData = ctx.createImageData(canvas.width, canvas.height);
-          const data = imageData.data;
-          let i = 0;
-          for (let y = 0; y < canvas.height; y++) {
-            for (let x = 0; x < canvas.width; x++) {
-              const isSet = decoder.isSet(x, y);
-              const color = isSet ? secondaryColor : primaryColor;
-              data[i++] = color.r;
-              data[i++] = color.g;
-              data[i++] = color.b;
-              data[i++] = 255;
-            }
-          }
-          ctx.putImageData(imageData, 0, 0);
+          renderPatternToCanvas({
+            canvas,
+            context: ctx,
+            pattern: patternCode,
+            primaryColor: paletteDef.primaryColor,
+            secondaryColor: paletteDef.secondaryColor,
+            width: canvas.width,
+            height: canvas.height,
+          });
           hideError();
           return true;
         } catch (err) {

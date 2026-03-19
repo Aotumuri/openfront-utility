@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Prompt Pattern Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RJ8487N9XW"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-RJ8487N9XW');
+    </script>
+    <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" href="ai.css" />
+  </head>
+  <body>
+    <div class="page ai-page">
+      <header class="page-header">
+        <div class="page-header-row">
+          <div class="title-block">
+            <p class="eyebrow">Pattern Utility</p>
+            <h1>Prompt Pattern Generator</h1>
+            <p class="subtitle">
+              Describe an OpenFront-style pattern, generate a few candidates, then send the winner into the main editor.
+            </p>
+          </div>
+          <nav class="page-nav">
+            <a class="nav-link" href="./index.html">Main Editor</a>
+            <a class="nav-link" href="./preview.html">Preview List</a>
+          </nav>
+        </div>
+      </header>
+
+      <div class="ai-shell">
+        <section class="panel prompt-panel">
+          <div class="panel-heading">
+            <div>
+              <div class="panel-title">Prompt</div>
+              <p id="statusMessage" class="panel-note">Prompt-only generation is ready.</p>
+            </div>
+          </div>
+          <label class="field-label" for="promptInput">Describe the pattern you want</label>
+          <textarea
+            id="promptInput"
+            class="prompt-input"
+            placeholder="Examples: defender of openfront, black white crest, minimal shield banner"
+          ></textarea>
+          <div class="row">
+            <button id="generateBtn" class="btn-primary">Generate</button>
+            <button id="regenerateBtn">Regenerate</button>
+          </div>
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="field-label">Normalized Prompt</div>
+              <div id="normalizedPrompt" class="info-value">—</div>
+            </div>
+            <div class="info-card">
+              <div class="field-label">Top Matches</div>
+              <div id="matchSummary" class="info-value">Prompt-only fallback is ready.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel dataset-panel">
+          <div class="panel-heading">
+            <div class="panel-title">Optional Dataset</div>
+            <p class="panel-note">Paste a JSON object with a <code>patterns</code> map if you want retrieval to steer generation.</p>
+          </div>
+          <textarea
+            id="datasetInput"
+            class="dataset-input"
+            placeholder='{"patterns":{"id1":{"name":"defender_of_openfront","pattern":"..."}}}'
+          ></textarea>
+          <div class="row">
+            <button id="loadDatasetBtn">Load Dataset</button>
+            <button id="exportTrainingBtn">Export Training Dataset</button>
+          </div>
+          <div id="datasetStats" class="dataset-stats">Total 0 · Decoded 0 · Failed 0</div>
+          <div id="datasetError" class="inline-error" hidden></div>
+          <ul id="datasetFailures" class="error-list"></ul>
+        </section>
+
+        <div class="ai-layout">
+          <section class="panel results-panel">
+            <div class="panel-heading">
+              <div class="panel-title">Candidates</div>
+              <p id="candidateCount" class="panel-note">0 options</p>
+            </div>
+            <div id="candidateResults" class="candidate-grid"></div>
+          </section>
+
+          <section class="panel selected-panel">
+            <div class="panel-heading">
+              <div class="panel-title">Selected Preview</div>
+              <p id="selectedStrategy" class="panel-note">No selection</p>
+            </div>
+            <canvas id="selectedPreviewCanvas" class="selected-preview"></canvas>
+            <div id="selectedMeta" class="selected-meta">
+              Generate candidates, then choose one for a larger preview.
+            </div>
+            <label class="field-label" for="selectedBase64">Base64</label>
+            <textarea id="selectedBase64" readonly></textarea>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="ai.js"></script>
+  </body>
+</html>
