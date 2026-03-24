@@ -1,4 +1,5 @@
 export type DrawingTools = {
+  drawLine: (x0: number, y0: number, x1: number, y1: number) => void;
   drawCircle: (cx: number, cy: number, r: number, fill: boolean) => void;
   drawStar: (cx: number, cy: number, r: number) => void;
   floodFill: (sx: number, sy: number) => void;
@@ -141,6 +142,7 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
   }
 
   return {
+    drawLine,
     drawCircle,
     drawStar,
     floodFill,

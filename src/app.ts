@@ -2,6 +2,7 @@ import { initColorPresetControls } from "./app/colorPresets.js";
 import { createDrawingTools } from "./app/drawingTools.js";
 import { setupGridGuides } from "./app/gridGuides.js";
 import { createGridManager } from "./app/gridManager.js";
+import { setupHistoryShortcuts } from "./app/historyShortcuts.js";
 import { initialPattern } from "./app/initialPattern.js";
 import {
   decodePatternBase64,
@@ -21,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const penSizeInput = document.getElementById(
     "pen-size"
   ) as HTMLInputElement;
+  const toolLineBtn = document.getElementById("tool-line") as HTMLButtonElement;
   const toolFillBtn = document.getElementById("tool-fill") as HTMLButtonElement;
   const toolStarBtn = document.getElementById("tool-star") as HTMLButtonElement;
   const toolCircleBtn = document.getElementById(
@@ -122,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const toolState = createToolState({
     toolPenBtn,
+    toolLineBtn,
     toolFillBtn,
     toolStarBtn,
     toolCircleBtn,
@@ -340,13 +343,6 @@ document.addEventListener("DOMContentLoaded", () => {
     applyHistoryState(base64);
   };
 
-  const isEditableTarget = (target: EventTarget | null) => {
-    if (!(target instanceof HTMLElement)) return false;
-    if (target.isContentEditable) return true;
-    const tagName = target.tagName.toLowerCase();
-    return tagName === "input" || tagName === "textarea" || tagName === "select";
-  };
-
   loadBtn.onclick = loadFromBase64;
   clearGridBtn.onclick = gridManager.clearGrid;
   copyOutputBtn.onclick = copyOutput;
@@ -361,24 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
     colorPresetControls.setCustomSelection();
     updateOutput();
   };
-
-  document.addEventListener("keydown", (event) => {
-    if (event.defaultPrevented || isEditableTarget(event.target)) return;
-    const key = event.key.toLowerCase();
-    const isUndo = (event.metaKey || event.ctrlKey) && !event.shiftKey && key === "z";
-    const isRedo =
-      (event.metaKey || event.ctrlKey) && event.shiftKey && key === "z";
-
-    if (isUndo) {
-      event.preventDefault();
-      handleUndo();
-      return;
-    }
-    if (isRedo) {
-      event.preventDefault();
-      handleRedo();
-    }
-  });
+  setupHistoryShortcuts({ onUndo: handleUndo, onRedo: handleRedo });
 
   gridManager.generateGrid();
 

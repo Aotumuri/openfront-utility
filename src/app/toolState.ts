@@ -1,7 +1,8 @@
-export type ToolKind = "pen" | "fill" | "star" | "circle";
+export type ToolKind = "pen" | "line" | "fill" | "star" | "circle";
 
 type ToolStateOptions = {
   toolPenBtn: HTMLButtonElement;
+  toolLineBtn: HTMLButtonElement;
   toolFillBtn: HTMLButtonElement;
   toolStarBtn: HTMLButtonElement;
   toolCircleBtn: HTMLButtonElement;
@@ -17,11 +18,15 @@ export type ToolState = {
   getStarRadius: () => number;
   getCircleRadius: () => number;
   isCircleFilled: () => boolean;
+  subscribeToToolChanges: (
+    listener: (tool: ToolKind) => void
+  ) => () => void;
 };
 
 export function createToolState(options: ToolStateOptions): ToolState {
   const {
     toolPenBtn,
+    toolLineBtn,
     toolFillBtn,
     toolStarBtn,
     toolCircleBtn,
@@ -31,20 +36,25 @@ export function createToolState(options: ToolStateOptions): ToolState {
     circleFillInput,
   } = options;
 
-  let currentTool: ToolKind = "pen";
+  let currentTool: ToolKind | null = null;
+  const listeners = new Set<(tool: ToolKind) => void>();
 
   function selectTool(tool: ToolKind) {
+    if (currentTool === tool) return;
     currentTool = tool;
-    [toolPenBtn, toolFillBtn, toolStarBtn, toolCircleBtn].forEach((btn) =>
-      btn.classList.remove("selected")
+    [toolPenBtn, toolLineBtn, toolFillBtn, toolStarBtn, toolCircleBtn].forEach(
+      (btn) => btn.classList.remove("selected")
     );
     if (tool === "pen") toolPenBtn.classList.add("selected");
+    if (tool === "line") toolLineBtn.classList.add("selected");
     if (tool === "fill") toolFillBtn.classList.add("selected");
     if (tool === "star") toolStarBtn.classList.add("selected");
     if (tool === "circle") toolCircleBtn.classList.add("selected");
+    listeners.forEach((listener) => listener(tool));
   }
 
   toolPenBtn.onclick = () => selectTool("pen");
+  toolLineBtn.onclick = () => selectTool("line");
   toolFillBtn.onclick = () => selectTool("fill");
   toolStarBtn.onclick = () => selectTool("star");
   toolCircleBtn.onclick = () => selectTool("circle");
@@ -72,10 +82,14 @@ export function createToolState(options: ToolStateOptions): ToolState {
   };
 
   return {
-    getCurrentTool: () => currentTool,
+    getCurrentTool: () => currentTool ?? "pen",
     getPenSize: () => parseInt(penSizeInput.value),
     getStarRadius: () => parseInt(starSizeInput.value),
     getCircleRadius: () => parseInt(circleSizeInput.value),
     isCircleFilled: () => circleFillInput.checked,
+    subscribeToToolChanges: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
   };
 }

@@ -31,6 +31,11 @@ export type GridManager = {
   setDrawingTools: (tools: DrawingTools) => void;
 };
 
+type Point = {
+  x: number;
+  y: number;
+};
+
 export function createGridManager(options: GridManagerOptions): GridManager {
   const {
     gridDiv,
@@ -58,6 +63,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   let isFirstLoad = true;
   let currentHeight = 0;
   let currentWidth = 0;
+  let lineStart: Point | null = null;
   let patternState: number[][] = [];
   let cellMatrix: HTMLDivElement[][] = [];
   const baseCellSize = 20;
@@ -121,6 +127,22 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     drawingTools = tools;
   };
 
+  const setLineStart = (point: Point | null) => {
+    if (lineStart) {
+      cellMatrix[lineStart.y]?.[lineStart.x]?.classList.remove("line-start");
+    }
+    lineStart = point;
+    if (lineStart) {
+      cellMatrix[lineStart.y]?.[lineStart.x]?.classList.add("line-start");
+    }
+  };
+
+  toolState.subscribeToToolChanges((tool) => {
+    if (tool !== "line") {
+      setLineStart(null);
+    }
+  });
+
   const applyPattern = (nextPattern: number[][]) => {
     for (let y = 0; y < tileHeight; y++) {
       for (let x = 0; x < tileWidth; x++) {
@@ -130,6 +152,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   };
 
   shiftLeftBtn.addEventListener("click", () => {
+    setLineStart(null);
     const nextPattern: number[][] = [];
     for (let y = 0; y < tileHeight; y++) {
       const row = patternState[y] ?? [];
@@ -140,6 +163,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   });
 
   shiftRightBtn.addEventListener("click", () => {
+    setLineStart(null);
     const nextPattern: number[][] = [];
     for (let y = 0; y < tileHeight; y++) {
       const row = patternState[y] ?? [];
@@ -151,6 +175,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   });
 
   shiftDownBtn.addEventListener("click", () => {
+    setLineStart(null);
     const nextPattern: number[][] = Array.from({ length: tileHeight }, () =>
       new Array(tileWidth).fill(0)
     );
@@ -166,6 +191,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   });
 
   shiftUpBtn.addEventListener("click", () => {
+    setLineStart(null);
     const nextPattern: number[][] = Array.from({ length: tileHeight }, () =>
       new Array(tileWidth).fill(0)
     );
@@ -187,6 +213,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   function generateGrid(pattern?: number[][]) {
     tileWidth = parseInt(tileWidthInput.value);
     tileHeight = parseInt(tileHeightInput.value);
+    setLineStart(null);
     applyGridSizing();
     const basePattern =
       pattern || (isFirstLoad ? initialPattern : patternState);
@@ -265,6 +292,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
         lastCell = cell;
 
         cell.classList.remove("guide-v", "guide-h", "center-v", "center-h");
+        cell.classList.remove("line-start");
         cell.classList.toggle("active", patternState[y][x] === 1);
 
         if (guideState.isBlackEnabled()) {
@@ -281,6 +309,13 @@ export function createGridManager(options: GridManagerOptions): GridManager {
           if (tool === "pen") {
             const shouldActivate = !isCellActive(x, y);
             applyPenBrush(x, y, shouldActivate);
+          } else if (tool === "line") {
+            if (!lineStart) {
+              setLineStart({ x, y });
+              return;
+            }
+            drawingTools?.drawLine(lineStart.x, lineStart.y, x, y);
+            setLineStart(null);
           } else if (tool === "fill") {
             drawingTools?.floodFill(x, y);
           } else if (tool === "star") {
@@ -312,6 +347,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   }
 
   function clearGrid() {
+    setLineStart(null);
     for (let y = 0; y < tileHeight; y++) {
       for (let x = 0; x < tileWidth; x++) {
         setCellActive(x, y, false);
