@@ -112,6 +112,7 @@ export function createDrawingTools(options) {
         }
     }
     return {
+        drawLine,
         drawCircle,
         drawStar,
         floodFill,

@@ -8,6 +8,7 @@ export function createGridManager(options) {
     let isFirstLoad = true;
     let currentHeight = 0;
     let currentWidth = 0;
+    let lineStart = null;
     let patternState = [];
     let cellMatrix = [];
     const baseCellSize = 20;
@@ -65,6 +66,21 @@ export function createGridManager(options) {
     const setDrawingTools = (tools) => {
         drawingTools = tools;
     };
+    const setLineStart = (point) => {
+        var _a, _b, _c, _d;
+        if (lineStart) {
+            (_b = (_a = cellMatrix[lineStart.y]) === null || _a === void 0 ? void 0 : _a[lineStart.x]) === null || _b === void 0 ? void 0 : _b.classList.remove("line-start");
+        }
+        lineStart = point;
+        if (lineStart) {
+            (_d = (_c = cellMatrix[lineStart.y]) === null || _c === void 0 ? void 0 : _c[lineStart.x]) === null || _d === void 0 ? void 0 : _d.classList.add("line-start");
+        }
+    };
+    toolState.subscribeToToolChanges((tool) => {
+        if (tool !== "line") {
+            setLineStart(null);
+        }
+    });
     const applyPattern = (nextPattern) => {
         var _a;
         for (let y = 0; y < tileHeight; y++) {
@@ -75,6 +91,7 @@ export function createGridManager(options) {
     };
     shiftLeftBtn.addEventListener("click", () => {
         var _a, _b;
+        setLineStart(null);
         const nextPattern = [];
         for (let y = 0; y < tileHeight; y++) {
             const row = (_a = patternState[y]) !== null && _a !== void 0 ? _a : [];
@@ -85,6 +102,7 @@ export function createGridManager(options) {
     });
     shiftRightBtn.addEventListener("click", () => {
         var _a, _b;
+        setLineStart(null);
         const nextPattern = [];
         for (let y = 0; y < tileHeight; y++) {
             const row = (_a = patternState[y]) !== null && _a !== void 0 ? _a : [];
@@ -96,6 +114,7 @@ export function createGridManager(options) {
     });
     shiftDownBtn.addEventListener("click", () => {
         var _a, _b, _c, _d;
+        setLineStart(null);
         const nextPattern = Array.from({ length: tileHeight }, () => new Array(tileWidth).fill(0));
         for (let x = 0; x < tileWidth; x++) {
             const bottomValue = (_b = (_a = patternState[tileHeight - 1]) === null || _a === void 0 ? void 0 : _a[x]) !== null && _b !== void 0 ? _b : 0;
@@ -109,6 +128,7 @@ export function createGridManager(options) {
     });
     shiftUpBtn.addEventListener("click", () => {
         var _a, _b, _c, _d;
+        setLineStart(null);
         const nextPattern = Array.from({ length: tileHeight }, () => new Array(tileWidth).fill(0));
         for (let x = 0; x < tileWidth; x++) {
             const topValue = (_b = (_a = patternState[0]) === null || _a === void 0 ? void 0 : _a[x]) !== null && _b !== void 0 ? _b : 0;
@@ -127,6 +147,7 @@ export function createGridManager(options) {
         var _a, _b, _c;
         tileWidth = parseInt(tileWidthInput.value);
         tileHeight = parseInt(tileHeightInput.value);
+        setLineStart(null);
         applyGridSizing();
         const basePattern = pattern || (isFirstLoad ? initialPattern : patternState);
         patternState = Array.from({ length: tileHeight }, (_, y) => Array.from({ length: tileWidth }, (_, x) => basePattern[y] && basePattern[y][x] === 1 ? 1 : 0));
@@ -197,6 +218,7 @@ export function createGridManager(options) {
                 nextCellMatrix[y][x] = cell;
                 lastCell = cell;
                 cell.classList.remove("guide-v", "guide-h", "center-v", "center-h");
+                cell.classList.remove("line-start");
                 cell.classList.toggle("active", patternState[y][x] === 1);
                 if (guideState.isBlackEnabled()) {
                     if (x !== 0 && x % 5 === 0)
@@ -215,6 +237,14 @@ export function createGridManager(options) {
                     if (tool === "pen") {
                         const shouldActivate = !isCellActive(x, y);
                         applyPenBrush(x, y, shouldActivate);
+                    }
+                    else if (tool === "line") {
+                        if (!lineStart) {
+                            setLineStart({ x, y });
+                            return;
+                        }
+                        drawingTools === null || drawingTools === void 0 ? void 0 : drawingTools.drawLine(lineStart.x, lineStart.y, x, y);
+                        setLineStart(null);
                     }
                     else if (tool === "fill") {
                         drawingTools === null || drawingTools === void 0 ? void 0 : drawingTools.floodFill(x, y);
@@ -247,6 +277,7 @@ export function createGridManager(options) {
         onPatternChange();
     }
     function clearGrid() {
+        setLineStart(null);
         for (let y = 0; y < tileHeight; y++) {
             for (let x = 0; x < tileWidth; x++) {
                 setCellActive(x, y, false);

@@ -1,19 +1,26 @@
 export function createToolState(options) {
-    const { toolPenBtn, toolFillBtn, toolStarBtn, toolCircleBtn, penSizeInput, starSizeInput, circleSizeInput, circleFillInput, } = options;
-    let currentTool = "pen";
+    const { toolPenBtn, toolLineBtn, toolFillBtn, toolStarBtn, toolCircleBtn, penSizeInput, starSizeInput, circleSizeInput, circleFillInput, } = options;
+    let currentTool = null;
+    const listeners = new Set();
     function selectTool(tool) {
+        if (currentTool === tool)
+            return;
         currentTool = tool;
-        [toolPenBtn, toolFillBtn, toolStarBtn, toolCircleBtn].forEach((btn) => btn.classList.remove("selected"));
+        [toolPenBtn, toolLineBtn, toolFillBtn, toolStarBtn, toolCircleBtn].forEach((btn) => btn.classList.remove("selected"));
         if (tool === "pen")
             toolPenBtn.classList.add("selected");
+        if (tool === "line")
+            toolLineBtn.classList.add("selected");
         if (tool === "fill")
             toolFillBtn.classList.add("selected");
         if (tool === "star")
             toolStarBtn.classList.add("selected");
         if (tool === "circle")
             toolCircleBtn.classList.add("selected");
+        listeners.forEach((listener) => listener(tool));
     }
     toolPenBtn.onclick = () => selectTool("pen");
+    toolLineBtn.onclick = () => selectTool("line");
     toolFillBtn.onclick = () => selectTool("fill");
     toolStarBtn.onclick = () => selectTool("star");
     toolCircleBtn.onclick = () => selectTool("circle");
@@ -39,10 +46,14 @@ export function createToolState(options) {
         }
     };
     return {
-        getCurrentTool: () => currentTool,
+        getCurrentTool: () => currentTool !== null && currentTool !== void 0 ? currentTool : "pen",
         getPenSize: () => parseInt(penSizeInput.value),
         getStarRadius: () => parseInt(starSizeInput.value),
         getCircleRadius: () => parseInt(circleSizeInput.value),
         isCircleFilled: () => circleFillInput.checked,
+        subscribeToToolChanges: (listener) => {
+            listeners.add(listener);
+            return () => listeners.delete(listener);
+        },
     };
 }
