@@ -157,6 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
     shiftDownBtn,
     shiftLeftBtn,
     shiftRightBtn,
+    invertBtn: document.getElementById("invertGridBtn") as HTMLButtonElement,
     initialPattern,
     guideState,
     toolState,

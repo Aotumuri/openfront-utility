@@ -13,6 +13,7 @@ type GridManagerOptions = {
   shiftDownBtn: HTMLButtonElement;
   shiftLeftBtn: HTMLButtonElement;
   shiftRightBtn: HTMLButtonElement;
+  invertBtn?: HTMLButtonElement;
   initialPattern: number[][];
   guideState: GuideState;
   toolState: ToolState;
@@ -48,6 +49,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     shiftDownBtn,
     shiftLeftBtn,
     shiftRightBtn,
+    invertBtn,
     initialPattern,
     guideState,
     toolState,
@@ -202,6 +204,15 @@ export function createGridManager(options: GridManagerOptions): GridManager {
         nextPattern[y][x] = patternState[y + 1]?.[x] ?? 0;
       }
     }
+    applyPattern(nextPattern);
+    onPatternChange();
+  });
+
+  invertBtn?.addEventListener("click", () => {
+    setLineStart(null);
+    const nextPattern = patternState.map((row) =>
+      row.map((cell) => (cell === 1 ? 0 : 1))
+    );
     applyPattern(nextPattern);
     onPatternChange();
   });
