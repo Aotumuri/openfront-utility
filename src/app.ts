@@ -1,5 +1,10 @@
 import { initColorPresetControls } from "./app/colorPresets.js";
 import { createDrawingTools } from "./app/drawingTools.js";
+import {
+  buildDevStorageOutput,
+  buildDiscordOutput,
+  buildPreviewLink,
+} from "./app/exportOutputs.js";
 import { setupGridGuides } from "./app/gridGuides.js";
 import { createGridManager } from "./app/gridManager.js";
 import { setupHistoryShortcuts } from "./app/historyShortcuts.js";
@@ -80,6 +85,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewLinkTextarea = document.getElementById(
     "previewLinkOutput"
   ) as HTMLTextAreaElement;
+  const devStorageTextarea = document.getElementById(
+    "devStorageOutput"
+  ) as HTMLTextAreaElement;
   const copyOutputBtn = document.getElementById(
     "copyOutputBtn"
   ) as HTMLButtonElement;
@@ -88,6 +96,9 @@ document.addEventListener("DOMContentLoaded", () => {
   ) as HTMLButtonElement;
   const copyPreviewLinkBtn = document.getElementById(
     "copyPreviewLinkBtn"
+  ) as HTMLButtonElement;
+  const copyDevStorageBtn = document.getElementById(
+    "copyDevStorageBtn"
   ) as HTMLButtonElement;
   const previewCanvas = document.getElementById("preview") as HTMLCanvasElement;
   const previewPrimaryColorInput = document.getElementById(
@@ -205,8 +216,22 @@ document.addEventListener("DOMContentLoaded", () => {
       scale
     );
     outputTextarea.value = base64;
-    discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${previewPrimaryColorInput.value}\nSecondary ${previewSecondaryColorInput.value}`;
-    previewLinkTextarea.value = buildPreviewLink();
+    discordOutputTextarea.value = buildDiscordOutput(
+      base64,
+      previewPrimaryColorInput.value,
+      previewSecondaryColorInput.value
+    );
+    previewLinkTextarea.value = buildPreviewLink(
+      window.location.href,
+      base64,
+      previewPrimaryColorInput.value,
+      previewSecondaryColorInput.value
+    );
+    devStorageTextarea.value = buildDevStorageOutput(
+      base64,
+      previewPrimaryColorInput.value,
+      previewSecondaryColorInput.value
+    );
     renderPreview(base64);
     const params = new URLSearchParams({
       primary: previewPrimaryColorInput.value.replace("#", ""),
@@ -312,23 +337,19 @@ document.addEventListener("DOMContentLoaded", () => {
     copyText(discordOutputTextarea.value);
   }
 
-  function buildPreviewLink() {
-    const base64 = outputTextarea.value.trim();
-    const params = new URLSearchParams({
-      primary: previewPrimaryColorInput.value.replace("#", ""),
-      secondary: previewSecondaryColorInput.value.replace("#", ""),
-      preview: "1",
-    });
-    const hash = base64 ? `#${base64}?${params.toString()}` : "";
-    const url = new URL(window.location.href);
-    url.hash = hash;
-    return url.toString();
-  }
-
   function copyPreviewLink() {
-    const link = buildPreviewLink();
+    const link = buildPreviewLink(
+      window.location.href,
+      outputTextarea.value.trim(),
+      previewPrimaryColorInput.value,
+      previewSecondaryColorInput.value
+    );
     previewLinkTextarea.value = link;
     copyText(link);
+  }
+
+  function copyDevStorageOutput() {
+    copyText(devStorageTextarea.value);
   }
 
   const handleUndo = () => {
@@ -348,6 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
   copyOutputBtn.onclick = copyOutput;
   copyDiscordBtn.onclick = copyDiscordOutput;
   copyPreviewLinkBtn.onclick = copyPreviewLink;
+  copyDevStorageBtn.onclick = copyDevStorageOutput;
   undoBtn.onclick = handleUndo;
   redoBtn.onclick = handleRedo;
   swapColorsBtn.onclick = () => {

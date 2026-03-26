@@ -359,12 +359,14 @@ textarea {
   min-width: 180px;
 }
 
-#previewLinkOutput {
+#previewLinkOutput,
+#devStorageOutput {
   min-height: 40px;
   height: 40px;
 }
 
-.preview-link-row textarea {
+.preview-link-row textarea,
+.dev-storage-row textarea {
   flex: 1;
   min-width: 180px;
 }
