@@ -1,5 +1,5 @@
 export function createGridManager(options) {
-    const { gridDiv, tileWidthInput, tileHeightInput, tileWidthValue, tileHeightValue, gridScaleInput, shiftUpBtn, shiftDownBtn, shiftLeftBtn, shiftRightBtn, initialPattern, guideState, toolState, drawingTools: initialDrawingTools, onPatternChange, } = options;
+    const { gridDiv, tileWidthInput, tileHeightInput, tileWidthValue, tileHeightValue, gridScaleInput, shiftUpBtn, shiftDownBtn, shiftLeftBtn, shiftRightBtn, invertBtn, initialPattern, guideState, toolState, drawingTools: initialDrawingTools, onPatternChange, } = options;
     let drawingTools = initialDrawingTools !== null && initialDrawingTools !== void 0 ? initialDrawingTools : null;
     let tileWidth = parseInt(tileWidthInput.value);
     let tileHeight = parseInt(tileHeightInput.value);
@@ -137,6 +137,12 @@ export function createGridManager(options) {
                 nextPattern[y][x] = (_d = (_c = patternState[y + 1]) === null || _c === void 0 ? void 0 : _c[x]) !== null && _d !== void 0 ? _d : 0;
             }
         }
+        applyPattern(nextPattern);
+        onPatternChange();
+    });
+    invertBtn === null || invertBtn === void 0 ? void 0 : invertBtn.addEventListener("click", () => {
+        setLineStart(null);
+        const nextPattern = patternState.map((row) => row.map((cell) => (cell === 1 ? 0 : 1)));
         applyPattern(nextPattern);
         onPatternChange();
     });

@@ -78,6 +78,7 @@
             <div class="tab-panel actions">
               <div class="row action-row">
                 <button id="clearGridBtn">Clear</button>
+                <button id="invertGridBtn">Invert</button>
                 <button id="undoBtn" disabled>Undo</button>
                 <button id="redoBtn" disabled>Redo</button>
               </div>
@@ -138,6 +139,10 @@
                 <div class="row preview-link-row">
                   <textarea id="previewLinkOutput" readonly></textarea>
                   <button id="copyPreviewLinkBtn" class="btn-primary">Copy Preview Link</button>
+                </div>
+                <div class="row dev-storage-row">
+                  <textarea id="devStorageOutput" readonly></textarea>
+                  <button id="copyDevStorageBtn" class="btn-primary">Copy Dev localStorage</button>
                 </div>
               </div>
               <div class="tab-panel import" id="panel-import">

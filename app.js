@@ -1,5 +1,6 @@
 import { initColorPresetControls } from "./app/colorPresets.js";
 import { createDrawingTools } from "./app/drawingTools.js";
+import { buildDevStorageOutput, buildDiscordOutput, buildPreviewLink, } from "./app/exportOutputs.js";
 import { setupGridGuides } from "./app/gridGuides.js";
 import { createGridManager } from "./app/gridManager.js";
 import { setupHistoryShortcuts } from "./app/historyShortcuts.js";
@@ -41,9 +42,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const outputTextarea = document.getElementById("output");
     const discordOutputTextarea = document.getElementById("discordOutput");
     const previewLinkTextarea = document.getElementById("previewLinkOutput");
+    const devStorageTextarea = document.getElementById("devStorageOutput");
     const copyOutputBtn = document.getElementById("copyOutputBtn");
     const copyDiscordBtn = document.getElementById("copyDiscordBtn");
     const copyPreviewLinkBtn = document.getElementById("copyPreviewLinkBtn");
+    const copyDevStorageBtn = document.getElementById("copyDevStorageBtn");
     const previewCanvas = document.getElementById("preview");
     const previewPrimaryColorInput = document.getElementById("previewPrimaryColor");
     const previewSecondaryColorInput = document.getElementById("previewSecondaryColor");
@@ -83,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
         shiftDownBtn,
         shiftLeftBtn,
         shiftRightBtn,
+        invertBtn: document.getElementById("invertGridBtn"),
         initialPattern,
         guideState,
         toolState,
@@ -133,8 +137,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const scale = parseInt(scaleInput.value);
         const base64 = generatePatternBase64(pattern, gridManager.getTileWidth(), gridManager.getTileHeight(), scale);
         outputTextarea.value = base64;
-        discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${previewPrimaryColorInput.value}\nSecondary ${previewSecondaryColorInput.value}`;
-        previewLinkTextarea.value = buildPreviewLink();
+        discordOutputTextarea.value = buildDiscordOutput(base64, previewPrimaryColorInput.value, previewSecondaryColorInput.value);
+        previewLinkTextarea.value = buildPreviewLink(window.location.href, base64, previewPrimaryColorInput.value, previewSecondaryColorInput.value);
+        devStorageTextarea.value = buildDevStorageOutput(base64, previewPrimaryColorInput.value, previewSecondaryColorInput.value);
         renderPreview(base64);
         const params = new URLSearchParams({
             primary: previewPrimaryColorInput.value.replace("#", ""),
@@ -229,22 +234,13 @@ document.addEventListener("DOMContentLoaded", () => {
     function copyDiscordOutput() {
         copyText(discordOutputTextarea.value);
     }
-    function buildPreviewLink() {
-        const base64 = outputTextarea.value.trim();
-        const params = new URLSearchParams({
-            primary: previewPrimaryColorInput.value.replace("#", ""),
-            secondary: previewSecondaryColorInput.value.replace("#", ""),
-            preview: "1",
-        });
-        const hash = base64 ? `#${base64}?${params.toString()}` : "";
-        const url = new URL(window.location.href);
-        url.hash = hash;
-        return url.toString();
-    }
     function copyPreviewLink() {
-        const link = buildPreviewLink();
+        const link = buildPreviewLink(window.location.href, outputTextarea.value.trim(), previewPrimaryColorInput.value, previewSecondaryColorInput.value);
         previewLinkTextarea.value = link;
         copyText(link);
+    }
+    function copyDevStorageOutput() {
+        copyText(devStorageTextarea.value);
     }
     const handleUndo = () => {
         const base64 = historyManager.undo();
@@ -263,6 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
     copyOutputBtn.onclick = copyOutput;
     copyDiscordBtn.onclick = copyDiscordOutput;
     copyPreviewLinkBtn.onclick = copyPreviewLink;
+    copyDevStorageBtn.onclick = copyDevStorageOutput;
     undoBtn.onclick = handleUndo;
     redoBtn.onclick = handleRedo;
     swapColorsBtn.onclick = () => {
