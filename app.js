@@ -1,9 +1,11 @@
 import { initColorPresetControls } from "./app/colorPresets.js";
+import { copyText } from "./app/copyText.js";
 import { createDrawingTools } from "./app/drawingTools.js";
 import { buildDevStorageOutput, buildDiscordOutput, buildPreviewLink, } from "./app/exportOutputs.js";
 import { setupGridGuides } from "./app/gridGuides.js";
 import { createGridManager } from "./app/gridManager.js";
 import { setupHistoryShortcuts } from "./app/historyShortcuts.js";
+import { initImageImportOverlay } from "./app/imageImportOverlay.js";
 import { initialPattern } from "./app/initialPattern.js";
 import { decodePatternBase64, generatePatternBase64, } from "./app/patternEncoding.js";
 import { createPatternLoader } from "./app/patternLoader.js";
@@ -209,25 +211,15 @@ document.addEventListener("DOMContentLoaded", () => {
         initialColors,
         onChange: () => updateOutput(),
     });
-    function copyText(value) {
-        var _a;
-        const fallbackCopy = () => {
-            const temp = document.createElement("textarea");
-            temp.value = value;
-            temp.style.position = "fixed";
-            temp.style.opacity = "0";
-            document.body.appendChild(temp);
-            temp.focus();
-            temp.select();
-            document.execCommand("copy");
-            temp.remove();
-        };
-        if ((_a = navigator.clipboard) === null || _a === void 0 ? void 0 : _a.writeText) {
-            navigator.clipboard.writeText(value).catch(fallbackCopy);
-            return;
-        }
-        fallbackCopy();
-    }
+    initImageImportOverlay({
+        onApply: (pattern, size) => {
+            tileWidthInput.value = size.width.toString();
+            tileHeightInput.value = size.height.toString();
+            tileWidthValue.value = tileWidthInput.value;
+            tileHeightValue.value = tileHeightInput.value;
+            gridManager.generateGrid(pattern);
+        },
+    });
     function copyOutput() {
         copyText(outputTextarea.value);
     }
