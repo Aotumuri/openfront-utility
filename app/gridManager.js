@@ -1,3 +1,5 @@
+import { getCircleCells, } from "./circleGeometry.js";
+import { invertPattern, shiftPatternDown, shiftPatternLeft, shiftPatternRight, shiftPatternUp } from "./patternTransforms.js";
 export function createGridManager(options) {
     const { gridDiv, tileWidthInput, tileHeightInput, tileWidthValue, tileHeightValue, gridScaleInput, shiftUpBtn, shiftDownBtn, shiftLeftBtn, shiftRightBtn, invertBtn, initialPattern, guideState, toolState, drawingTools: initialDrawingTools, onPatternChange, } = options;
     let drawingTools = initialDrawingTools !== null && initialDrawingTools !== void 0 ? initialDrawingTools : null;
@@ -9,13 +11,12 @@ export function createGridManager(options) {
     let currentHeight = 0;
     let currentWidth = 0;
     let lineStart = null;
+    let circlePreviewCells = [];
     let patternState = [];
     let cellMatrix = [];
     const baseCellSize = 20;
     const getGridScale = () => {
-        if (!gridScaleInput)
-            return 1;
-        const nextScale = parseFloat(gridScaleInput.value);
+        const nextScale = gridScaleInput ? parseFloat(gridScaleInput.value) : 1;
         return Number.isFinite(nextScale) && nextScale > 0 ? nextScale : 1;
     };
     const applyGridSizing = () => {
@@ -44,9 +45,7 @@ export function createGridManager(options) {
         tileHeightInput.value = tileHeightValue.value;
         generateGrid();
     });
-    gridScaleInput === null || gridScaleInput === void 0 ? void 0 : gridScaleInput.addEventListener("change", () => {
-        applyGridSizing();
-    });
+    gridScaleInput === null || gridScaleInput === void 0 ? void 0 : gridScaleInput.addEventListener("change", applyGridSizing);
     const isInBounds = (x, y) => x >= 0 && y >= 0 && x < tileWidth && y < tileHeight;
     const setCellActive = (x, y, active) => {
         var _a;
@@ -58,14 +57,8 @@ export function createGridManager(options) {
             cell.classList.toggle("active", active);
         }
     };
-    const isCellActive = (x, y) => {
-        if (!isInBounds(x, y))
-            return false;
-        return patternState[y][x] === 1;
-    };
-    const setDrawingTools = (tools) => {
-        drawingTools = tools;
-    };
+    const isCellActive = (x, y) => isInBounds(x, y) && patternState[y][x] === 1;
+    const setDrawingTools = (tools) => (drawingTools = tools);
     const setLineStart = (point) => {
         var _a, _b, _c, _d;
         if (lineStart) {
@@ -76,10 +69,21 @@ export function createGridManager(options) {
             (_d = (_c = cellMatrix[lineStart.y]) === null || _c === void 0 ? void 0 : _c[lineStart.x]) === null || _d === void 0 ? void 0 : _d.classList.add("line-start");
         }
     };
+    const clearCirclePreview = () => {
+        circlePreviewCells.forEach((point) => { var _a, _b; return (_b = (_a = cellMatrix[point.y]) === null || _a === void 0 ? void 0 : _a[point.x]) === null || _b === void 0 ? void 0 : _b.classList.remove("circle-hover"); });
+        circlePreviewCells = [];
+    };
+    const previewCircle = (center, radius) => {
+        clearCirclePreview();
+        circlePreviewCells = getCircleCells(center, Math.max(0, radius), toolState.isCircleFilled(), tileWidth, tileHeight);
+        circlePreviewCells.forEach((cell) => { var _a, _b; return (_b = (_a = cellMatrix[cell.y]) === null || _a === void 0 ? void 0 : _a[cell.x]) === null || _b === void 0 ? void 0 : _b.classList.add("circle-hover"); });
+    };
+    gridDiv.onmouseleave = clearCirclePreview;
     toolState.subscribeToToolChanges((tool) => {
-        if (tool !== "line") {
+        if (tool !== "line")
             setLineStart(null);
-        }
+        if (tool !== "circle")
+            clearCirclePreview();
     });
     const applyPattern = (nextPattern) => {
         var _a;
@@ -89,62 +93,26 @@ export function createGridManager(options) {
             }
         }
     };
-    shiftLeftBtn.addEventListener("click", () => {
-        var _a, _b;
+    const applyPatternTransform = (transform) => {
         setLineStart(null);
-        const nextPattern = [];
-        for (let y = 0; y < tileHeight; y++) {
-            const row = (_a = patternState[y]) !== null && _a !== void 0 ? _a : [];
-            nextPattern[y] = row.slice(1).concat((_b = row[0]) !== null && _b !== void 0 ? _b : 0);
-        }
-        applyPattern(nextPattern);
+        clearCirclePreview();
+        applyPattern(transform(patternState));
         onPatternChange();
+    };
+    shiftLeftBtn.addEventListener("click", () => {
+        applyPatternTransform(shiftPatternLeft);
     });
     shiftRightBtn.addEventListener("click", () => {
-        var _a, _b;
-        setLineStart(null);
-        const nextPattern = [];
-        for (let y = 0; y < tileHeight; y++) {
-            const row = (_a = patternState[y]) !== null && _a !== void 0 ? _a : [];
-            const last = (_b = row[row.length - 1]) !== null && _b !== void 0 ? _b : 0;
-            nextPattern[y] = [last, ...row.slice(0, -1)];
-        }
-        applyPattern(nextPattern);
-        onPatternChange();
+        applyPatternTransform(shiftPatternRight);
     });
     shiftDownBtn.addEventListener("click", () => {
-        var _a, _b, _c, _d;
-        setLineStart(null);
-        const nextPattern = Array.from({ length: tileHeight }, () => new Array(tileWidth).fill(0));
-        for (let x = 0; x < tileWidth; x++) {
-            const bottomValue = (_b = (_a = patternState[tileHeight - 1]) === null || _a === void 0 ? void 0 : _a[x]) !== null && _b !== void 0 ? _b : 0;
-            nextPattern[0][x] = bottomValue;
-            for (let y = 1; y < tileHeight; y++) {
-                nextPattern[y][x] = (_d = (_c = patternState[y - 1]) === null || _c === void 0 ? void 0 : _c[x]) !== null && _d !== void 0 ? _d : 0;
-            }
-        }
-        applyPattern(nextPattern);
-        onPatternChange();
+        applyPatternTransform(shiftPatternDown);
     });
     shiftUpBtn.addEventListener("click", () => {
-        var _a, _b, _c, _d;
-        setLineStart(null);
-        const nextPattern = Array.from({ length: tileHeight }, () => new Array(tileWidth).fill(0));
-        for (let x = 0; x < tileWidth; x++) {
-            const topValue = (_b = (_a = patternState[0]) === null || _a === void 0 ? void 0 : _a[x]) !== null && _b !== void 0 ? _b : 0;
-            nextPattern[tileHeight - 1][x] = topValue;
-            for (let y = 0; y < tileHeight - 1; y++) {
-                nextPattern[y][x] = (_d = (_c = patternState[y + 1]) === null || _c === void 0 ? void 0 : _c[x]) !== null && _d !== void 0 ? _d : 0;
-            }
-        }
-        applyPattern(nextPattern);
-        onPatternChange();
+        applyPatternTransform(shiftPatternUp);
     });
     invertBtn === null || invertBtn === void 0 ? void 0 : invertBtn.addEventListener("click", () => {
-        setLineStart(null);
-        const nextPattern = patternState.map((row) => row.map((cell) => (cell === 1 ? 0 : 1)));
-        applyPattern(nextPattern);
-        onPatternChange();
+        applyPatternTransform(invertPattern);
     });
     function getCurrentPattern() {
         return patternState;
@@ -154,6 +122,7 @@ export function createGridManager(options) {
         tileWidth = parseInt(tileWidthInput.value);
         tileHeight = parseInt(tileHeightInput.value);
         setLineStart(null);
+        clearCirclePreview();
         applyGridSizing();
         const basePattern = pattern || (isFirstLoad ? initialPattern : patternState);
         patternState = Array.from({ length: tileHeight }, (_, y) => Array.from({ length: tileWidth }, (_, x) => basePattern[y] && basePattern[y][x] === 1 ? 1 : 0));
@@ -224,7 +193,7 @@ export function createGridManager(options) {
                 nextCellMatrix[y][x] = cell;
                 lastCell = cell;
                 cell.classList.remove("guide-v", "guide-h", "center-v", "center-h");
-                cell.classList.remove("line-start");
+                cell.classList.remove("line-start", "circle-hover");
                 cell.classList.toggle("active", patternState[y][x] === 1);
                 if (guideState.isBlackEnabled()) {
                     if (x !== 0 && x % 5 === 0)
@@ -260,9 +229,11 @@ export function createGridManager(options) {
                         drawingTools === null || drawingTools === void 0 ? void 0 : drawingTools.drawStar(x, y, r);
                     }
                     else if (tool === "circle") {
-                        const r = toolState.getCircleRadius();
-                        const fill = toolState.isCircleFilled();
-                        drawingTools === null || drawingTools === void 0 ? void 0 : drawingTools.drawCircle(x, y, r, fill);
+                        clearCirclePreview();
+                        drawingTools === null || drawingTools === void 0 ? void 0 : drawingTools.drawCircle(x, y, toolState.getCircleRadius(), toolState.isCircleFilled());
+                    }
+                    else {
+                        return;
                     }
                     onPatternChange();
                 };
@@ -275,6 +246,9 @@ export function createGridManager(options) {
                         applyPenBrush(x, y, toggleState);
                         onPatternChange();
                     }
+                    else if (!isMouseDown && tool === "circle") {
+                        previewCircle({ x, y }, toolState.getCircleRadius());
+                    }
                 };
             }
         }
@@ -284,6 +258,7 @@ export function createGridManager(options) {
     }
     function clearGrid() {
         setLineStart(null);
+        clearCirclePreview();
         for (let y = 0; y < tileHeight; y++) {
             for (let x = 0; x < tileWidth; x++) {
                 setCellActive(x, y, false);

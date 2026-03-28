@@ -1,52 +1,11 @@
+import { getCircleCells } from "./circleGeometry.js";
 export function createDrawingTools(options) {
     const { getTileWidth, getTileHeight, isCellActive, setCellActive } = options;
-    function plotCirclePoints(cx, cy, x, y, width, height) {
-        const pts = [
-            [cx + x, cy + y],
-            [cx + y, cy + x],
-            [cx - y, cy + x],
-            [cx - x, cy + y],
-            [cx - x, cy - y],
-            [cx - y, cy - x],
-            [cx + y, cy - x],
-            [cx + x, cy - y],
-        ];
-        for (const [px, py] of pts) {
-            if (px >= 0 && px < width && py >= 0 && py < height) {
-                setCellActive(px, py, true);
-            }
-        }
-    }
     function drawCircle(cx, cy, r, fill) {
         const width = getTileWidth();
         const height = getTileHeight();
-        if (fill) {
-            for (let y = -r; y <= r; y++) {
-                for (let x = -r; x <= r; x++) {
-                    if (x * x + y * y <= r * r) {
-                        const px = cx + x;
-                        const py = cy + y;
-                        if (px >= 0 && px < width && py >= 0 && py < height) {
-                            setCellActive(px, py, true);
-                        }
-                    }
-                }
-            }
-        }
-        else {
-            let x = r, y = 0, err = 0;
-            while (x >= y) {
-                plotCirclePoints(cx, cy, x, y, width, height);
-                y++;
-                if (err <= 0) {
-                    err += 2 * y + 1;
-                }
-                else {
-                    x--;
-                    err -= 2 * x + 1;
-                }
-            }
-        }
+        const points = getCircleCells({ x: cx, y: cy }, r, fill, width, height);
+        points.forEach((point) => setCellActive(point.x, point.y, true));
     }
     function drawLine(x0, y0, x1, y1) {
         let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
