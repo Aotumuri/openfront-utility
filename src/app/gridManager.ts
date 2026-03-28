@@ -1,5 +1,10 @@
+import {
+  getCircleCells,
+  type GridPoint,
+} from "./circleGeometry.js";
 import type { DrawingTools } from "./drawingTools.js";
 import type { GuideState } from "./gridGuides.js";
+import { invertPattern, shiftPatternDown, shiftPatternLeft, shiftPatternRight, shiftPatternUp } from "./patternTransforms.js";
 import type { ToolState } from "./toolState.js";
 
 type GridManagerOptions = {
@@ -32,11 +37,6 @@ export type GridManager = {
   setDrawingTools: (tools: DrawingTools) => void;
 };
 
-type Point = {
-  x: number;
-  y: number;
-};
-
 export function createGridManager(options: GridManagerOptions): GridManager {
   const {
     gridDiv,
@@ -65,14 +65,14 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   let isFirstLoad = true;
   let currentHeight = 0;
   let currentWidth = 0;
-  let lineStart: Point | null = null;
+  let lineStart: GridPoint | null = null;
+  let circlePreviewCells: GridPoint[] = [];
   let patternState: number[][] = [];
   let cellMatrix: HTMLDivElement[][] = [];
   const baseCellSize = 20;
 
   const getGridScale = () => {
-    if (!gridScaleInput) return 1;
-    const nextScale = parseFloat(gridScaleInput.value);
+    const nextScale = gridScaleInput ? parseFloat(gridScaleInput.value) : 1;
     return Number.isFinite(nextScale) && nextScale > 0 ? nextScale : 1;
   };
 
@@ -104,9 +104,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     tileHeightInput.value = tileHeightValue.value;
     generateGrid();
   });
-  gridScaleInput?.addEventListener("change", () => {
-    applyGridSizing();
-  });
+  gridScaleInput?.addEventListener("change", applyGridSizing);
 
   const isInBounds = (x: number, y: number) =>
     x >= 0 && y >= 0 && x < tileWidth && y < tileHeight;
@@ -120,16 +118,12 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     }
   };
 
-  const isCellActive = (x: number, y: number) => {
-    if (!isInBounds(x, y)) return false;
-    return patternState[y][x] === 1;
-  };
+  const isCellActive = (x: number, y: number) =>
+    isInBounds(x, y) && patternState[y][x] === 1;
 
-  const setDrawingTools = (tools: DrawingTools) => {
-    drawingTools = tools;
-  };
+  const setDrawingTools = (tools: DrawingTools) => (drawingTools = tools);
 
-  const setLineStart = (point: Point | null) => {
+  const setLineStart = (point: GridPoint | null) => {
     if (lineStart) {
       cellMatrix[lineStart.y]?.[lineStart.x]?.classList.remove("line-start");
     }
@@ -139,10 +133,32 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     }
   };
 
+  const clearCirclePreview = () => {
+    circlePreviewCells.forEach((point) =>
+      cellMatrix[point.y]?.[point.x]?.classList.remove("circle-hover")
+    );
+    circlePreviewCells = [];
+  };
+
+  const previewCircle = (center: GridPoint, radius: number) => {
+    clearCirclePreview();
+    circlePreviewCells = getCircleCells(
+      center,
+      Math.max(0, radius),
+      toolState.isCircleFilled(),
+      tileWidth,
+      tileHeight
+    );
+    circlePreviewCells.forEach((cell) =>
+      cellMatrix[cell.y]?.[cell.x]?.classList.add("circle-hover")
+    );
+  };
+
+  gridDiv.onmouseleave = clearCirclePreview;
+
   toolState.subscribeToToolChanges((tool) => {
-    if (tool !== "line") {
-      setLineStart(null);
-    }
+    if (tool !== "line") setLineStart(null);
+    if (tool !== "circle") clearCirclePreview();
   });
 
   const applyPattern = (nextPattern: number[][]) => {
@@ -153,68 +169,31 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     }
   };
 
-  shiftLeftBtn.addEventListener("click", () => {
+  const applyPatternTransform = (transform: (pattern: number[][]) => number[][]) => {
     setLineStart(null);
-    const nextPattern: number[][] = [];
-    for (let y = 0; y < tileHeight; y++) {
-      const row = patternState[y] ?? [];
-      nextPattern[y] = row.slice(1).concat(row[0] ?? 0);
-    }
-    applyPattern(nextPattern);
+    clearCirclePreview();
+    applyPattern(transform(patternState));
     onPatternChange();
+  };
+
+  shiftLeftBtn.addEventListener("click", () => {
+    applyPatternTransform(shiftPatternLeft);
   });
 
   shiftRightBtn.addEventListener("click", () => {
-    setLineStart(null);
-    const nextPattern: number[][] = [];
-    for (let y = 0; y < tileHeight; y++) {
-      const row = patternState[y] ?? [];
-      const last = row[row.length - 1] ?? 0;
-      nextPattern[y] = [last, ...row.slice(0, -1)];
-    }
-    applyPattern(nextPattern);
-    onPatternChange();
+    applyPatternTransform(shiftPatternRight);
   });
 
   shiftDownBtn.addEventListener("click", () => {
-    setLineStart(null);
-    const nextPattern: number[][] = Array.from({ length: tileHeight }, () =>
-      new Array(tileWidth).fill(0)
-    );
-    for (let x = 0; x < tileWidth; x++) {
-      const bottomValue = patternState[tileHeight - 1]?.[x] ?? 0;
-      nextPattern[0][x] = bottomValue;
-      for (let y = 1; y < tileHeight; y++) {
-        nextPattern[y][x] = patternState[y - 1]?.[x] ?? 0;
-      }
-    }
-    applyPattern(nextPattern);
-    onPatternChange();
+    applyPatternTransform(shiftPatternDown);
   });
 
   shiftUpBtn.addEventListener("click", () => {
-    setLineStart(null);
-    const nextPattern: number[][] = Array.from({ length: tileHeight }, () =>
-      new Array(tileWidth).fill(0)
-    );
-    for (let x = 0; x < tileWidth; x++) {
-      const topValue = patternState[0]?.[x] ?? 0;
-      nextPattern[tileHeight - 1][x] = topValue;
-      for (let y = 0; y < tileHeight - 1; y++) {
-        nextPattern[y][x] = patternState[y + 1]?.[x] ?? 0;
-      }
-    }
-    applyPattern(nextPattern);
-    onPatternChange();
+    applyPatternTransform(shiftPatternUp);
   });
 
   invertBtn?.addEventListener("click", () => {
-    setLineStart(null);
-    const nextPattern = patternState.map((row) =>
-      row.map((cell) => (cell === 1 ? 0 : 1))
-    );
-    applyPattern(nextPattern);
-    onPatternChange();
+    applyPatternTransform(invertPattern);
   });
 
   function getCurrentPattern(): number[][] {
@@ -225,6 +204,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     tileWidth = parseInt(tileWidthInput.value);
     tileHeight = parseInt(tileHeightInput.value);
     setLineStart(null);
+    clearCirclePreview();
     applyGridSizing();
     const basePattern =
       pattern || (isFirstLoad ? initialPattern : patternState);
@@ -303,7 +283,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
         lastCell = cell;
 
         cell.classList.remove("guide-v", "guide-h", "center-v", "center-h");
-        cell.classList.remove("line-start");
+        cell.classList.remove("line-start", "circle-hover");
         cell.classList.toggle("active", patternState[y][x] === 1);
 
         if (guideState.isBlackEnabled()) {
@@ -333,9 +313,15 @@ export function createGridManager(options: GridManagerOptions): GridManager {
             const r = toolState.getStarRadius();
             drawingTools?.drawStar(x, y, r);
           } else if (tool === "circle") {
-            const r = toolState.getCircleRadius();
-            const fill = toolState.isCircleFilled();
-            drawingTools?.drawCircle(x, y, r, fill);
+            clearCirclePreview();
+            drawingTools?.drawCircle(
+              x,
+              y,
+              toolState.getCircleRadius(),
+              toolState.isCircleFilled()
+            );
+          } else {
+            return;
           }
           onPatternChange();
         };
@@ -348,6 +334,8 @@ export function createGridManager(options: GridManagerOptions): GridManager {
             }
             applyPenBrush(x, y, toggleState);
             onPatternChange();
+          } else if (!isMouseDown && tool === "circle") {
+            previewCircle({ x, y }, toolState.getCircleRadius());
           }
         };
       }
@@ -359,6 +347,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
 
   function clearGrid() {
     setLineStart(null);
+    clearCirclePreview();
     for (let y = 0; y < tileHeight; y++) {
       for (let x = 0; x < tileWidth; x++) {
         setCellActive(x, y, false);
