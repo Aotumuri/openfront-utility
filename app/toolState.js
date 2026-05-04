@@ -1,12 +1,12 @@
 export function createToolState(options) {
-    const { toolPenBtn, toolLineBtn, toolFillBtn, toolStarBtn, toolCircleBtn, penSizeInput, starSizeInput, circleSizeInput, circleFillInput, } = options;
+    const { toolPenBtn, toolLineBtn, toolFillBtn, toolStarBtn, toolCircleBtn, toolSelectBtn, penSizeInput, starSizeInput, circleSizeInput, circleFillInput, } = options;
     let currentTool = null;
     const listeners = new Set();
     function selectTool(tool) {
         if (currentTool === tool)
             return;
         currentTool = tool;
-        [toolPenBtn, toolLineBtn, toolFillBtn, toolStarBtn, toolCircleBtn].forEach((btn) => btn.classList.remove("selected"));
+        [toolPenBtn, toolLineBtn, toolFillBtn, toolStarBtn, toolCircleBtn, toolSelectBtn].forEach((btn) => btn.classList.remove("selected"));
         if (tool === "pen")
             toolPenBtn.classList.add("selected");
         if (tool === "line")
@@ -17,6 +17,8 @@ export function createToolState(options) {
             toolStarBtn.classList.add("selected");
         if (tool === "circle")
             toolCircleBtn.classList.add("selected");
+        if (tool === "select")
+            toolSelectBtn.classList.add("selected");
         listeners.forEach((listener) => listener(tool));
     }
     toolPenBtn.onclick = () => selectTool("pen");
@@ -24,6 +26,7 @@ export function createToolState(options) {
     toolFillBtn.onclick = () => selectTool("fill");
     toolStarBtn.onclick = () => selectTool("star");
     toolCircleBtn.onclick = () => selectTool("circle");
+    toolSelectBtn.onclick = () => selectTool(currentTool === "select" ? null : "select");
     selectTool("pen");
     starSizeInput.oninput = () => {
         if (currentTool === "star") {

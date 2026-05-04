@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const toolFillBtn = document.getElementById("tool-fill");
     const toolStarBtn = document.getElementById("tool-star");
     const toolCircleBtn = document.getElementById("tool-circle");
+    const toolSelectBtn = document.getElementById("tool-select");
     const starSizeInput = document.getElementById("star-size");
     const circleSizeInput = document.getElementById("circle-size");
     const circleFillInput = document.getElementById("circle-fill");
@@ -40,6 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const shiftLeftBtn = document.getElementById("shiftLeftBtn");
     const shiftRightBtn = document.getElementById("shiftRightBtn");
     const shiftDownBtn = document.getElementById("shiftDownBtn");
+    const rotateLeftBtn = document.getElementById("rotateLeftBtn");
+    const rotateRightBtn = document.getElementById("rotateRightBtn");
     const gridDiv = document.getElementById("grid");
     const outputTextarea = document.getElementById("output");
     const discordOutputTextarea = document.getElementById("discordOutput");
@@ -56,6 +59,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const colorPresetContainer = document.getElementById("colorPresetContainer");
     const layoutTabsInput = document.getElementById("layout-tabs");
     const viewPreviewInput = document.getElementById("view-preview");
+    const tabActionsInput = document.getElementById("tab-actions");
+    const tabToolsInput = document.getElementById("tab-tools");
+    const tabGridInput = document.getElementById("tab-grid");
     const previewPanel = document.querySelector(".preview-panel");
     if (!colorPresetContainer) {
         throw new Error("Missing color preset container");
@@ -71,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         toolFillBtn,
         toolStarBtn,
         toolCircleBtn,
+        toolSelectBtn,
         penSizeInput,
         starSizeInput,
         circleSizeInput,
@@ -89,6 +96,8 @@ document.addEventListener("DOMContentLoaded", () => {
         shiftLeftBtn,
         shiftRightBtn,
         invertBtn: document.getElementById("invertGridBtn"),
+        rotateLeftBtn,
+        rotateRightBtn,
         initialPattern,
         guideState,
         toolState,
@@ -262,6 +271,14 @@ document.addEventListener("DOMContentLoaded", () => {
         updateOutput();
     };
     setupHistoryShortcuts({ onUndo: handleUndo, onRedo: handleRedo });
+    const syncRotateSelectWithActionsTab = () => {
+        if (!tabActionsInput.checked && toolState.getCurrentTool() === "select") {
+            toolSelectBtn.click();
+        }
+    };
+    tabActionsInput.addEventListener("change", syncRotateSelectWithActionsTab);
+    tabToolsInput.addEventListener("change", syncRotateSelectWithActionsTab);
+    tabGridInput.addEventListener("change", syncRotateSelectWithActionsTab);
     gridManager.generateGrid();
     if (shouldFocusPreview) {
         if (layoutTabsInput) {
