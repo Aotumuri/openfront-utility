@@ -60,6 +60,26 @@ function buildMetaSection(pattern) {
         price.textContent = `Price: ${pattern.product.price}`;
         metaContainer.appendChild(price);
     }
+    if (typeof pattern.priceSoft === "number" || typeof pattern.priceHard === "number") {
+        const priceRange = document.createElement("div");
+        priceRange.className = "pattern-meta-item";
+        const soft = typeof pattern.priceSoft === "number" ? pattern.priceSoft : "n/a";
+        const hard = typeof pattern.priceHard === "number" ? pattern.priceHard : "n/a";
+        priceRange.textContent = `Price: ${soft} / ${hard}`;
+        metaContainer.appendChild(priceRange);
+    }
+    if (pattern.artist) {
+        const artist = document.createElement("div");
+        artist.className = "pattern-meta-item";
+        artist.textContent = `Artist: ${pattern.artist}`;
+        metaContainer.appendChild(artist);
+    }
+    if (pattern.rarity) {
+        const rarity = document.createElement("div");
+        rarity.className = "pattern-meta-item";
+        rarity.textContent = `Rarity: ${pattern.rarity}`;
+        metaContainer.appendChild(rarity);
+    }
     if (pattern.affiliateCode) {
         const code = document.createElement("div");
         code.className = "pattern-meta-item";
