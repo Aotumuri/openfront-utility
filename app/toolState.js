@@ -1,12 +1,20 @@
 export function createToolState(options) {
-    const { toolPenBtn, toolLineBtn, toolFillBtn, toolStarBtn, toolCircleBtn, toolSelectBtn, penSizeInput, starSizeInput, circleSizeInput, circleFillInput, } = options;
+    const { toolPenBtn, toolLineBtn, toolFillBtn, toolStarBtn, toolCircleBtn, toolSelectBtn, toolStampBtn, penSizeInput, starSizeInput, circleSizeInput, stampBrushSizeInput, circleFillInput, } = options;
     let currentTool = null;
     const listeners = new Set();
     function selectTool(tool) {
         if (currentTool === tool)
             return;
         currentTool = tool;
-        [toolPenBtn, toolLineBtn, toolFillBtn, toolStarBtn, toolCircleBtn, toolSelectBtn].forEach((btn) => btn.classList.remove("selected"));
+        [
+            toolPenBtn,
+            toolLineBtn,
+            toolFillBtn,
+            toolStarBtn,
+            toolCircleBtn,
+            toolSelectBtn,
+            toolStampBtn,
+        ].forEach((btn) => btn.classList.remove("selected"));
         if (tool === "pen")
             toolPenBtn.classList.add("selected");
         if (tool === "line")
@@ -19,6 +27,8 @@ export function createToolState(options) {
             toolCircleBtn.classList.add("selected");
         if (tool === "select")
             toolSelectBtn.classList.add("selected");
+        if (tool === "stamp")
+            toolStampBtn.classList.add("selected");
         listeners.forEach((listener) => listener(tool));
     }
     toolPenBtn.onclick = () => selectTool("pen");
@@ -27,6 +37,7 @@ export function createToolState(options) {
     toolStarBtn.onclick = () => selectTool("star");
     toolCircleBtn.onclick = () => selectTool("circle");
     toolSelectBtn.onclick = () => selectTool(currentTool === "select" ? null : "select");
+    toolStampBtn.onclick = () => selectTool("stamp");
     selectTool("pen");
     starSizeInput.oninput = () => {
         if (currentTool === "star") {
@@ -53,6 +64,7 @@ export function createToolState(options) {
         getPenSize: () => parseInt(penSizeInput.value),
         getStarRadius: () => parseInt(starSizeInput.value),
         getCircleRadius: () => parseInt(circleSizeInput.value),
+        getStampBrushRadius: () => parseInt(stampBrushSizeInput.value),
         isCircleFilled: () => circleFillInput.checked,
         subscribeToToolChanges: (listener) => {
             listeners.add(listener);

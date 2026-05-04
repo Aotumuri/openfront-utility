@@ -18,6 +18,9 @@ export function createGridManager(options) {
     let isSelectionActive = false;
     let selectionCells = [];
     let selectionAnchorCell = null;
+    let stampSelectionCells = [];
+    let stampSelectionVisited = new Set();
+    let stampSelectionLastPoint = null;
     let patternState = [];
     let cellMatrix = [];
     const baseCellSize = 20;
@@ -66,6 +69,53 @@ export function createGridManager(options) {
     };
     const isCellActive = (x, y) => isInBounds(x, y) && patternState[y][x] === 1;
     const setDrawingTools = (tools) => (drawingTools = tools);
+    const clearStampSelection = () => {
+        stampSelectionCells.forEach((point) => {
+            var _a, _b;
+            (_b = (_a = cellMatrix[point.y]) === null || _a === void 0 ? void 0 : _a[point.x]) === null || _b === void 0 ? void 0 : _b.classList.remove("stamp-selection-cell");
+        });
+        stampSelectionCells = [];
+        stampSelectionVisited = new Set();
+        stampSelectionLastPoint = null;
+    };
+    const addStampCell = (x, y) => {
+        var _a, _b;
+        if (!isInBounds(x, y))
+            return;
+        const key = `${x},${y}`;
+        if (stampSelectionVisited.has(key))
+            return;
+        stampSelectionVisited.add(key);
+        stampSelectionCells.push({ x, y });
+        (_b = (_a = cellMatrix[y]) === null || _a === void 0 ? void 0 : _a[x]) === null || _b === void 0 ? void 0 : _b.classList.add("stamp-selection-cell");
+    };
+    const addStampCircle = (center) => {
+        const points = getCircleCells(center, Math.max(0, toolState.getStampBrushRadius()), true, tileWidth, tileHeight);
+        points.forEach((point) => addStampCell(point.x, point.y));
+    };
+    const addStampPath = (from, to) => {
+        let x = from.x;
+        let y = from.y;
+        let dx = Math.abs(to.x - from.x);
+        let sx = from.x < to.x ? 1 : -1;
+        let dy = -Math.abs(to.y - from.y);
+        let sy = from.y < to.y ? 1 : -1;
+        let err = dx + dy;
+        while (true) {
+            addStampCircle({ x, y });
+            if (x === to.x && y === to.y)
+                break;
+            const e2 = 2 * err;
+            if (e2 >= dy) {
+                err += dy;
+                x += sx;
+            }
+            if (e2 <= dx) {
+                err += dx;
+                y += sy;
+            }
+        }
+    };
     const clearSelection = () => {
         selectionCells.forEach((point) => {
             var _a, _b;
@@ -169,6 +219,9 @@ export function createGridManager(options) {
             clearSelectionTimer();
             clearSelection();
         }
+        if (tool !== "stamp") {
+            clearStampSelection();
+        }
     });
     const applyPattern = (nextPattern) => {
         var _a;
@@ -182,6 +235,7 @@ export function createGridManager(options) {
         setLineStart(null);
         clearCirclePreview();
         clearSelection();
+        clearStampSelection();
         applyPattern(transform(patternState));
         onPatternChange();
     };
@@ -212,12 +266,25 @@ export function createGridManager(options) {
             renderSelection();
         }, selectionHoldDelay);
     };
+    const startStampSelection = (x, y) => {
+        clearStampSelection();
+        addStampCircle({ x, y });
+        stampSelectionLastPoint = { x, y };
+    };
     const updateSelection = (x, y) => {
         if (!selectionStart)
             return;
         selectionEnd = { x, y };
         if (isSelectionActive)
             renderSelection();
+    };
+    const updateStampSelection = (x, y) => {
+        if (!stampSelectionLastPoint) {
+            startStampSelection(x, y);
+            return;
+        }
+        addStampPath(stampSelectionLastPoint, { x, y });
+        stampSelectionLastPoint = { x, y };
     };
     const getSelectionCorner = (start, end) => {
         const side = Math.min(Math.abs(end.x - start.x), Math.abs(end.y - start.y));
@@ -254,6 +321,7 @@ export function createGridManager(options) {
         setLineStart(null);
         clearCirclePreview();
         clearSelection();
+        clearStampSelection();
         applyGridSizing();
         const basePattern = pattern || (isFirstLoad ? initialPattern : patternState);
         patternState = Array.from({ length: tileHeight }, (_, y) => Array.from({ length: tileWidth }, (_, x) => basePattern[y] && basePattern[y][x] === 1 ? 1 : 0));
@@ -327,6 +395,7 @@ export function createGridManager(options) {
                 cell.classList.remove("line-start", "circle-hover");
                 cell.classList.remove("selection-cell");
                 cell.classList.remove("selection-anchor");
+                cell.classList.remove("stamp-selection-cell");
                 cell.classList.toggle("active", patternState[y][x] === 1);
                 if (guideState.isBlackEnabled()) {
                     if (x !== 0 && x % 5 === 0)
@@ -365,6 +434,9 @@ export function createGridManager(options) {
                         clearCirclePreview();
                         drawingTools === null || drawingTools === void 0 ? void 0 : drawingTools.drawCircle(x, y, toolState.getCircleRadius(), toolState.isCircleFilled());
                     }
+                    else if (tool === "stamp") {
+                        return;
+                    }
                     else {
                         return;
                     }
@@ -385,15 +457,24 @@ export function createGridManager(options) {
                     else if (isMouseDown && tool === "select") {
                         updateSelection(x, y);
                     }
+                    else if (isMouseDown && tool === "stamp") {
+                        updateStampSelection(x, y);
+                    }
                 };
                 cell.onmousedown = () => {
                     if (toolState.getCurrentTool() === "select") {
                         startSelection(x, y);
                     }
+                    else if (toolState.getCurrentTool() === "stamp") {
+                        startStampSelection(x, y);
+                    }
                 };
                 cell.onmouseup = () => {
                     if (toolState.getCurrentTool() === "select") {
                         finishSelection();
+                    }
+                    else if (toolState.getCurrentTool() === "stamp") {
+                        stampSelectionLastPoint = null;
                     }
                 };
             }
@@ -406,6 +487,7 @@ export function createGridManager(options) {
         setLineStart(null);
         clearCirclePreview();
         clearSelection();
+        clearStampSelection();
         for (let y = 0; y < tileHeight; y++) {
             for (let x = 0; x < tileWidth; x++) {
                 setCellActive(x, y, false);
@@ -422,5 +504,6 @@ export function createGridManager(options) {
         isCellActive,
         setCellActive,
         setDrawingTools,
+        getStampSelection: () => stampSelectionCells,
     };
 }

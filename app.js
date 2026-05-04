@@ -22,9 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const toolFillBtn = document.getElementById("tool-fill");
     const toolStarBtn = document.getElementById("tool-star");
     const toolCircleBtn = document.getElementById("tool-circle");
+    const toolStampBtn = document.getElementById("tool-stamp");
     const toolSelectBtn = document.getElementById("tool-select");
     const starSizeInput = document.getElementById("star-size");
     const circleSizeInput = document.getElementById("circle-size");
+    const stampBrushSizeInput = document.getElementById("stamp-brush-size");
     const circleFillInput = document.getElementById("circle-fill");
     const loadBtn = document.getElementById("loadBtn");
     const tileWidthInput = document.getElementById("tileWidth");
@@ -41,6 +43,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const shiftLeftBtn = document.getElementById("shiftLeftBtn");
     const shiftRightBtn = document.getElementById("shiftRightBtn");
     const shiftDownBtn = document.getElementById("shiftDownBtn");
+    const stampWidthInput = document.getElementById("stampWidth");
+    const stampHeightInput = document.getElementById("stampHeight");
+    const stampApplyModeSelect = document.getElementById("stampApplyMode");
+    const stampEditor = document.getElementById("stampEditor");
+    const stampApplyBtn = document.getElementById("stampApplyBtn");
+    const stampClearBtn = document.getElementById("stampClearBtn");
     const rotateLeftBtn = document.getElementById("rotateLeftBtn");
     const rotateRightBtn = document.getElementById("rotateRightBtn");
     const gridDiv = document.getElementById("grid");
@@ -62,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tabActionsInput = document.getElementById("tab-actions");
     const tabToolsInput = document.getElementById("tab-tools");
     const tabGridInput = document.getElementById("tab-grid");
+    const tabStampInput = document.getElementById("tab-stamp");
     const previewPanel = document.querySelector(".preview-panel");
     if (!colorPresetContainer) {
         throw new Error("Missing color preset container");
@@ -78,10 +87,17 @@ document.addEventListener("DOMContentLoaded", () => {
         toolStarBtn,
         toolCircleBtn,
         toolSelectBtn,
+        toolStampBtn,
         penSizeInput,
         starSizeInput,
         circleSizeInput,
+        stampBrushSizeInput,
         circleFillInput,
+    });
+    toolState.subscribeToToolChanges((tool) => {
+        if (tool === "stamp") {
+            tabStampInput.checked = true;
+        }
     });
     let updateOutput = () => { };
     const gridManager = createGridManager({
@@ -119,6 +135,65 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     const historyManager = createHistoryManager();
     let isApplyingHistory = false;
+    let stampPattern = Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => 0));
+    const clampInt = (value, min, max, fallback) => {
+        const parsed = parseInt(value);
+        if (!Number.isFinite(parsed))
+            return fallback;
+        return Math.max(min, Math.min(max, parsed));
+    };
+    const ensureStampPatternSize = () => {
+        const width = clampInt(stampWidthInput.value, 1, 24, 4);
+        const height = clampInt(stampHeightInput.value, 1, 24, 4);
+        stampWidthInput.value = String(width);
+        stampHeightInput.value = String(height);
+        stampPattern = Array.from({ length: height }, (_, y) => Array.from({ length: width }, (_, x) => { var _a, _b; return (_b = (_a = stampPattern[y]) === null || _a === void 0 ? void 0 : _a[x]) !== null && _b !== void 0 ? _b : 0; }));
+    };
+    const renderStampEditor = () => {
+        var _a, _b;
+        ensureStampPatternSize();
+        stampEditor.style.gridTemplateColumns = `repeat(${(_b = (_a = stampPattern[0]) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0}, 18px)`;
+        const cells = [];
+        for (let y = 0; y < stampPattern.length; y++) {
+            for (let x = 0; x < stampPattern[y].length; x++) {
+                const cell = document.createElement("button");
+                cell.type = "button";
+                cell.className = `stamp-editor-cell${stampPattern[y][x] === 1 ? " active" : ""}`;
+                cell.title = `${x}, ${y}`;
+                cell.onclick = () => {
+                    stampPattern[y][x] = stampPattern[y][x] === 1 ? 0 : 1;
+                    renderStampEditor();
+                };
+                cells.push(cell);
+            }
+        }
+        stampEditor.replaceChildren(...cells);
+    };
+    const getTiledStampValue = (x, y) => {
+        var _a, _b;
+        const height = stampPattern.length;
+        const width = (_b = (_a = stampPattern[0]) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0;
+        if (!width || !height)
+            return 0;
+        return stampPattern[y % height][x % width] === 1 ? 1 : 0;
+    };
+    const applyStampPattern = () => {
+        const selection = gridManager.getStampSelection();
+        if (!selection.length)
+            return;
+        const targetCells = new Set(selection.map((point) => `${point.x},${point.y}`));
+        const mode = stampApplyModeSelect.value;
+        for (let y = 0; y < gridManager.getTileHeight(); y++) {
+            for (let x = 0; x < gridManager.getTileWidth(); x++) {
+                if (!targetCells.has(`${x},${y}`))
+                    continue;
+                if (mode === "overlay" && gridManager.isCellActive(x, y))
+                    continue;
+                gridManager.setCellActive(x, y, getTiledStampValue(x, y) === 1);
+            }
+        }
+        updateOutput();
+    };
     const updateHistoryButtons = () => {
         undoBtn.disabled = !historyManager.canUndo();
         redoBtn.disabled = !historyManager.canRedo();
@@ -257,6 +332,12 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     loadBtn.onclick = loadFromBase64;
     clearGridBtn.onclick = gridManager.clearGrid;
+    stampApplyBtn.onclick = applyStampPattern;
+    stampClearBtn.onclick = () => {
+        ensureStampPatternSize();
+        stampPattern = stampPattern.map((row) => row.map(() => 0));
+        renderStampEditor();
+    };
     copyOutputBtn.onclick = copyOutput;
     copyDiscordBtn.onclick = copyDiscordOutput;
     copyPreviewLinkBtn.onclick = copyPreviewLink;
@@ -276,9 +357,18 @@ document.addEventListener("DOMContentLoaded", () => {
             toolSelectBtn.click();
         }
     };
+    const syncStampToolWithTab = () => {
+        if (tabStampInput.checked && toolState.getCurrentTool() !== "stamp") {
+            toolStampBtn.click();
+        }
+    };
     tabActionsInput.addEventListener("change", syncRotateSelectWithActionsTab);
     tabToolsInput.addEventListener("change", syncRotateSelectWithActionsTab);
     tabGridInput.addEventListener("change", syncRotateSelectWithActionsTab);
+    tabStampInput.addEventListener("change", syncStampToolWithTab);
+    stampWidthInput.addEventListener("change", renderStampEditor);
+    stampHeightInput.addEventListener("change", renderStampEditor);
+    renderStampEditor();
     gridManager.generateGrid();
     if (shouldFocusPreview) {
         if (layoutTabsInput) {
