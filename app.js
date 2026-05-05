@@ -6,7 +6,6 @@ import { setupGridGuides } from "./app/gridGuides.js";
 import { createGridManager } from "./app/gridManager.js";
 import { setupHistoryShortcuts } from "./app/historyShortcuts.js";
 import { initImageImportOverlay } from "./app/imageImportOverlay.js";
-import { initialPattern } from "./app/initialPattern.js";
 import { decodePatternBase64, generatePatternBase64, } from "./app/patternEncoding.js";
 import { createPatternLoader } from "./app/patternLoader.js";
 import { createPreviewRenderer } from "./app/previewRenderer.js";
@@ -24,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const toolCircleBtn = document.getElementById("tool-circle");
     const toolStampBtn = document.getElementById("tool-stamp");
     const toolSelectBtn = document.getElementById("tool-select");
+    const shiftSelectBtn = document.getElementById("shift-select-btn");
     const starSizeInput = document.getElementById("star-size");
     const circleSizeInput = document.getElementById("circle-size");
     const stampBrushSizeInput = document.getElementById("stamp-brush-size");
@@ -43,6 +43,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const shiftLeftBtn = document.getElementById("shiftLeftBtn");
     const shiftRightBtn = document.getElementById("shiftRightBtn");
     const shiftDownBtn = document.getElementById("shiftDownBtn");
+    const shiftModeAll = document.getElementById("shift-mode-all");
+    const shiftModePartial = document.getElementById("shift-mode-partial");
+    const shiftOverwriteOn = document.getElementById("shift-overwrite-on");
+    const shiftOverwriteOff = document.getElementById("shift-overwrite-off");
     const stampWidthInput = document.getElementById("stampWidth");
     const stampHeightInput = document.getElementById("stampHeight");
     const stampApplyModeSelect = document.getElementById("stampApplyMode");
@@ -114,7 +118,6 @@ document.addEventListener("DOMContentLoaded", () => {
         invertBtn: document.getElementById("invertGridBtn"),
         rotateLeftBtn,
         rotateRightBtn,
-        initialPattern,
         guideState,
         toolState,
         onPatternChange: () => updateOutput(),
@@ -264,8 +267,18 @@ document.addEventListener("DOMContentLoaded", () => {
         : "";
     let initialColors = null;
     let shouldFocusPreview = false;
-    if (hashValue) {
-        const [patternPart, queryPart] = hashValue.split("?");
+    if (!hashValue) {
+        const isEasterEgg = Math.random() < 0.25;
+        const injectedHash = isEasterEgg
+            ? "#AFlhAAAAAADg______8DAAAAAAA4sbvhzgBRIVFEBGBOZIaZA0SRRBFRgKuRK-4MAAAAAADg______8DAAAAAADgAHAAOAAiABGACCAIMAQIAgICi4GAQECgIBAQBBCCCAGEqsIooaqwaggirBoCCAmGAEJVoaJQVVg1JBhWDQICIYGAgCBAGiAI4APwAfgAAAAAAAAA?primary=fedd67&secondary=000000"
+            : "#AAEiAAAAAAAAAAAAAAAAAAAAAIDD8YnweTiiD5FIYEIgEpkIRCKBCoFIpCIQeTwyPB6RjEAkEIgQKEQiApFAIEIgEYkIOAKfCIGIIyIAAAAAAAAAAAA?primary=ffffff&secondary=000000";
+        window.history.replaceState(null, "", injectedHash);
+    }
+    const effectiveHashValue = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : "";
+    if (effectiveHashValue) {
+        const [patternPart, queryPart] = effectiveHashValue.split("?");
         if (patternPart) {
             base64Input.value = patternPart;
             setTimeout(loadFromBase64, 0);
@@ -353,6 +366,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     setupHistoryShortcuts({ onUndo: handleUndo, onRedo: handleRedo });
     const syncRotateSelectWithActionsTab = () => {
+        gridManager.clearShiftSelect();
+        clearShiftSelectUI();
         if (!tabActionsInput.checked && toolState.getCurrentTool() === "select") {
             toolSelectBtn.click();
         }
@@ -366,6 +381,51 @@ document.addEventListener("DOMContentLoaded", () => {
     tabToolsInput.addEventListener("change", syncRotateSelectWithActionsTab);
     tabGridInput.addEventListener("change", syncRotateSelectWithActionsTab);
     tabStampInput.addEventListener("change", syncStampToolWithTab);
+    const syncShiftSelectButtonVisibility = () => {
+        const visible = shiftModePartial.checked;
+        shiftSelectBtn.classList.toggle("shift-select-visible", visible);
+        shiftSelectBtn.classList.toggle("shift-select-hidden", !visible);
+    };
+    const clearShiftSelectUI = () => {
+        shiftSelectBtn.classList.remove("selected");
+        shiftModeAll.checked = true;
+        shiftModePartial.checked = false;
+        syncShiftSelectButtonVisibility();
+    };
+    shiftSelectBtn.onclick = () => {
+        const next = !shiftSelectBtn.classList.contains("selected");
+        shiftSelectBtn.classList.toggle("selected", next);
+        gridManager.enableShiftSelect(next);
+    };
+    toolSelectBtn.addEventListener("click", () => {
+        gridManager.clearShiftSelect();
+        clearShiftSelectUI();
+    });
+    shiftOverwriteOn.onchange = () => {
+        if (shiftOverwriteOn.checked)
+            gridManager.setShiftOverwriteMode(true);
+    };
+    shiftOverwriteOff.onchange = () => {
+        if (shiftOverwriteOff.checked)
+            gridManager.setShiftOverwriteMode(false);
+    };
+    shiftModeAll.onchange = () => {
+        if (shiftModeAll.checked) {
+            gridManager.setShiftSelectionMode("all");
+            gridManager.clearShiftSelect();
+            clearShiftSelectUI();
+            syncShiftSelectButtonVisibility();
+        }
+    };
+    shiftModePartial.onchange = () => {
+        if (shiftModePartial.checked) {
+            gridManager.setShiftSelectionMode("partial");
+            syncShiftSelectButtonVisibility();
+        }
+    };
+    syncShiftSelectButtonVisibility();
+    gridManager.setShiftSelectionMode("all");
+    gridManager.setShiftOverwriteMode(true);
     stampWidthInput.addEventListener("change", renderStampEditor);
     stampHeightInput.addEventListener("change", renderStampEditor);
     renderStampEditor();
