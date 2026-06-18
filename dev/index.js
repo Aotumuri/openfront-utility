@@ -7,13 +7,7 @@ class PatternDecoder {
             throw new Error("Pattern data is too short to contain required metadata.");
         }
         const version = this.bytes[0];
-        if (version === 0) {
-            this.bitsPerCell = 1;
-        }
-        else if (version === 1) {
-            this.bitsPerCell = 2;
-        }
-        else {
+        if (version !== 0) {
             throw new Error(`Unrecognized pattern version ${version}.`);
         }
         const byte1 = this.bytes[1];
@@ -21,7 +15,7 @@ class PatternDecoder {
         this.scale = byte1 & 0x07;
         this.tileWidth = (((byte2 & 0x03) << 5) | ((byte1 >> 3) & 0x1f)) + 2;
         this.tileHeight = ((byte2 >> 2) & 0x3f) + 2;
-        const expectedBits = this.tileWidth * this.tileHeight * this.bitsPerCell;
+        const expectedBits = this.tileWidth * this.tileHeight;
         const expectedBytes = (expectedBits + 7) >> 3; // Equivalent to: ceil(expectedBits / 8);
         if (this.bytes.length - 3 < expectedBytes) {
             throw new Error("Pattern data is too short for the specified dimensions.");
@@ -43,22 +37,15 @@ class PatternDecoder {
         return this.scale;
     }
     isSet(x, y) {
-        return this.getValue(x, y) > 0;
-    }
-    getValue(x, y) {
         const px = (x >> this.scale) % this.tileWidth;
         const py = (y >> this.scale) % this.tileHeight;
         const idx = py * this.tileWidth + px;
-        const bitIndex = idx * this.bitsPerCell;
-        const byteIndex = bitIndex >> 3;
-        const shift = bitIndex & 7;
+        const byteIndex = idx >> 3;
+        const bitIndex = idx & 7;
         const byte = this.bytes[3 + byteIndex];
         if (byte === undefined)
             throw new Error("Invalid pattern");
-        if (this.bitsPerCell === 1) {
-            return (byte >> shift) & 0x01;
-        }
-        return (byte >> shift) & 0x03;
+        return (byte & (1 << bitIndex)) !== 0;
     }
 }
 // ここからUIロジックをTypeScriptで実装

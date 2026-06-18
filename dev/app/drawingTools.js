@@ -1,61 +1,18 @@
+import { getCircleCells } from "./circleGeometry.js";
 export function createDrawingTools(options) {
-    const { getTileWidth, getTileHeight, getCellValue, setCellValue, getActiveColor } = options;
-    function plotCirclePoints(cx, cy, x, y, width, height) {
-        const pts = [
-            [cx + x, cy + y],
-            [cx + y, cy + x],
-            [cx - y, cy + x],
-            [cx - x, cy + y],
-            [cx - x, cy - y],
-            [cx - y, cy - x],
-            [cx + y, cy - x],
-            [cx + x, cy - y],
-        ];
-        for (const [px, py] of pts) {
-            if (px >= 0 && px < width && py >= 0 && py < height) {
-                setCellValue(px, py, getActiveColor());
-            }
-        }
-    }
+    const { getTileWidth, getTileHeight, isCellActive, setCellActive } = options;
     function drawCircle(cx, cy, r, fill) {
-        const activeColor = getActiveColor();
         const width = getTileWidth();
         const height = getTileHeight();
-        if (fill) {
-            for (let y = -r; y <= r; y++) {
-                for (let x = -r; x <= r; x++) {
-                    if (x * x + y * y <= r * r) {
-                        const px = cx + x;
-                        const py = cy + y;
-                        if (px >= 0 && px < width && py >= 0 && py < height) {
-                            setCellValue(px, py, activeColor);
-                        }
-                    }
-                }
-            }
-        }
-        else {
-            let x = r, y = 0, err = 0;
-            while (x >= y) {
-                plotCirclePoints(cx, cy, x, y, width, height);
-                y++;
-                if (err <= 0) {
-                    err += 2 * y + 1;
-                }
-                else {
-                    x--;
-                    err -= 2 * x + 1;
-                }
-            }
-        }
+        const points = getCircleCells({ x: cx, y: cy }, r, fill, width, height);
+        points.forEach((point) => setCellActive(point.x, point.y, true));
     }
     function drawLine(x0, y0, x1, y1) {
-        const activeColor = getActiveColor();
         let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
         let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
         let err = dx + dy, e2;
         while (true) {
-            setCellValue(x0, y0, activeColor);
+            setCellActive(x0, y0, true);
             if (x0 === x1 && y0 === y1)
                 break;
             e2 = 2 * err;
@@ -86,13 +43,15 @@ export function createDrawingTools(options) {
     function floodFill(sx, sy) {
         const width = getTileWidth();
         const height = getTileHeight();
-        const get = (x, y) => getCellValue(x, y);
+        const get = (x, y) => {
+            return isCellActive(x, y) ? 1 : 0;
+        };
         const set = (x, y, v) => {
-            setCellValue(x, y, v);
+            setCellActive(x, y, v === 1);
         };
         const target = get(sx, sy);
-        const newValue = getActiveColor();
-        if (target === newValue)
+        const newValue = target ? 0 : 1;
+        if (get(sx, sy) === newValue)
             return;
         const visited = Array(height)
             .fill(0)
@@ -112,6 +71,7 @@ export function createDrawingTools(options) {
         }
     }
     return {
+        drawLine,
         drawCircle,
         drawStar,
         floodFill,

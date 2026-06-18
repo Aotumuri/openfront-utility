@@ -1,24 +1,37 @@
 import { initColorPresetControls } from "./app/colorPresets.js";
+import { copyText } from "./app/copyText.js";
 import { createDrawingTools } from "./app/drawingTools.js";
+import { initEditorViewControls } from "./app/editorViewControls.js";
+import { buildDevStorageOutput, buildDiscordOutput, buildPreviewLink, } from "./app/exportOutputs.js";
 import { setupGridGuides } from "./app/gridGuides.js";
 import { createGridManager } from "./app/gridManager.js";
-import { initialPattern } from "./app/initialPattern.js";
+import { setupHistoryShortcuts } from "./app/historyShortcuts.js";
+import { initImageImportOverlay } from "./app/imageImportOverlay.js";
 import { decodePatternBase64, generatePatternBase64, } from "./app/patternEncoding.js";
 import { createPatternLoader } from "./app/patternLoader.js";
+import { initPaneResizeControls } from "./app/paneResizeControls.js";
 import { createPreviewRenderer } from "./app/previewRenderer.js";
+import { initShiftControls } from "./app/shiftControls.js";
+import { initStampControls } from "./app/stampControls.js";
 import { createToolState } from "./app/toolState.js";
 import { createHistoryManager } from "./app/undoRedo.js";
+import { initWorkspaceControls } from "./app/workspaceControls.js";
 document.addEventListener("DOMContentLoaded", () => {
-    var _a, _b, _c, _d;
+    var _a, _b;
     const toolbox = document.getElementById("toolbox");
     const base64Input = document.getElementById("base64Input");
     const toolPenBtn = document.getElementById("tool-pen");
     const penSizeInput = document.getElementById("pen-size");
+    const toolLineBtn = document.getElementById("tool-line");
     const toolFillBtn = document.getElementById("tool-fill");
     const toolStarBtn = document.getElementById("tool-star");
     const toolCircleBtn = document.getElementById("tool-circle");
+    const toolStampBtn = document.getElementById("tool-stamp");
+    const toolSelectBtn = document.getElementById("tool-select");
+    const shiftSelectBtn = document.getElementById("shift-select-btn");
     const starSizeInput = document.getElementById("star-size");
     const circleSizeInput = document.getElementById("circle-size");
+    const stampBrushSizeInput = document.getElementById("stamp-brush-size");
     const circleFillInput = document.getElementById("circle-fill");
     const loadBtn = document.getElementById("loadBtn");
     const tileWidthInput = document.getElementById("tileWidth");
@@ -39,43 +52,68 @@ document.addEventListener("DOMContentLoaded", () => {
     const outputTextarea = document.getElementById("output");
     const discordOutputTextarea = document.getElementById("discordOutput");
     const previewLinkTextarea = document.getElementById("previewLinkOutput");
+    const devStorageTextarea = document.getElementById("devStorageOutput");
     const copyOutputBtn = document.getElementById("copyOutputBtn");
     const copyDiscordBtn = document.getElementById("copyDiscordBtn");
     const copyPreviewLinkBtn = document.getElementById("copyPreviewLinkBtn");
+    const copyDevStorageBtn = document.getElementById("copyDevStorageBtn");
     const previewCanvas = document.getElementById("preview");
     const previewPrimaryColorInput = document.getElementById("previewPrimaryColor");
     const previewSecondaryColorInput = document.getElementById("previewSecondaryColor");
-    const previewTertiaryColorInput = document.getElementById("previewTertiaryColor");
-    const previewQuaternaryColorInput = document.getElementById("previewQuaternaryColor");
     const swapColorsBtn = document.getElementById("swapColorsBtn");
-    const drawColorButtons = [
-        document.getElementById("draw-color-0"),
-        document.getElementById("draw-color-1"),
-        document.getElementById("draw-color-2"),
-        document.getElementById("draw-color-3"),
-    ];
     const colorPresetContainer = document.getElementById("colorPresetContainer");
-    const layoutTabsInput = document.getElementById("layout-tabs");
-    const viewPreviewInput = document.getElementById("view-preview");
+    const selectedPresetLabel = document.getElementById("selectedPresetLabel");
+    const editorShell = document.querySelector(".editor-shell");
+    const toolbarToggleBtn = document.getElementById("toolbarToggleBtn");
+    const modeButtons = document.querySelectorAll("[data-view-mode]");
+    const floatPreviewBtn = document.getElementById("floatPreviewBtn");
+    const dockPreviewBtn = document.getElementById("dockPreviewBtn");
     const previewPanel = document.querySelector(".preview-panel");
+    const previewHeader = document.querySelector(".preview-header");
     if (!colorPresetContainer) {
         throw new Error("Missing color preset container");
     }
     const previewContext = previewCanvas.getContext("2d");
     if (!previewContext)
         throw new Error("2D context not supported");
+    const workspaceControls = initWorkspaceControls({
+        workspace: document.getElementById("canvasWorkspace"),
+        viewport: document.getElementById("gridViewport"),
+        zoomInButton: document.getElementById("zoomInBtn"),
+        zoomOutButton: document.getElementById("zoomOutBtn"),
+        resetButton: document.getElementById("resetViewBtn"),
+        zoomValue: document.getElementById("zoomValue"),
+    });
+    const editorViewControls = initEditorViewControls({
+        shell: editorShell,
+        toolbarToggleButton: toolbarToggleBtn,
+        modeButtons,
+        previewPanel,
+        previewHeader,
+        floatPreviewButton: floatPreviewBtn,
+        dockPreviewButton: dockPreviewBtn,
+    });
+    initPaneResizeControls({
+        shell: editorShell,
+        workspaceSplit: document.querySelector(".workspace-split"),
+        toolbarHandle: document.getElementById("toolbarResizeHandle"),
+        previewHandle: document.getElementById("previewResizeHandle"),
+    });
     let handleGuideChange = () => { };
     const guideState = setupGridGuides(toolbox, () => handleGuideChange());
     const toolState = createToolState({
         toolPenBtn,
+        toolLineBtn,
         toolFillBtn,
         toolStarBtn,
         toolCircleBtn,
+        toolSelectBtn,
+        toolStampBtn,
         penSizeInput,
         starSizeInput,
         circleSizeInput,
+        stampBrushSizeInput,
         circleFillInput,
-        colorButtons: drawColorButtons,
     });
     let updateOutput = () => { };
     const gridManager = createGridManager({
@@ -89,7 +127,9 @@ document.addEventListener("DOMContentLoaded", () => {
         shiftDownBtn,
         shiftLeftBtn,
         shiftRightBtn,
-        initialPattern,
+        invertBtn: document.getElementById("invertGridBtn"),
+        rotateLeftBtn: document.getElementById("rotateLeftBtn"),
+        rotateRightBtn: document.getElementById("rotateRightBtn"),
         guideState,
         toolState,
         onPatternChange: () => updateOutput(),
@@ -97,9 +137,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const drawingTools = createDrawingTools({
         getTileWidth: gridManager.getTileWidth,
         getTileHeight: gridManager.getTileHeight,
-        getCellValue: gridManager.getCellValue,
-        setCellValue: gridManager.setCellValue,
-        getActiveColor: toolState.getActiveColor,
+        isCellActive: gridManager.isCellActive,
+        setCellActive: gridManager.setCellActive,
     });
     gridManager.setDrawingTools(drawingTools);
     handleGuideChange = () => gridManager.generateGrid();
@@ -108,8 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
         context: previewContext,
         primaryColorInput: previewPrimaryColorInput,
         secondaryColorInput: previewSecondaryColorInput,
-        tertiaryColorInput: previewTertiaryColorInput,
-        quaternaryColorInput: previewQuaternaryColorInput,
     });
     const historyManager = createHistoryManager();
     let isApplyingHistory = false;
@@ -138,39 +175,21 @@ document.addEventListener("DOMContentLoaded", () => {
         isApplyingHistory = false;
     };
     updateOutput = () => {
-        const colors = [
-            previewPrimaryColorInput.value,
-            previewSecondaryColorInput.value,
-            previewTertiaryColorInput.value,
-            previewQuaternaryColorInput.value,
-        ];
-        gridDiv.style.setProperty("--palette-0", colors[0]);
-        gridDiv.style.setProperty("--palette-1", colors[1]);
-        gridDiv.style.setProperty("--palette-2", colors[2]);
-        gridDiv.style.setProperty("--palette-3", colors[3]);
-        drawColorButtons.forEach((btn, index) => {
-            const nextColor = colors[index];
-            if (nextColor) {
-                btn.style.backgroundColor = nextColor;
-            }
-        });
         const pattern = gridManager.getCurrentPattern();
         const scale = parseInt(scaleInput.value);
         const base64 = generatePatternBase64(pattern, gridManager.getTileWidth(), gridManager.getTileHeight(), scale);
         outputTextarea.value = base64;
-        discordOutputTextarea.value = `\`\`\`${base64}\`\`\`\nPrimary ${colors[0]}\nSecondary ${colors[1]}\nTertiary ${colors[2]}\nQuaternary ${colors[3]}`;
-        previewLinkTextarea.value = buildPreviewLink();
+        discordOutputTextarea.value = buildDiscordOutput(base64, previewPrimaryColorInput.value, previewSecondaryColorInput.value);
+        previewLinkTextarea.value = buildPreviewLink(window.location.href, base64, previewPrimaryColorInput.value, previewSecondaryColorInput.value);
+        devStorageTextarea.value = buildDevStorageOutput(base64, previewPrimaryColorInput.value, previewSecondaryColorInput.value);
         renderPreview(base64);
         const params = new URLSearchParams({
-            primary: colors[0].replace("#", ""),
-            secondary: colors[1].replace("#", ""),
-            tertiary: colors[2].replace("#", ""),
-            quaternary: colors[3].replace("#", ""),
+            primary: previewPrimaryColorInput.value.replace("#", ""),
+            secondary: previewSecondaryColorInput.value.replace("#", ""),
         });
         window.history.replaceState(null, "", `#${base64}?${params.toString()}`);
-        if (!isApplyingHistory) {
+        if (!isApplyingHistory)
             historyManager.record(base64);
-        }
         updateHistoryButtons();
     };
     scaleInput.addEventListener("input", () => {
@@ -195,6 +214,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return null;
         return `#${cleaned.toLowerCase()}`;
     };
+    if (!window.location.hash) {
+        const isEasterEgg = Math.random() < 0.25;
+        const injectedHash = isEasterEgg
+            ? "#AFlhAAAAAADg______8DAAAAAAA4sbvhzgBRIVFEBGBOZIaZA0SRRBFRgKuRK-4MAAAAAADg______8DAAAAAADgAHAAOAAiABGACCAIMAQIAgICi4GAQECgIBAQBBCCCAGEqsIooaqwaggirBoCCAmGAEJVoaJQVVg1JBhWDQICIYGAgCBAGiAI4APwAfgAAAAAAAAA?primary=fedd67&secondary=000000"
+            : "#AAEiAAAAAAAAAAAAAAAAAAAAAIDD8YnweTiiD5FIYEIgEpkIRCKBCoFIpCIQeTwyPB6RjEAkEIgQKEQiApFAIEIgEYkIOAKfCIGIIyIAAAAAAAAAAAA?primary=ffffff&secondary=000000";
+        window.history.replaceState(null, "", injectedHash);
+    }
     const hashValue = window.location.hash.startsWith("#")
         ? window.location.hash.slice(1)
         : "";
@@ -210,94 +236,78 @@ document.addEventListener("DOMContentLoaded", () => {
             const params = new URLSearchParams(queryPart);
             const primary = (_a = normalizeHex(params.get("primary"))) !== null && _a !== void 0 ? _a : normalizeHex(params.get("p"));
             const secondary = (_b = normalizeHex(params.get("secondary"))) !== null && _b !== void 0 ? _b : normalizeHex(params.get("s"));
-            const tertiary = (_c = normalizeHex(params.get("tertiary"))) !== null && _c !== void 0 ? _c : normalizeHex(params.get("t"));
-            const quaternary = (_d = normalizeHex(params.get("quaternary"))) !== null && _d !== void 0 ? _d : normalizeHex(params.get("q"));
-            if (primary || secondary || tertiary || quaternary) {
+            if (primary || secondary) {
                 initialColors = {
                     primary: primary !== null && primary !== void 0 ? primary : previewPrimaryColorInput.value,
                     secondary: secondary !== null && secondary !== void 0 ? secondary : previewSecondaryColorInput.value,
-                    tertiary: tertiary !== null && tertiary !== void 0 ? tertiary : previewTertiaryColorInput.value,
-                    quaternary: quaternary !== null && quaternary !== void 0 ? quaternary : previewQuaternaryColorInput.value,
                 };
             }
             const previewFlag = params.get("preview");
-            if (previewFlag !== null &&
-                previewFlag !== "0" &&
-                previewFlag !== "false") {
-                shouldFocusPreview = true;
-            }
+            shouldFocusPreview =
+                previewFlag !== null && previewFlag !== "0" && previewFlag !== "false";
         }
     }
     const colorPresetControls = initColorPresetControls({
         container: colorPresetContainer,
         primaryColorInput: previewPrimaryColorInput,
         secondaryColorInput: previewSecondaryColorInput,
-        tertiaryColorInput: previewTertiaryColorInput,
-        quaternaryColorInput: previewQuaternaryColorInput,
+        selectedLabel: selectedPresetLabel,
         initialColors,
         onChange: () => updateOutput(),
     });
-    function copyText(value) {
-        var _a;
-        const fallbackCopy = () => {
-            const temp = document.createElement("textarea");
-            temp.value = value;
-            temp.style.position = "fixed";
-            temp.style.opacity = "0";
-            document.body.appendChild(temp);
-            temp.focus();
-            temp.select();
-            document.execCommand("copy");
-            temp.remove();
-        };
-        if ((_a = navigator.clipboard) === null || _a === void 0 ? void 0 : _a.writeText) {
-            navigator.clipboard.writeText(value).catch(fallbackCopy);
-            return;
-        }
-        fallbackCopy();
-    }
-    function copyOutput() {
-        copyText(outputTextarea.value);
-    }
-    function copyDiscordOutput() {
-        copyText(discordOutputTextarea.value);
-    }
-    function buildPreviewLink() {
-        const base64 = outputTextarea.value.trim();
-        const params = new URLSearchParams({
-            primary: previewPrimaryColorInput.value.replace("#", ""),
-            secondary: previewSecondaryColorInput.value.replace("#", ""),
-            tertiary: previewTertiaryColorInput.value.replace("#", ""),
-            quaternary: previewQuaternaryColorInput.value.replace("#", ""),
-            preview: "1",
-        });
-        const hash = base64 ? `#${base64}?${params.toString()}` : "";
-        const url = new URL(window.location.href);
-        url.hash = hash;
-        return url.toString();
-    }
-    function copyPreviewLink() {
-        const link = buildPreviewLink();
-        previewLinkTextarea.value = link;
-        copyText(link);
-    }
+    initImageImportOverlay({
+        onApply: (pattern, size) => {
+            tileWidthInput.value = size.width.toString();
+            tileHeightInput.value = size.height.toString();
+            tileWidthValue.value = tileWidthInput.value;
+            tileHeightValue.value = tileHeightInput.value;
+            gridManager.generateGrid(pattern);
+        },
+    });
+    initStampControls({
+        gridManager,
+        toolState,
+        toolStampBtn,
+        stampWidthInput: document.getElementById("stampWidth"),
+        stampHeightInput: document.getElementById("stampHeight"),
+        stampApplyModeSelect: document.getElementById("stampApplyMode"),
+        stampEditor: document.getElementById("stampEditor"),
+        stampApplyBtn: document.getElementById("stampApplyBtn"),
+        stampClearBtn: document.getElementById("stampClearBtn"),
+        onChange: () => updateOutput(),
+    });
+    initShiftControls({
+        gridManager,
+        toolState,
+        toolSelectBtn,
+        shiftSelectBtn,
+        shiftModeAll: document.getElementById("shift-mode-all"),
+        shiftModePartial: document.getElementById("shift-mode-partial"),
+        shiftOverwriteOn: document.getElementById("shift-overwrite-on"),
+        shiftOverwriteOff: document.getElementById("shift-overwrite-off"),
+    });
     loadBtn.onclick = loadFromBase64;
     clearGridBtn.onclick = gridManager.clearGrid;
-    copyOutputBtn.onclick = copyOutput;
-    copyDiscordBtn.onclick = copyDiscordOutput;
-    copyPreviewLinkBtn.onclick = copyPreviewLink;
-    undoBtn.onclick = () => {
+    copyOutputBtn.onclick = () => copyText(outputTextarea.value);
+    copyDiscordBtn.onclick = () => copyText(discordOutputTextarea.value);
+    copyPreviewLinkBtn.onclick = () => {
+        const link = buildPreviewLink(window.location.href, outputTextarea.value.trim(), previewPrimaryColorInput.value, previewSecondaryColorInput.value);
+        previewLinkTextarea.value = link;
+        copyText(link);
+    };
+    copyDevStorageBtn.onclick = () => copyText(devStorageTextarea.value);
+    const handleUndo = () => {
         const base64 = historyManager.undo();
-        if (!base64)
-            return;
-        applyHistoryState(base64);
+        if (base64)
+            applyHistoryState(base64);
     };
-    redoBtn.onclick = () => {
+    const handleRedo = () => {
         const base64 = historyManager.redo();
-        if (!base64)
-            return;
-        applyHistoryState(base64);
+        if (base64)
+            applyHistoryState(base64);
     };
+    undoBtn.onclick = handleUndo;
+    redoBtn.onclick = handleRedo;
     swapColorsBtn.onclick = () => {
         const primary = previewPrimaryColorInput.value;
         previewPrimaryColorInput.value = previewSecondaryColorInput.value;
@@ -305,17 +315,9 @@ document.addEventListener("DOMContentLoaded", () => {
         colorPresetControls.setCustomSelection();
         updateOutput();
     };
+    setupHistoryShortcuts({ onUndo: handleUndo, onRedo: handleRedo });
     gridManager.generateGrid();
-    if (shouldFocusPreview) {
-        if (layoutTabsInput) {
-            layoutTabsInput.checked = true;
-        }
-        if (viewPreviewInput) {
-            viewPreviewInput.checked = true;
-        }
-        const scrollTarget = previewPanel !== null && previewPanel !== void 0 ? previewPanel : previewCanvas;
-        setTimeout(() => {
-            scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 0);
-    }
+    if (shouldFocusPreview)
+        editorViewControls.setViewMode("preview");
+    workspaceControls.reset();
 });

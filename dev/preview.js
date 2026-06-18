@@ -2,8 +2,6 @@
 /// <reference lib="es2017" />
 const FALLBACK_PRIMARY = "#000000";
 const FALLBACK_SECONDARY = "#FFFFFF";
-const FALLBACK_TERTIARY = "#6a7a84";
-const FALLBACK_QUATERNARY = "#9aa8b5";
 function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
@@ -42,8 +40,6 @@ function resolvePalette(pattern, paletteMap) {
             name: "fallback",
             primaryColor: FALLBACK_PRIMARY,
             secondaryColor: FALLBACK_SECONDARY,
-            tertiaryColor: FALLBACK_TERTIARY,
-            quaternaryColor: FALLBACK_QUATERNARY,
         },
         activeName: "fallback",
     };
@@ -63,6 +59,26 @@ function buildMetaSection(pattern) {
         price.className = "pattern-meta-item";
         price.textContent = `Price: ${pattern.product.price}`;
         metaContainer.appendChild(price);
+    }
+    if (typeof pattern.priceSoft === "number" || typeof pattern.priceHard === "number") {
+        const priceRange = document.createElement("div");
+        priceRange.className = "pattern-meta-item";
+        const soft = typeof pattern.priceSoft === "number" ? pattern.priceSoft : "n/a";
+        const hard = typeof pattern.priceHard === "number" ? pattern.priceHard : "n/a";
+        priceRange.textContent = `Price: ${soft} / ${hard}`;
+        metaContainer.appendChild(priceRange);
+    }
+    if (pattern.artist) {
+        const artist = document.createElement("div");
+        artist.className = "pattern-meta-item";
+        artist.textContent = `Artist: ${pattern.artist}`;
+        metaContainer.appendChild(artist);
+    }
+    if (pattern.rarity) {
+        const rarity = document.createElement("div");
+        rarity.className = "pattern-meta-item";
+        rarity.textContent = `Rarity: ${pattern.rarity}`;
+        metaContainer.appendChild(rarity);
     }
     if (pattern.affiliateCode) {
         const code = document.createElement("div");
@@ -85,7 +101,7 @@ function renderPatternsFromInput(container, textarea) {
         const paletteMap = (_b = parsed.colorPalettes) !== null && _b !== void 0 ? _b : {};
         container.innerHTML = "";
         Object.entries(patternEntries).forEach(([key, payload]) => {
-            var _a, _b, _c;
+            var _a;
             const pattern = payload !== null && payload !== void 0 ? payload : {};
             const { palette, activeName } = resolvePalette(pattern, paletteMap);
             const wrapper = document.createElement("div");
@@ -117,26 +133,21 @@ function renderPatternsFromInput(container, textarea) {
                 }
             };
             const paintWithPalette = (paletteDef) => {
-                var _a, _b, _c;
                 if (!patternCode) {
                     showError("Pattern data missing");
                     return false;
                 }
                 try {
-                    const colors = [
-                        hexToRgb(paletteDef.primaryColor),
-                        hexToRgb(paletteDef.secondaryColor),
-                        hexToRgb((_a = paletteDef.tertiaryColor) !== null && _a !== void 0 ? _a : paletteDef.primaryColor),
-                        hexToRgb((_b = paletteDef.quaternaryColor) !== null && _b !== void 0 ? _b : paletteDef.secondaryColor),
-                    ];
+                    const primaryColor = hexToRgb(paletteDef.primaryColor);
+                    const secondaryColor = hexToRgb(paletteDef.secondaryColor);
                     const decoder = new PatternDecoder(patternCode);
                     const imageData = ctx.createImageData(canvas.width, canvas.height);
                     const data = imageData.data;
                     let i = 0;
                     for (let y = 0; y < canvas.height; y++) {
                         for (let x = 0; x < canvas.width; x++) {
-                            const value = decoder.getValue(x, y);
-                            const color = (_c = colors[value]) !== null && _c !== void 0 ? _c : colors[0];
+                            const isSet = decoder.isSet(x, y);
+                            const color = isSet ? secondaryColor : primaryColor;
                             data[i++] = color.r;
                             data[i++] = color.g;
                             data[i++] = color.b;
@@ -185,18 +196,8 @@ function renderPatternsFromInput(container, textarea) {
                     const secondarySwatch = document.createElement("span");
                     secondarySwatch.className = "palette-swatch";
                     secondarySwatch.style.backgroundColor = paletteOption.secondaryColor;
-                    const tertiarySwatch = document.createElement("span");
-                    tertiarySwatch.className = "palette-swatch";
-                    tertiarySwatch.style.backgroundColor =
-                        (_b = paletteOption.tertiaryColor) !== null && _b !== void 0 ? _b : paletteOption.primaryColor;
-                    const quaternarySwatch = document.createElement("span");
-                    quaternarySwatch.className = "palette-swatch";
-                    quaternarySwatch.style.backgroundColor =
-                        (_c = paletteOption.quaternaryColor) !== null && _c !== void 0 ? _c : paletteOption.secondaryColor;
                     swatches.appendChild(primarySwatch);
                     swatches.appendChild(secondarySwatch);
-                    swatches.appendChild(tertiarySwatch);
-                    swatches.appendChild(quaternarySwatch);
                     const nameEl = document.createElement("span");
                     nameEl.className = "palette-name";
                     nameEl.textContent = ref.isArchived
