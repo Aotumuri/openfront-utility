@@ -25,6 +25,8 @@ type GridManagerOptions = {
   toolState: ToolState;
   drawingTools?: DrawingTools;
   onPatternChange: () => void;
+  onPatternChangeStart?: () => void;
+  onPatternChangeEnd?: () => void;
 };
 
 export type GridManager = {
@@ -62,6 +64,8 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     toolState,
     drawingTools: initialDrawingTools,
     onPatternChange,
+    onPatternChangeStart,
+    onPatternChangeEnd,
   } = options;
 
   let drawingTools: DrawingTools | null = initialDrawingTools ?? null;
@@ -90,6 +94,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   let stampSelectionCells: GridPoint[] = [];
   let stampSelectionVisited = new Set<string>();
   let stampSelectionLastPoint: GridPoint | null = null;
+  let isPatternChangeStrokeActive = false;
   let patternState: number[][] = [];
   let cellMatrix: HTMLDivElement[][] = [];
   const baseCellSize = 20;
@@ -146,6 +151,18 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     isInBounds(x, y) && patternState[y][x] === 1;
 
   const setDrawingTools = (tools: DrawingTools) => (drawingTools = tools);
+
+  const beginPatternChangeStroke = () => {
+    if (isPatternChangeStrokeActive) return;
+    isPatternChangeStrokeActive = true;
+    onPatternChangeStart?.();
+  };
+
+  const endPatternChangeStroke = () => {
+    if (!isPatternChangeStrokeActive) return;
+    isPatternChangeStrokeActive = false;
+    onPatternChangeEnd?.();
+  };
 
   const clearStampSelection = () => {
     stampSelectionCells.forEach((point) => {
@@ -556,6 +573,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   document.body.addEventListener("mouseup", () => {
     isMouseDown = false;
     toggleState = null;
+    endPatternChangeStroke();
     if (isShiftSelectEnabled) {
       finishShiftSelection();
     } else if (toolState.getCurrentTool() === "select") {
@@ -712,6 +730,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
           }
           const tool = toolState.getCurrentTool();
           if (isMouseDown && tool === "pen") {
+            beginPatternChangeStroke();
             if (toggleState === null) {
               toggleState = !isCellActive(x, y);
             }
