@@ -116,6 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
         circleFillInput,
     });
     let updateOutput = () => { };
+    let isPatternChangeGroupOpen = false;
+    let pendingPatternChangeBase64 = null;
     const gridManager = createGridManager({
         gridDiv,
         tileWidthInput,
@@ -133,6 +135,22 @@ document.addEventListener("DOMContentLoaded", () => {
         guideState,
         toolState,
         onPatternChange: () => updateOutput(),
+        onPatternChangeStart: () => {
+            if (isApplyingHistory)
+                return;
+            isPatternChangeGroupOpen = true;
+            pendingPatternChangeBase64 = null;
+        },
+        onPatternChangeEnd: () => {
+            if (!isPatternChangeGroupOpen)
+                return;
+            isPatternChangeGroupOpen = false;
+            if (pendingPatternChangeBase64) {
+                historyManager.record(pendingPatternChangeBase64);
+                pendingPatternChangeBase64 = null;
+            }
+            updateHistoryButtons();
+        },
     });
     const drawingTools = createDrawingTools({
         getTileWidth: gridManager.getTileWidth,
@@ -188,8 +206,14 @@ document.addEventListener("DOMContentLoaded", () => {
             secondary: previewSecondaryColorInput.value.replace("#", ""),
         });
         window.history.replaceState(null, "", `#${base64}?${params.toString()}`);
-        if (!isApplyingHistory)
-            historyManager.record(base64);
+        if (!isApplyingHistory) {
+            if (isPatternChangeGroupOpen) {
+                pendingPatternChangeBase64 = base64;
+            }
+            else {
+                historyManager.record(base64);
+            }
+        }
         updateHistoryButtons();
     };
     scaleInput.addEventListener("input", () => {

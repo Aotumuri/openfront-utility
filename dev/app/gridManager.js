@@ -1,7 +1,7 @@
 import { getCircleCells, } from "./circleGeometry.js";
 import { invertPattern, shiftPatternDown, shiftPatternLeft, shiftPatternRight, shiftPatternUp } from "./patternTransforms.js";
 export function createGridManager(options) {
-    const { gridDiv, tileWidthInput, tileHeightInput, tileWidthValue, tileHeightValue, gridScaleInput, shiftUpBtn, shiftDownBtn, shiftLeftBtn, shiftRightBtn, invertBtn, rotateLeftBtn, rotateRightBtn, guideState, toolState, drawingTools: initialDrawingTools, onPatternChange, } = options;
+    const { gridDiv, tileWidthInput, tileHeightInput, tileWidthValue, tileHeightValue, gridScaleInput, shiftUpBtn, shiftDownBtn, shiftLeftBtn, shiftRightBtn, invertBtn, rotateLeftBtn, rotateRightBtn, guideState, toolState, drawingTools: initialDrawingTools, onPatternChange, onPatternChangeStart, onPatternChangeEnd, } = options;
     let drawingTools = initialDrawingTools !== null && initialDrawingTools !== void 0 ? initialDrawingTools : null;
     let tileWidth = parseInt(tileWidthInput.value);
     let tileHeight = parseInt(tileHeightInput.value);
@@ -28,6 +28,7 @@ export function createGridManager(options) {
     let stampSelectionCells = [];
     let stampSelectionVisited = new Set();
     let stampSelectionLastPoint = null;
+    let isPatternChangeStrokeActive = false;
     let patternState = [];
     let cellMatrix = [];
     const baseCellSize = 20;
@@ -76,6 +77,18 @@ export function createGridManager(options) {
     };
     const isCellActive = (x, y) => isInBounds(x, y) && patternState[y][x] === 1;
     const setDrawingTools = (tools) => (drawingTools = tools);
+    const beginPatternChangeStroke = () => {
+        if (isPatternChangeStrokeActive)
+            return;
+        isPatternChangeStrokeActive = true;
+        onPatternChangeStart === null || onPatternChangeStart === void 0 ? void 0 : onPatternChangeStart();
+    };
+    const endPatternChangeStroke = () => {
+        if (!isPatternChangeStrokeActive)
+            return;
+        isPatternChangeStrokeActive = false;
+        onPatternChangeEnd === null || onPatternChangeEnd === void 0 ? void 0 : onPatternChangeEnd();
+    };
     const clearStampSelection = () => {
         stampSelectionCells.forEach((point) => {
             var _a, _b;
@@ -459,9 +472,107 @@ export function createGridManager(options) {
         }
         renderShiftSelection();
     };
+    const applyPenBrush = (cx, cy, activate) => {
+        const size = toolState.getPenSize();
+        const radius = Math.floor(size / 2);
+        for (let by = cy - radius; by <= cy + radius; by++) {
+            if (by < 0 || by >= tileHeight)
+                continue;
+            for (let bx = cx - radius; bx <= cx + radius; bx++) {
+                if (bx < 0 || bx >= tileWidth)
+                    continue;
+                setCellActive(bx, by, activate);
+            }
+        }
+    };
+    const getCellPoint = (target) => {
+        const cell = target === null || target === void 0 ? void 0 : target.closest(".cell");
+        if (!(cell instanceof HTMLElement) || !gridDiv.contains(cell))
+            return null;
+        const x = Number(cell.dataset.x);
+        const y = Number(cell.dataset.y);
+        if (!Number.isInteger(x) || !Number.isInteger(y))
+            return null;
+        return isInBounds(x, y) ? { x, y } : null;
+    };
+    const getCellPointAt = (event) => getCellPoint(document.elementFromPoint(event.clientX, event.clientY));
+    const applyTouchPoint = (point) => {
+        if (isShiftSelectEnabled) {
+            updateShiftSelection(point.x, point.y);
+            return;
+        }
+        const tool = toolState.getCurrentTool();
+        if (tool === "pen") {
+            beginPatternChangeStroke();
+            if (toggleState === null) {
+                toggleState = !isCellActive(point.x, point.y);
+            }
+            applyPenBrush(point.x, point.y, toggleState);
+            onPatternChange();
+        }
+        else if (tool === "select") {
+            updateSelection(point.x, point.y);
+        }
+        else if (tool === "stamp") {
+            updateStampSelection(point.x, point.y);
+        }
+    };
+    let touchPointerId = null;
+    gridDiv.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse")
+            return;
+        const point = getCellPoint(event.target);
+        if (!point)
+            return;
+        event.preventDefault();
+        touchPointerId = event.pointerId;
+        isMouseDown = true;
+        gridDiv.setPointerCapture(event.pointerId);
+        if (isShiftSelectEnabled) {
+            startShiftSelection(point.x, point.y);
+        }
+        else if (toolState.getCurrentTool() === "select") {
+            startSelection(point.x, point.y);
+        }
+        else if (toolState.getCurrentTool() === "stamp") {
+            startStampSelection(point.x, point.y);
+        }
+        applyTouchPoint(point);
+    });
+    gridDiv.addEventListener("pointermove", (event) => {
+        if (touchPointerId !== event.pointerId)
+            return;
+        event.preventDefault();
+        const point = getCellPointAt(event);
+        if (point)
+            applyTouchPoint(point);
+    });
+    const finishTouchPointer = (event) => {
+        if (touchPointerId !== event.pointerId)
+            return;
+        touchPointerId = null;
+        isMouseDown = false;
+        toggleState = null;
+        endPatternChangeStroke();
+        if (gridDiv.hasPointerCapture(event.pointerId)) {
+            gridDiv.releasePointerCapture(event.pointerId);
+        }
+        if (isShiftSelectEnabled) {
+            finishShiftSelection();
+        }
+        else if (toolState.getCurrentTool() === "select") {
+            finishSelection();
+        }
+        else if (toolState.getCurrentTool() === "stamp") {
+            stampSelectionLastPoint = null;
+        }
+    };
+    gridDiv.addEventListener("pointerup", finishTouchPointer);
+    gridDiv.addEventListener("pointercancel", finishTouchPointer);
     document.body.addEventListener("mouseup", () => {
         isMouseDown = false;
         toggleState = null;
+        endPatternChangeStroke();
         if (isShiftSelectEnabled) {
             finishShiftSelection();
         }
@@ -518,19 +629,6 @@ export function createGridManager(options) {
                 centerH = [(tileHeight - 1) / 2, (tileHeight - 1) / 2 + 1];
             }
         }
-        const applyPenBrush = (cx, cy, activate) => {
-            const size = toolState.getPenSize();
-            const radius = Math.floor(size / 2);
-            for (let by = cy - radius; by <= cy + radius; by++) {
-                if (by < 0 || by >= tileHeight)
-                    continue;
-                for (let bx = cx - radius; bx <= cx + radius; bx++) {
-                    if (bx < 0 || bx >= tileWidth)
-                        continue;
-                    setCellActive(bx, by, activate);
-                }
-            }
-        };
         for (let y = 0; y < tileHeight; y++) {
             for (let x = 0; x < tileWidth; x++) {
                 let cell = (_c = (_b = cellMatrix[y]) === null || _b === void 0 ? void 0 : _b[x]) !== null && _c !== void 0 ? _c : null;
@@ -614,6 +712,7 @@ export function createGridManager(options) {
                     }
                     const tool = toolState.getCurrentTool();
                     if (isMouseDown && tool === "pen") {
+                        beginPatternChangeStroke();
                         if (toggleState === null) {
                             toggleState = !isCellActive(x, y);
                         }

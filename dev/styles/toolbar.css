@@ -251,3 +251,18 @@ details[open] summary::after {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .right-toolbar {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .toolbar-scroll {
+    padding: 8px 10px 14px;
+  }
+
+  .toolbar-section {
+    padding: 8px 0;
+  }
+}
