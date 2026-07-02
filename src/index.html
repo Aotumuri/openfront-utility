@@ -30,7 +30,6 @@
             <button type="button" data-view-mode="canvas">Canvas</button>
             <button type="button" data-view-mode="preview">Preview</button>
           </div>
-          <button id="floatPreviewBtn" type="button">Float Preview</button>
           <button id="toolbarToggleBtn" type="button" aria-expanded="true">Toolbar</button>
         </div>
       </header>
@@ -65,9 +64,33 @@
             <section class="preview-panel" aria-label="Pattern preview">
               <div class="preview-header">
                 <div class="panel-title">Preview</div>
-                <button id="dockPreviewBtn" type="button" hidden>Dock</button>
+                <div class="preview-actions">
+                  <button id="floatPreviewBtn" class="preview-action-btn" type="button">Float</button>
+                  <button id="dockPreviewBtn" class="preview-action-btn" type="button" hidden>Dock</button>
+                </div>
               </div>
-              <canvas id="preview"></canvas>
+              <div class="preview-body">
+                <canvas id="preview"></canvas>
+                <section class="preview-colors" aria-label="Preview colors">
+                  <div class="panel-title">Preview Colors</div>
+                  <div class="selected-preset" id="selectedPresetLabel">Custom colors</div>
+                  <div class="row color-row">
+                    <label for="previewPrimaryColor">Primary</label>
+                    <input type="color" id="previewPrimaryColor" value="#ffffff" />
+                  </div>
+                  <div class="row color-row">
+                    <label for="previewSecondaryColor">Secondary</label>
+                    <input type="color" id="previewSecondaryColor" value="#000000" />
+                  </div>
+                  <button id="swapColorsBtn">Swap Colors</button>
+                  <details class="color-preset-details">
+                    <summary>Color Presets</summary>
+                    <div id="colorPresetContainer" class="color-preset-container loading">
+                      <div class="color-preset-placeholder">Loading presets...</div>
+                    </div>
+                  </details>
+                </section>
+              </div>
             </section>
           </div>
         </section>
@@ -204,26 +227,6 @@
                 <div id="stampEditor" class="stamp-editor" aria-label="Stamp pattern editor"></div>
               </div>
               <button id="stampApplyBtn" class="btn-primary">Apply Stamp</button>
-            </section>
-
-            <section class="toolbar-section">
-              <div class="panel-title">Preview Colors</div>
-              <div class="selected-preset" id="selectedPresetLabel">Custom colors</div>
-              <div class="row color-row">
-                <label for="previewPrimaryColor">Primary</label>
-                <input type="color" id="previewPrimaryColor" value="#ffffff" />
-              </div>
-              <div class="row color-row">
-                <label for="previewSecondaryColor">Secondary</label>
-                <input type="color" id="previewSecondaryColor" value="#000000" />
-              </div>
-              <button id="swapColorsBtn">Swap Colors</button>
-              <details class="color-preset-details">
-                <summary>Color Presets</summary>
-                <div id="colorPresetContainer" class="color-preset-container loading">
-                  <div class="color-preset-placeholder">Loading presets...</div>
-                </div>
-              </details>
             </section>
 
             <section class="toolbar-section">
