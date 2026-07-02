@@ -570,6 +570,98 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     renderShiftSelection();
   };
 
+  const applyPenBrush = (cx: number, cy: number, activate: boolean) => {
+    const size = toolState.getPenSize();
+    const radius = Math.floor(size / 2);
+    for (let by = cy - radius; by <= cy + radius; by++) {
+      if (by < 0 || by >= tileHeight) continue;
+      for (let bx = cx - radius; bx <= cx + radius; bx++) {
+        if (bx < 0 || bx >= tileWidth) continue;
+        setCellActive(bx, by, activate);
+      }
+    }
+  };
+
+  const getCellPoint = (target: Element | null): GridPoint | null => {
+    const cell = target?.closest(".cell");
+    if (!(cell instanceof HTMLElement) || !gridDiv.contains(cell)) return null;
+    const x = Number(cell.dataset.x);
+    const y = Number(cell.dataset.y);
+    if (!Number.isInteger(x) || !Number.isInteger(y)) return null;
+    return isInBounds(x, y) ? { x, y } : null;
+  };
+
+  const getCellPointAt = (event: PointerEvent) =>
+    getCellPoint(document.elementFromPoint(event.clientX, event.clientY));
+
+  const applyTouchPoint = (point: GridPoint) => {
+    if (isShiftSelectEnabled) {
+      updateShiftSelection(point.x, point.y);
+      return;
+    }
+    const tool = toolState.getCurrentTool();
+    if (tool === "pen") {
+      beginPatternChangeStroke();
+      if (toggleState === null) {
+        toggleState = !isCellActive(point.x, point.y);
+      }
+      applyPenBrush(point.x, point.y, toggleState);
+      onPatternChange();
+    } else if (tool === "select") {
+      updateSelection(point.x, point.y);
+    } else if (tool === "stamp") {
+      updateStampSelection(point.x, point.y);
+    }
+  };
+
+  let touchPointerId: number | null = null;
+
+  gridDiv.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "mouse") return;
+    const point = getCellPoint(event.target as Element);
+    if (!point) return;
+    event.preventDefault();
+    touchPointerId = event.pointerId;
+    isMouseDown = true;
+    gridDiv.setPointerCapture(event.pointerId);
+    if (isShiftSelectEnabled) {
+      startShiftSelection(point.x, point.y);
+    } else if (toolState.getCurrentTool() === "select") {
+      startSelection(point.x, point.y);
+    } else if (toolState.getCurrentTool() === "stamp") {
+      startStampSelection(point.x, point.y);
+    }
+    applyTouchPoint(point);
+  });
+
+  gridDiv.addEventListener("pointermove", (event) => {
+    if (touchPointerId !== event.pointerId) return;
+    event.preventDefault();
+    const point = getCellPointAt(event);
+    if (point) applyTouchPoint(point);
+  });
+
+  const finishTouchPointer = (event: PointerEvent) => {
+    if (touchPointerId !== event.pointerId) return;
+    touchPointerId = null;
+    isMouseDown = false;
+    toggleState = null;
+    endPatternChangeStroke();
+    if (gridDiv.hasPointerCapture(event.pointerId)) {
+      gridDiv.releasePointerCapture(event.pointerId);
+    }
+    if (isShiftSelectEnabled) {
+      finishShiftSelection();
+    } else if (toolState.getCurrentTool() === "select") {
+      finishSelection();
+    } else if (toolState.getCurrentTool() === "stamp") {
+      stampSelectionLastPoint = null;
+    }
+  };
+
+  gridDiv.addEventListener("pointerup", finishTouchPointer);
+  gridDiv.addEventListener("pointercancel", finishTouchPointer);
+
   document.body.addEventListener("mouseup", () => {
     isMouseDown = false;
     toggleState = null;
@@ -637,18 +729,6 @@ export function createGridManager(options: GridManagerOptions): GridManager {
         centerH = [(tileHeight - 1) / 2, (tileHeight - 1) / 2 + 1];
       }
     }
-
-    const applyPenBrush = (cx: number, cy: number, activate: boolean) => {
-      const size = toolState.getPenSize();
-      const radius = Math.floor(size / 2);
-      for (let by = cy - radius; by <= cy + radius; by++) {
-        if (by < 0 || by >= tileHeight) continue;
-        for (let bx = cx - radius; bx <= cx + radius; bx++) {
-          if (bx < 0 || bx >= tileWidth) continue;
-          setCellActive(bx, by, activate);
-        }
-      }
-    };
 
     for (let y = 0; y < tileHeight; y++) {
       for (let x = 0; x < tileWidth; x++) {
