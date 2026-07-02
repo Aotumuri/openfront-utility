@@ -213,9 +213,22 @@ body.is-resizing-pane .resize-handle::before {
   position: fixed;
   z-index: 30;
   width: min(360px, calc(100vw - 28px));
-  max-height: min(520px, calc(100vh - 28px));
+  max-height: calc(100vh - 28px);
   top: 82px;
   left: 82px;
+}
+
+.preview-panel.floating .preview-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.preview-panel.floating #preview {
+  align-self: center;
+  width: auto;
+  max-width: 100%;
+  max-height: min(360px, max(0px, calc(100vh - 332px)));
 }
 
 .preview-panel.floating .preview-header {

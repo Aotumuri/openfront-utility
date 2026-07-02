@@ -34,6 +34,16 @@ export function initEditorViewControls(options: EditorViewControlsOptions) {
   const isPreviewFloating = () => previewPanel.classList.contains("floating");
   const getEffectiveViewMode = (mode: ViewMode): ViewMode =>
     singlePaneQuery.matches && mode === "both" ? "canvas" : mode;
+  const clampFloatingPreview = () => {
+    if (!isPreviewFloating()) return;
+    const rect = previewPanel.getBoundingClientRect();
+    const maxLeft = window.innerWidth - rect.width - 8;
+    const maxTop = window.innerHeight - rect.height - 8;
+    const nextLeft = Math.max(8, Math.min(maxLeft, rect.left));
+    const nextTop = Math.max(8, Math.min(maxTop, rect.top));
+    previewPanel.style.left = `${nextLeft}px`;
+    previewPanel.style.top = `${nextTop}px`;
+  };
 
   const applyViewMode = (mode: ViewMode) => {
     const effectiveMode = getEffectiveViewMode(mode);
@@ -77,6 +87,7 @@ export function initEditorViewControls(options: EditorViewControlsOptions) {
     floatPreviewButton.hidden = true;
     applyViewMode("canvas");
     syncModeButtons();
+    clampFloatingPreview();
   };
 
   const dockPreview = () => {
@@ -138,7 +149,9 @@ export function initEditorViewControls(options: EditorViewControlsOptions) {
   singlePaneQuery.addEventListener("change", () => {
     if (!isPreviewFloating()) applyViewMode(dockedViewMode);
     syncModeButtons();
+    clampFloatingPreview();
   });
+  window.addEventListener("resize", clampFloatingPreview);
 
   applyViewMode(dockedViewMode);
   setToolbarOpen(!window.matchMedia("(max-width: 900px)").matches);
