@@ -225,4 +225,8 @@ h1 {
   .mode-switch button {
     padding: 5px 7px;
   }
+
+  .mode-switch button[data-view-mode="both"] {
+    display: none;
+  }
 }

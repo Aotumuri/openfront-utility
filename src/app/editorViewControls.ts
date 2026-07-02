@@ -27,20 +27,31 @@ export function initEditorViewControls(options: EditorViewControlsOptions) {
   let startTop = 0;
   let dockedViewMode: ViewMode =
     (shell.dataset.viewMode as ViewMode | undefined) ?? "both";
+  const singlePaneQuery = window.matchMedia(
+    "(max-width: 600px) and (orientation: portrait)",
+  );
 
   const isPreviewFloating = () => previewPanel.classList.contains("floating");
+  const getEffectiveViewMode = (mode: ViewMode): ViewMode =>
+    singlePaneQuery.matches && mode === "both" ? "canvas" : mode;
 
   const applyViewMode = (mode: ViewMode) => {
-    shell.dataset.viewMode = mode;
+    const effectiveMode = getEffectiveViewMode(mode);
+    shell.dataset.viewMode = effectiveMode;
     modeButtons.forEach((button) => {
-      button.classList.toggle("selected", button.dataset.viewMode === mode);
+      button.classList.toggle(
+        "selected",
+        button.dataset.viewMode === effectiveMode,
+      );
     });
   };
 
   const syncModeButtons = () => {
     const floating = isPreviewFloating();
     modeButtons.forEach((button) => {
-      button.disabled = floating && button.dataset.viewMode !== "canvas";
+      button.disabled =
+        (floating && button.dataset.viewMode !== "canvas") ||
+        (singlePaneQuery.matches && button.dataset.viewMode === "both");
     });
   };
 
@@ -124,6 +135,10 @@ export function initEditorViewControls(options: EditorViewControlsOptions) {
 
   previewHeader.addEventListener("pointerup", stopDrag);
   previewHeader.addEventListener("pointercancel", stopDrag);
+  singlePaneQuery.addEventListener("change", () => {
+    if (!isPreviewFloating()) applyViewMode(dockedViewMode);
+    syncModeButtons();
+  });
 
   applyViewMode(dockedViewMode);
   setToolbarOpen(!window.matchMedia("(max-width: 900px)").matches);
