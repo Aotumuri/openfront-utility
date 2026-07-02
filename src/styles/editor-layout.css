@@ -270,3 +270,24 @@ body.is-resizing-pane .resize-handle::before {
     display: none;
   }
 }
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .editor-shell,
+  .editor-shell.toolbar-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) 0;
+  }
+
+  .editor-shell.toolbar-open {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(240px, 42vh);
+  }
+
+  .toolbar-resize-handle {
+    display: none;
+  }
+
+  .workspace-panel {
+    padding: 6px;
+  }
+}
