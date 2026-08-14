@@ -69,15 +69,15 @@ export function getCircleCells(
 
   let x = radius;
   let y = 0;
-  let err = 0;
+  let error = 1 - radius;
   while (x >= y) {
     addOutlinePoints(points, seen, center.x, center.y, x, y, width, height);
     y += 1;
-    if (err <= 0) {
-      err += 2 * y + 1;
+    if (error < 0) {
+      error += 2 * y + 1;
     } else {
       x -= 1;
-      err -= 2 * x + 1;
+      error += 2 * (y - x) + 1;
     }
   }
 

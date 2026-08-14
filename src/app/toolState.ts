@@ -2,6 +2,7 @@ export type ToolKind =
   | "pen"
   | "line"
   | "fill"
+  | "shade"
   | "star"
   | "circle"
   | "select"
@@ -11,6 +12,7 @@ type ToolStateOptions = {
   toolPenBtn: HTMLButtonElement;
   toolLineBtn: HTMLButtonElement;
   toolFillBtn: HTMLButtonElement;
+  toolShadeBtn: HTMLButtonElement;
   toolStarBtn: HTMLButtonElement;
   toolCircleBtn: HTMLButtonElement;
   toolSelectBtn: HTMLButtonElement;
@@ -24,6 +26,7 @@ type ToolStateOptions = {
 
 export type ToolState = {
   getCurrentTool: () => ToolKind;
+  getSelectedTool: () => ToolKind | null;
   getPenSize: () => number;
   getStarRadius: () => number;
   getCircleRadius: () => number;
@@ -32,13 +35,15 @@ export type ToolState = {
   subscribeToToolChanges: (
     listener: (tool: ToolKind | null) => void
   ) => () => void;
+  clearCurrentTool: () => void;
 };
 
 export function createToolState(options: ToolStateOptions): ToolState {
   const {
     toolPenBtn,
     toolLineBtn,
-    toolFillBtn,
+  toolFillBtn,
+    toolShadeBtn,
     toolStarBtn,
     toolCircleBtn,
     toolSelectBtn,
@@ -60,26 +65,36 @@ export function createToolState(options: ToolStateOptions): ToolState {
       toolPenBtn,
       toolLineBtn,
       toolFillBtn,
+      toolShadeBtn,
       toolStarBtn,
       toolCircleBtn,
       toolSelectBtn,
       toolStampBtn,
-    ].forEach(
-      (btn) => btn.classList.remove("selected")
-    );
-    if (tool === "pen") toolPenBtn.classList.add("selected");
-    if (tool === "line") toolLineBtn.classList.add("selected");
-    if (tool === "fill") toolFillBtn.classList.add("selected");
-    if (tool === "star") toolStarBtn.classList.add("selected");
-    if (tool === "circle") toolCircleBtn.classList.add("selected");
-    if (tool === "select") toolSelectBtn.classList.add("selected");
-    if (tool === "stamp") toolStampBtn.classList.add("selected");
+    ].forEach((btn) => {
+      btn.classList.remove("selected");
+      btn.setAttribute("aria-pressed", "false");
+    });
+    const selectedButton = {
+      pen: toolPenBtn,
+      line: toolLineBtn,
+      fill: toolFillBtn,
+      shade: toolShadeBtn,
+      star: toolStarBtn,
+      circle: toolCircleBtn,
+      select: toolSelectBtn,
+      stamp: toolStampBtn,
+    }[tool ?? "pen"];
+    if (tool && selectedButton) {
+      selectedButton.classList.add("selected");
+      selectedButton.setAttribute("aria-pressed", "true");
+    }
     listeners.forEach((listener) => listener(tool));
   }
 
   toolPenBtn.onclick = () => selectTool("pen");
   toolLineBtn.onclick = () => selectTool("line");
   toolFillBtn.onclick = () => selectTool("fill");
+  toolShadeBtn.onclick = () => selectTool("shade");
   toolStarBtn.onclick = () => selectTool("star");
   toolCircleBtn.onclick = () => selectTool("circle");
   toolSelectBtn.onclick = () => selectTool(currentTool === "select" ? null : "select");
@@ -109,6 +124,7 @@ export function createToolState(options: ToolStateOptions): ToolState {
 
   return {
     getCurrentTool: () => currentTool ?? "pen",
+    getSelectedTool: () => currentTool,
     getPenSize: () => parseInt(penSizeInput.value),
     getStarRadius: () => parseInt(starSizeInput.value),
     getCircleRadius: () => parseInt(circleSizeInput.value),
@@ -118,5 +134,6 @@ export function createToolState(options: ToolStateOptions): ToolState {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    clearCurrentTool: () => selectTool(null),
   };
 }

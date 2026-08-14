@@ -1,4 +1,4 @@
-export function copyText(value: string) {
+export async function copyText(value: string) {
   const fallbackCopy = () => {
     const temp = document.createElement("textarea");
     temp.value = value;
@@ -12,8 +12,13 @@ export function copyText(value: string) {
   };
 
   if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(value).catch(fallbackCopy);
-    return;
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      fallbackCopy();
+    }
+  } else {
+    fallbackCopy();
   }
-  fallbackCopy();
+  document.dispatchEvent(new CustomEvent("pattern:copied"));
 }
