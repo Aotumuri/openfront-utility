@@ -24,6 +24,7 @@ import { createToolState } from "./app/toolState.js";
 import { createHistoryManager } from "./app/undoRedo.js";
 import { initWorkspaceControls } from "./app/workspaceControls.js";
 import { initCopyPasteShortcuts } from "./app/copyPasteShortcuts.js";
+import { initToolShortcuts } from "./app/toolShortcuts.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const toolbox = document.getElementById("toolbox");
@@ -225,6 +226,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   gridManager.setDrawingTools(drawingTools);
   initCopyPasteShortcuts(gridManager, toolState);
+  initToolShortcuts({
+    pen: toolPenBtn,
+    line: toolLineBtn,
+    fill: toolFillBtn,
+    star: toolStarBtn,
+    circle: toolCircleBtn,
+    stamp: toolStampBtn,
+  });
   gridManager.subscribeToPasteMode((active) => {
     toolStatus.textContent = active
       ? "Paste · move over the canvas, then click to place"
