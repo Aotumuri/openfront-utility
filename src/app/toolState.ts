@@ -25,7 +25,7 @@ type ToolStateOptions = {
 };
 
 export type ToolState = {
-  getCurrentTool: () => ToolKind;
+  getCurrentTool: () => ToolKind | null;
   getSelectedTool: () => ToolKind | null;
   getPenSize: () => number;
   getStarRadius: () => number;
@@ -123,7 +123,7 @@ export function createToolState(options: ToolStateOptions): ToolState {
   };
 
   return {
-    getCurrentTool: () => currentTool ?? "pen",
+    getCurrentTool: () => currentTool,
     getSelectedTool: () => currentTool,
     getPenSize: () => parseInt(penSizeInput.value),
     getStarRadius: () => parseInt(starSizeInput.value),
