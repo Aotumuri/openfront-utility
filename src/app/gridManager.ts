@@ -43,6 +43,10 @@ export type GridManager = {
   setShiftOverwriteMode: (overwrite: boolean) => void;
   enableShiftSelect: (enabled: boolean) => void;
   clearShiftSelect: () => void;
+  copySelection: () => boolean;
+  enterPasteMode: () => boolean;
+  exitPasteMode: () => void;
+  subscribeToPasteMode: (listener: (active: boolean) => void) => () => void;
 };
 
 export function createGridManager(options: GridManagerOptions): GridManager {
@@ -94,6 +98,20 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   let stampSelectionCells: GridPoint[] = [];
   let stampSelectionVisited = new Set<string>();
   let stampSelectionLastPoint: GridPoint | null = null;
+  let copyStart: GridPoint | null = null;
+  let copyEnd: GridPoint | null = null;
+  let copyCells: GridPoint[] = [];
+  let copying = false;
+  let copiedPattern: number[][] | null = null;
+  let pasteMode = false;
+  let pasteCells: GridPoint[] = [];
+  let suppressClick = false;
+  const pasteModeListeners = new Set<(active: boolean) => void>();
+  const setPasteMode = (active: boolean) => {
+    pasteMode = active;
+    if (!active) clearPaste();
+    pasteModeListeners.forEach((listener) => listener(active));
+  };
   let isPatternChangeStrokeActive = false;
   let patternState: number[][] = [];
   let cellMatrix: HTMLDivElement[][] = [];
@@ -171,6 +189,32 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     stampSelectionCells = [];
     stampSelectionVisited = new Set<string>();
     stampSelectionLastPoint = null;
+  };
+
+  const clearCopy = () => {
+    copyCells.forEach((p) => cellMatrix[p.y]?.[p.x]?.classList.remove("copy-selection-cell"));
+    copyCells = [];
+    copyStart = null;
+    copyEnd = null;
+    copying = false;
+  };
+  const renderCopy = () => {
+    copyCells.forEach((p) => cellMatrix[p.y]?.[p.x]?.classList.remove("copy-selection-cell"));
+    copyCells = [];
+    if (!copyStart || !copyEnd) return;
+    for (let y = Math.min(copyStart.y, copyEnd.y); y <= Math.max(copyStart.y, copyEnd.y); y++) for (let x = Math.min(copyStart.x, copyEnd.x); x <= Math.max(copyStart.x, copyEnd.x); x++) {
+      copyCells.push({ x, y }); cellMatrix[y]?.[x]?.classList.add("copy-selection-cell");
+    }
+  };
+  const clearPaste = () => { pasteCells.forEach((p) => cellMatrix[p.y]?.[p.x]?.classList.remove("paste-preview-cell")); pasteCells = []; };
+  const previewPaste = (center: GridPoint) => {
+    clearPaste(); if (!copiedPattern) return;
+    const ox = center.x - Math.floor(copiedPattern[0].length / 2), oy = center.y - Math.floor(copiedPattern.length / 2);
+    copiedPattern.forEach((row, sy) => row.forEach((on, sx) => { const x = ox + sx, y = oy + sy; if (on && isInBounds(x, y)) { pasteCells.push({ x, y }); cellMatrix[y][x].classList.add("paste-preview-cell"); } }));
+  };
+  const applyPaste = (center: GridPoint) => {
+    if (!copiedPattern) return; const ox = center.x - Math.floor(copiedPattern[0].length / 2), oy = center.y - Math.floor(copiedPattern.length / 2);
+    beginPatternChangeStroke(); copiedPattern.forEach((row, sy) => row.forEach((on, sx) => { if (on) setCellActive(ox + sx, oy + sy, true); })); onPatternChange(); endPatternChangeStroke(); previewPaste(center);
   };
 
   const addStampCell = (x: number, y: number) => {
@@ -424,6 +468,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   gridDiv.onmouseleave = clearCirclePreview;
 
   toolState.subscribeToToolChanges((tool) => {
+    if (tool) setPasteMode(false);
     if (tool !== "line") setLineStart(null);
     if (tool !== "circle") clearCirclePreview();
     if (tool !== "select") {
@@ -768,6 +813,8 @@ export function createGridManager(options: GridManagerOptions): GridManager {
         }
 
         cell.onclick = () => {
+          if (suppressClick) { suppressClick = false; return; }
+          if (pasteMode) { applyPaste({ x, y }); return; }
           if (isShiftSelectEnabled) {
             return;
           }
@@ -804,6 +851,8 @@ export function createGridManager(options: GridManagerOptions): GridManager {
         };
 
         cell.onmouseover = () => {
+          if (copying) { copyEnd = { x, y }; renderCopy(); return; }
+          if (pasteMode) { previewPaste({ x, y }); return; }
           if (isShiftSelectEnabled) {
             if (isMouseDown) updateShiftSelection(x, y);
             return;
@@ -827,8 +876,12 @@ export function createGridManager(options: GridManagerOptions): GridManager {
           }
         };
 
-        cell.onmousedown = () => {
-          if (isShiftSelectEnabled) {
+        cell.onmousedown = (event) => {
+          if (event.shiftKey) {
+            clearCopy(); clearPaste(); pasteMode = false; copyStart = { x, y }; copyEnd = { x, y }; copying = true; renderCopy();
+          } else if (pasteMode) {
+            previewPaste({ x, y });
+          } else if (isShiftSelectEnabled) {
             startShiftSelection(x, y);
           } else if (toolState.getCurrentTool() === "select") {
             startSelection(x, y);
@@ -837,7 +890,8 @@ export function createGridManager(options: GridManagerOptions): GridManager {
           }
         };
         cell.onmouseup = () => {
-          if (isShiftSelectEnabled) {
+          if (copying) { copying = false; renderCopy(); suppressClick = true; }
+          else if (isShiftSelectEnabled) {
             finishShiftSelection();
           } else if (toolState.getCurrentTool() === "select") {
             finishSelection();
@@ -889,6 +943,27 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     clearShiftSelect: () => {
       isShiftSelectEnabled = false;
       clearShiftSelection();
+    },
+    copySelection: () => {
+      if (!copyStart || !copyEnd) return false;
+      suppressClick = false;
+      const x1 = Math.min(copyStart.x, copyEnd.x), y1 = Math.min(copyStart.y, copyEnd.y);
+      const x2 = Math.max(copyStart.x, copyEnd.x), y2 = Math.max(copyStart.y, copyEnd.y);
+      copiedPattern = Array.from({ length: y2 - y1 + 1 }, (_, y) => Array.from({ length: x2 - x1 + 1 }, (_, x) => patternState[y1 + y][x1 + x]));
+      clearCopy();
+      return true;
+    },
+    enterPasteMode: () => {
+      if (!copiedPattern) return false;
+      setPasteMode(true);
+      return true;
+    },
+    exitPasteMode: () => {
+      setPasteMode(false);
+    },
+    subscribeToPasteMode: (listener) => {
+      pasteModeListeners.add(listener);
+      return () => pasteModeListeners.delete(listener);
     },
   };
 }

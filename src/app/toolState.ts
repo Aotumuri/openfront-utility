@@ -24,6 +24,7 @@ type ToolStateOptions = {
 
 export type ToolState = {
   getCurrentTool: () => ToolKind;
+  getSelectedTool: () => ToolKind | null;
   getPenSize: () => number;
   getStarRadius: () => number;
   getCircleRadius: () => number;
@@ -32,6 +33,7 @@ export type ToolState = {
   subscribeToToolChanges: (
     listener: (tool: ToolKind | null) => void
   ) => () => void;
+  clearCurrentTool: () => void;
 };
 
 export function createToolState(options: ToolStateOptions): ToolState {
@@ -116,6 +118,7 @@ export function createToolState(options: ToolStateOptions): ToolState {
 
   return {
     getCurrentTool: () => currentTool ?? "pen",
+    getSelectedTool: () => currentTool,
     getPenSize: () => parseInt(penSizeInput.value),
     getStarRadius: () => parseInt(starSizeInput.value),
     getCircleRadius: () => parseInt(circleSizeInput.value),
@@ -125,5 +128,6 @@ export function createToolState(options: ToolStateOptions): ToolState {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    clearCurrentTool: () => selectTool(null),
   };
 }

@@ -23,6 +23,7 @@ import { initStampControls } from "./app/stampControls.js";
 import { createToolState } from "./app/toolState.js";
 import { createHistoryManager } from "./app/undoRedo.js";
 import { initWorkspaceControls } from "./app/workspaceControls.js";
+import { initCopyPasteShortcuts } from "./app/copyPasteShortcuts.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const toolbox = document.getElementById("toolbox");
@@ -216,6 +217,14 @@ document.addEventListener("DOMContentLoaded", () => {
     setCellActive: gridManager.setCellActive,
   });
   gridManager.setDrawingTools(drawingTools);
+  initCopyPasteShortcuts(gridManager, toolState);
+  gridManager.subscribeToPasteMode((active) => {
+    toolStatus.textContent = active
+      ? "Paste · move over the canvas, then click to place"
+      : (toolState.getSelectedTool()
+        ? toolDescriptions[toolState.getSelectedTool()!]
+        : "Choose a drawing tool");
+  });
   handleGuideChange = () => gridManager.generateGrid();
 
   const renderPreview = createPreviewRenderer({
