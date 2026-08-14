@@ -1,9 +1,30 @@
 .right-toolbar {
+  position: relative;
   min-width: 0;
   min-height: 0;
   border-left: 1px solid var(--border);
   background: var(--surface);
   overflow: hidden;
+}
+
+.toolbar-scroll-cue {
+  position: absolute;
+  z-index: 3;
+  right: 12px;
+  bottom: 12px;
+  padding: 7px 10px;
+  border-color: rgba(11, 111, 109, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 3px 12px rgba(31, 42, 46, 0.16);
+  color: var(--accent-dark);
+  font-size: 12px;
+}
+
+.toolbar-scroll-cue span {
+  display: inline-block;
+  margin-left: 3px;
+  animation: preview-scroll-cue-bounce 1.5s ease-in-out infinite;
 }
 
 .toolbar-scroll {
@@ -295,6 +316,11 @@ details[open] summary::after {
   .right-toolbar {
     border-top: 1px solid var(--border);
     border-left: 0;
+  }
+
+  .toolbar-scroll-cue {
+    right: 8px;
+    bottom: 8px;
   }
 
   .toolbar-scroll {

@@ -79,6 +79,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewHeader = document.querySelector(".preview-header") as HTMLElement;
   const previewBody = document.querySelector(".preview-body") as HTMLElement;
   const previewScrollCue = document.getElementById("previewScrollCue") as HTMLButtonElement;
+  const toolbarScroll = document.querySelector(".toolbar-scroll") as HTMLElement;
+  const toolbarScrollCue = document.getElementById("toolbarScrollCue") as HTMLButtonElement;
   const toolStatus = document.getElementById("toolStatus") as HTMLElement;
   const toast = document.getElementById("toast") as HTMLElement;
 
@@ -100,6 +102,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   new ResizeObserver(updatePreviewScrollCue).observe(previewBody);
   new ResizeObserver(updatePreviewScrollCue).observe(previewCanvas);
+
+  const updateToolbarScrollCue = () => {
+    const hasMoreContent =
+      toolbarScroll.scrollTop + toolbarScroll.clientHeight < toolbarScroll.scrollHeight - 2;
+    toolbarScrollCue.hidden = !hasMoreContent;
+  };
+  toolbarScroll.addEventListener("scroll", updateToolbarScrollCue, { passive: true });
+  toolbarScrollCue.addEventListener("click", () => {
+    toolbarScroll.scrollBy({ top: toolbarScroll.clientHeight * 0.8, behavior: "smooth" });
+  });
+  new ResizeObserver(updateToolbarScrollCue).observe(toolbarScroll);
 
   const workspaceControls = initWorkspaceControls({
     workspace: document.getElementById("canvasWorkspace") as HTMLElement,
@@ -421,6 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   gridManager.generateGrid();
   requestAnimationFrame(updatePreviewScrollCue);
+  requestAnimationFrame(updateToolbarScrollCue);
   if (shouldFocusPreview) editorViewControls.setViewMode("preview");
   workspaceControls.reset();
 });
