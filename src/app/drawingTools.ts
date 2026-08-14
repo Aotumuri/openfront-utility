@@ -1,4 +1,5 @@
 import { getCircleCells } from "./circleGeometry.js";
+import { getStarCells } from "./starGeometry.js";
 
 export type DrawingTools = {
   drawLine: (x0: number, y0: number, x1: number, y1: number) => void;
@@ -47,23 +48,11 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
   }
 
   function drawStar(cx: number, cy: number, r: number) {
-    const points: [number, number][] = [];
-    for (let i = 0; i < 5; i++) {
-      const angle = ((Math.PI * 2) / 5) * i - Math.PI / 2;
-      points.push([
-        Math.round(cx + r * Math.cos(angle)),
-        Math.round(cy + r * Math.sin(angle)),
-      ]);
-    }
-    for (let i = 0; i < 5; i++) {
-      drawLine(cx, cy, points[i][0], points[i][1]);
-      drawLine(
-        points[i][0],
-        points[i][1],
-        points[(i + 2) % 5][0],
-        points[(i + 2) % 5][1]
-      );
-    }
+    const width = getTileWidth();
+    const height = getTileHeight();
+    getStarCells({ x: cx, y: cy }, r, width, height).forEach((point) =>
+      setCellActive(point.x, point.y, true),
+    );
   }
 
   function floodFill(sx: number, sy: number) {
