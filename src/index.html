@@ -22,6 +22,33 @@
           <p class="eyebrow">Pattern Utility</p>
           <h1>Pattern Editor</h1>
         </div>
+        <section class="top-grid-controls" aria-label="Grid settings">
+          <span class="top-control-label">Grid</span>
+          <label class="top-dimension-control" for="tileWidth-value">W
+            <input type="range" id="tileWidth" value="66" min="2" max="129" class="range-input top-range-input" aria-label="Grid width" />
+            <input type="number" min="2" max="129" id="tileWidth-value" value="66" class="number-input" />
+          </label>
+          <label class="top-dimension-control" for="tileHeight-value">H
+            <input type="range" id="tileHeight" value="10" min="2" max="65" class="range-input top-range-input" aria-label="Grid height" />
+            <input type="number" min="2" max="129" id="tileHeight-value" value="10" class="number-input" />
+          </label>
+          <details class="top-grid-details">
+            <summary>More</summary>
+            <div class="top-grid-details-body">
+              <label for="scale">Scale</label>
+              <input type="range" id="scale" value="1" min="0" max="7" class="range-input" />
+              <div class="scale-badge"><span id="scale-value">2</span>x</div>
+              <label for="gridScale">Display</label>
+              <select id="gridScale" class="select-input">
+                <option value="0.25">x0.25</option>
+                <option value="0.5">x0.5</option>
+                <option value="1" selected>x1</option>
+                <option value="2">x2</option>
+                <option value="3">x3</option>
+              </select>
+            </div>
+          </details>
+        </section>
         <div class="top-actions">
           <button id="undoBtn" type="button" disabled title="Undo (⌘/Ctrl + Z)">Undo</button>
           <button id="redoBtn" type="button" disabled title="Redo (⌘/Ctrl + Shift + Z)">Redo</button>
@@ -163,40 +190,6 @@
                 <div id="stampEditor" class="stamp-editor" aria-label="Stamp pattern editor"></div>
               </div>
               <button id="stampApplyBtn" class="btn-primary">Apply Stamp</button>
-            </section>
-
-            <section class="toolbar-section">
-              <div class="panel-title">Grid</div>
-              <div class="row slider-row">
-                <label for="tileWidth">Width</label>
-                <input type="range" id="tileWidth" value="66" min="2" max="129" class="range-input" />
-                <input type="number" min="2" max="129" id="tileWidth-value" value="66" class="number-input" />
-              </div>
-              <div class="row slider-row">
-                <label for="tileHeight">Height</label>
-                <input type="range" id="tileHeight" value="10" min="2" max="65" class="range-input" />
-                <input type="number" min="2" max="129" id="tileHeight-value" value="10" class="number-input" />
-              </div>
-              <details>
-                <summary>Advanced Grid</summary>
-                <div class="details-body">
-                  <div class="row slider-row">
-                    <label for="scale">Scale</label>
-                    <input type="range" id="scale" value="1" min="0" max="7" class="range-input" />
-                    <div class="scale-badge"><span id="scale-value">2</span>x</div>
-                  </div>
-                  <div class="row slider-row grid-size-row">
-                    <label for="gridScale">Grid Size</label>
-                    <select id="gridScale" class="select-input">
-                      <option value="0.25">x0.25</option>
-                      <option value="0.5">x0.5</option>
-                      <option value="1" selected>x1</option>
-                      <option value="2">x2</option>
-                      <option value="3">x3</option>
-                    </select>
-                  </div>
-                </div>
-              </details>
             </section>
 
             <section class="toolbar-section">
