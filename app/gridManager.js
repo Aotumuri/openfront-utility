@@ -1,7 +1,8 @@
 import { getCircleCells, } from "./circleGeometry.js";
+import { getStarCells } from "./starGeometry.js";
 import { invertPattern, shiftPatternDown, shiftPatternLeft, shiftPatternRight, shiftPatternUp } from "./patternTransforms.js";
 export function createGridManager(options) {
-    const { gridDiv, tileWidthInput, tileHeightInput, tileWidthValue, tileHeightValue, gridScaleInput, shiftUpBtn, shiftDownBtn, shiftLeftBtn, shiftRightBtn, invertBtn, rotateLeftBtn, rotateRightBtn, guideState, toolState, drawingTools: initialDrawingTools, onPatternChange, } = options;
+    const { gridDiv, tileWidthInput, tileHeightInput, tileWidthValue, tileHeightValue, gridScaleInput, shiftUpBtn, shiftDownBtn, shiftLeftBtn, shiftRightBtn, invertBtn, rotateLeftBtn, rotateRightBtn, guideState, toolState, drawingTools: initialDrawingTools, onPatternChange, onPatternChangeStart, onPatternChangeEnd, } = options;
     let drawingTools = initialDrawingTools !== null && initialDrawingTools !== void 0 ? initialDrawingTools : null;
     let tileWidth = parseInt(tileWidthInput.value);
     let tileHeight = parseInt(tileHeightInput.value);
@@ -28,6 +29,22 @@ export function createGridManager(options) {
     let stampSelectionCells = [];
     let stampSelectionVisited = new Set();
     let stampSelectionLastPoint = null;
+    let copyStart = null;
+    let copyEnd = null;
+    let copyCells = [];
+    let copying = false;
+    let copiedPattern = null;
+    let pasteMode = false;
+    let pasteCells = [];
+    let suppressClick = false;
+    const pasteModeListeners = new Set();
+    const setPasteMode = (active) => {
+        pasteMode = active;
+        if (!active)
+            clearPaste();
+        pasteModeListeners.forEach((listener) => listener(active));
+    };
+    let isPatternChangeStrokeActive = false;
     let patternState = [];
     let cellMatrix = [];
     const baseCellSize = 20;
@@ -76,6 +93,18 @@ export function createGridManager(options) {
     };
     const isCellActive = (x, y) => isInBounds(x, y) && patternState[y][x] === 1;
     const setDrawingTools = (tools) => (drawingTools = tools);
+    const beginPatternChangeStroke = () => {
+        if (isPatternChangeStrokeActive)
+            return;
+        isPatternChangeStrokeActive = true;
+        onPatternChangeStart === null || onPatternChangeStart === void 0 ? void 0 : onPatternChangeStart();
+    };
+    const endPatternChangeStroke = () => {
+        if (!isPatternChangeStrokeActive)
+            return;
+        isPatternChangeStrokeActive = false;
+        onPatternChangeEnd === null || onPatternChangeEnd === void 0 ? void 0 : onPatternChangeEnd();
+    };
     const clearStampSelection = () => {
         stampSelectionCells.forEach((point) => {
             var _a, _b;
@@ -84,6 +113,47 @@ export function createGridManager(options) {
         stampSelectionCells = [];
         stampSelectionVisited = new Set();
         stampSelectionLastPoint = null;
+    };
+    const clearCopy = () => {
+        copyCells.forEach((p) => { var _a, _b; return (_b = (_a = cellMatrix[p.y]) === null || _a === void 0 ? void 0 : _a[p.x]) === null || _b === void 0 ? void 0 : _b.classList.remove("copy-selection-cell"); });
+        copyCells = [];
+        copyStart = null;
+        copyEnd = null;
+        copying = false;
+    };
+    const renderCopy = () => {
+        var _a, _b;
+        copyCells.forEach((p) => { var _a, _b; return (_b = (_a = cellMatrix[p.y]) === null || _a === void 0 ? void 0 : _a[p.x]) === null || _b === void 0 ? void 0 : _b.classList.remove("copy-selection-cell"); });
+        copyCells = [];
+        if (!copyStart || !copyEnd)
+            return;
+        for (let y = Math.min(copyStart.y, copyEnd.y); y <= Math.max(copyStart.y, copyEnd.y); y++)
+            for (let x = Math.min(copyStart.x, copyEnd.x); x <= Math.max(copyStart.x, copyEnd.x); x++) {
+                copyCells.push({ x, y });
+                (_b = (_a = cellMatrix[y]) === null || _a === void 0 ? void 0 : _a[x]) === null || _b === void 0 ? void 0 : _b.classList.add("copy-selection-cell");
+            }
+    };
+    const clearPaste = () => { pasteCells.forEach((p) => { var _a, _b; return (_b = (_a = cellMatrix[p.y]) === null || _a === void 0 ? void 0 : _a[p.x]) === null || _b === void 0 ? void 0 : _b.classList.remove("paste-preview-cell"); }); pasteCells = []; };
+    const previewPaste = (center) => {
+        clearPaste();
+        if (!copiedPattern)
+            return;
+        const ox = center.x - Math.floor(copiedPattern[0].length / 2), oy = center.y - Math.floor(copiedPattern.length / 2);
+        copiedPattern.forEach((row, sy) => row.forEach((on, sx) => { const x = ox + sx, y = oy + sy; if (on && isInBounds(x, y)) {
+            pasteCells.push({ x, y });
+            cellMatrix[y][x].classList.add("paste-preview-cell");
+        } }));
+    };
+    const applyPaste = (center) => {
+        if (!copiedPattern)
+            return;
+        const ox = center.x - Math.floor(copiedPattern[0].length / 2), oy = center.y - Math.floor(copiedPattern.length / 2);
+        beginPatternChangeStroke();
+        copiedPattern.forEach((row, sy) => row.forEach((on, sx) => { if (on)
+            setCellActive(ox + sx, oy + sy, true); }));
+        onPatternChange();
+        endPatternChangeStroke();
+        previewPaste(center);
     };
     const addStampCell = (x, y) => {
         var _a, _b;
@@ -317,11 +387,18 @@ export function createGridManager(options) {
         circlePreviewCells = getCircleCells(center, Math.max(0, radius), toolState.isCircleFilled(), tileWidth, tileHeight);
         circlePreviewCells.forEach((cell) => { var _a, _b; return (_b = (_a = cellMatrix[cell.y]) === null || _a === void 0 ? void 0 : _a[cell.x]) === null || _b === void 0 ? void 0 : _b.classList.add("circle-hover"); });
     };
+    const previewStar = (center, radius) => {
+        clearCirclePreview();
+        circlePreviewCells = getStarCells(center, radius, tileWidth, tileHeight);
+        circlePreviewCells.forEach((cell) => { var _a, _b; return (_b = (_a = cellMatrix[cell.y]) === null || _a === void 0 ? void 0 : _a[cell.x]) === null || _b === void 0 ? void 0 : _b.classList.add("circle-hover"); });
+    };
     gridDiv.onmouseleave = clearCirclePreview;
     toolState.subscribeToToolChanges((tool) => {
+        if (tool)
+            setPasteMode(false);
         if (tool !== "line")
             setLineStart(null);
-        if (tool !== "circle")
+        if (tool !== "circle" && tool !== "star")
             clearCirclePreview();
         if (tool !== "select") {
             clearSelectionTimer();
@@ -459,9 +536,107 @@ export function createGridManager(options) {
         }
         renderShiftSelection();
     };
+    const applyPenBrush = (cx, cy, activate) => {
+        const size = toolState.getPenSize();
+        const radius = Math.floor(size / 2);
+        for (let by = cy - radius; by <= cy + radius; by++) {
+            if (by < 0 || by >= tileHeight)
+                continue;
+            for (let bx = cx - radius; bx <= cx + radius; bx++) {
+                if (bx < 0 || bx >= tileWidth)
+                    continue;
+                setCellActive(bx, by, activate);
+            }
+        }
+    };
+    const getCellPoint = (target) => {
+        const cell = target === null || target === void 0 ? void 0 : target.closest(".cell");
+        if (!(cell instanceof HTMLElement) || !gridDiv.contains(cell))
+            return null;
+        const x = Number(cell.dataset.x);
+        const y = Number(cell.dataset.y);
+        if (!Number.isInteger(x) || !Number.isInteger(y))
+            return null;
+        return isInBounds(x, y) ? { x, y } : null;
+    };
+    const getCellPointAt = (event) => getCellPoint(document.elementFromPoint(event.clientX, event.clientY));
+    const applyTouchPoint = (point) => {
+        if (isShiftSelectEnabled) {
+            updateShiftSelection(point.x, point.y);
+            return;
+        }
+        const tool = toolState.getCurrentTool();
+        if (tool === "pen") {
+            beginPatternChangeStroke();
+            if (toggleState === null) {
+                toggleState = !isCellActive(point.x, point.y);
+            }
+            applyPenBrush(point.x, point.y, toggleState);
+            onPatternChange();
+        }
+        else if (tool === "select") {
+            updateSelection(point.x, point.y);
+        }
+        else if (tool === "stamp") {
+            updateStampSelection(point.x, point.y);
+        }
+    };
+    let touchPointerId = null;
+    gridDiv.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse")
+            return;
+        const point = getCellPoint(event.target);
+        if (!point)
+            return;
+        event.preventDefault();
+        touchPointerId = event.pointerId;
+        isMouseDown = true;
+        gridDiv.setPointerCapture(event.pointerId);
+        if (isShiftSelectEnabled) {
+            startShiftSelection(point.x, point.y);
+        }
+        else if (toolState.getCurrentTool() === "select") {
+            startSelection(point.x, point.y);
+        }
+        else if (toolState.getCurrentTool() === "stamp") {
+            startStampSelection(point.x, point.y);
+        }
+        applyTouchPoint(point);
+    });
+    gridDiv.addEventListener("pointermove", (event) => {
+        if (touchPointerId !== event.pointerId)
+            return;
+        event.preventDefault();
+        const point = getCellPointAt(event);
+        if (point)
+            applyTouchPoint(point);
+    });
+    const finishTouchPointer = (event) => {
+        if (touchPointerId !== event.pointerId)
+            return;
+        touchPointerId = null;
+        isMouseDown = false;
+        toggleState = null;
+        endPatternChangeStroke();
+        if (gridDiv.hasPointerCapture(event.pointerId)) {
+            gridDiv.releasePointerCapture(event.pointerId);
+        }
+        if (isShiftSelectEnabled) {
+            finishShiftSelection();
+        }
+        else if (toolState.getCurrentTool() === "select") {
+            finishSelection();
+        }
+        else if (toolState.getCurrentTool() === "stamp") {
+            stampSelectionLastPoint = null;
+        }
+    };
+    gridDiv.addEventListener("pointerup", finishTouchPointer);
+    gridDiv.addEventListener("pointercancel", finishTouchPointer);
     document.body.addEventListener("mouseup", () => {
         isMouseDown = false;
         toggleState = null;
+        endPatternChangeStroke();
         if (isShiftSelectEnabled) {
             finishShiftSelection();
         }
@@ -518,19 +693,6 @@ export function createGridManager(options) {
                 centerH = [(tileHeight - 1) / 2, (tileHeight - 1) / 2 + 1];
             }
         }
-        const applyPenBrush = (cx, cy, activate) => {
-            const size = toolState.getPenSize();
-            const radius = Math.floor(size / 2);
-            for (let by = cy - radius; by <= cy + radius; by++) {
-                if (by < 0 || by >= tileHeight)
-                    continue;
-                for (let bx = cx - radius; bx <= cx + radius; bx++) {
-                    if (bx < 0 || bx >= tileWidth)
-                        continue;
-                    setCellActive(bx, by, activate);
-                }
-            }
-        };
         for (let y = 0; y < tileHeight; y++) {
             for (let x = 0; x < tileWidth; x++) {
                 let cell = (_c = (_b = cellMatrix[y]) === null || _b === void 0 ? void 0 : _b[x]) !== null && _c !== void 0 ? _c : null;
@@ -571,6 +733,14 @@ export function createGridManager(options) {
                         cell.classList.add("center-h");
                 }
                 cell.onclick = () => {
+                    if (suppressClick) {
+                        suppressClick = false;
+                        return;
+                    }
+                    if (pasteMode) {
+                        applyPaste({ x, y });
+                        return;
+                    }
                     if (isShiftSelectEnabled) {
                         return;
                     }
@@ -590,7 +760,11 @@ export function createGridManager(options) {
                     else if (tool === "fill") {
                         drawingTools === null || drawingTools === void 0 ? void 0 : drawingTools.floodFill(x, y);
                     }
+                    else if (tool === "shade") {
+                        drawingTools === null || drawingTools === void 0 ? void 0 : drawingTools.shadeFill(x, y);
+                    }
                     else if (tool === "star") {
+                        clearCirclePreview();
                         const r = toolState.getStarRadius();
                         drawingTools === null || drawingTools === void 0 ? void 0 : drawingTools.drawStar(x, y, r);
                     }
@@ -607,6 +781,15 @@ export function createGridManager(options) {
                     onPatternChange();
                 };
                 cell.onmouseover = () => {
+                    if (copying) {
+                        copyEnd = { x, y };
+                        renderCopy();
+                        return;
+                    }
+                    if (pasteMode) {
+                        previewPaste({ x, y });
+                        return;
+                    }
                     if (isShiftSelectEnabled) {
                         if (isMouseDown)
                             updateShiftSelection(x, y);
@@ -614,6 +797,7 @@ export function createGridManager(options) {
                     }
                     const tool = toolState.getCurrentTool();
                     if (isMouseDown && tool === "pen") {
+                        beginPatternChangeStroke();
                         if (toggleState === null) {
                             toggleState = !isCellActive(x, y);
                         }
@@ -622,6 +806,9 @@ export function createGridManager(options) {
                     }
                     else if (!isMouseDown && tool === "circle") {
                         previewCircle({ x, y }, toolState.getCircleRadius());
+                    }
+                    else if (!isMouseDown && tool === "star") {
+                        previewStar({ x, y }, toolState.getStarRadius());
                     }
                     else if (isMouseDown && tool === "select") {
                         updateSelection(x, y);
@@ -633,8 +820,20 @@ export function createGridManager(options) {
                         updateStampSelection(x, y);
                     }
                 };
-                cell.onmousedown = () => {
-                    if (isShiftSelectEnabled) {
+                cell.onmousedown = (event) => {
+                    if (event.shiftKey) {
+                        clearCopy();
+                        clearPaste();
+                        pasteMode = false;
+                        copyStart = { x, y };
+                        copyEnd = { x, y };
+                        copying = true;
+                        renderCopy();
+                    }
+                    else if (pasteMode) {
+                        previewPaste({ x, y });
+                    }
+                    else if (isShiftSelectEnabled) {
                         startShiftSelection(x, y);
                     }
                     else if (toolState.getCurrentTool() === "select") {
@@ -645,7 +844,12 @@ export function createGridManager(options) {
                     }
                 };
                 cell.onmouseup = () => {
-                    if (isShiftSelectEnabled) {
+                    if (copying) {
+                        copying = false;
+                        renderCopy();
+                        suppressClick = true;
+                    }
+                    else if (isShiftSelectEnabled) {
                         finishShiftSelection();
                     }
                     else if (toolState.getCurrentTool() === "select") {
@@ -699,6 +903,29 @@ export function createGridManager(options) {
         clearShiftSelect: () => {
             isShiftSelectEnabled = false;
             clearShiftSelection();
+        },
+        copySelection: () => {
+            if (!copyStart || !copyEnd)
+                return false;
+            suppressClick = false;
+            const x1 = Math.min(copyStart.x, copyEnd.x), y1 = Math.min(copyStart.y, copyEnd.y);
+            const x2 = Math.max(copyStart.x, copyEnd.x), y2 = Math.max(copyStart.y, copyEnd.y);
+            copiedPattern = Array.from({ length: y2 - y1 + 1 }, (_, y) => Array.from({ length: x2 - x1 + 1 }, (_, x) => patternState[y1 + y][x1 + x]));
+            clearCopy();
+            return true;
+        },
+        enterPasteMode: () => {
+            if (!copiedPattern)
+                return false;
+            setPasteMode(true);
+            return true;
+        },
+        exitPasteMode: () => {
+            setPasteMode(false);
+        },
+        subscribeToPasteMode: (listener) => {
+            pasteModeListeners.add(listener);
+            return () => pasteModeListeners.delete(listener);
         },
     };
 }

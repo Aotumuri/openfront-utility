@@ -9,11 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 const COLOR_PRESET_URL = "color-presets.json";
 export function initColorPresetControls(options) {
-    const { container, primaryColorInput, secondaryColorInput, onChange, initialColors, } = options;
+    const { container, primaryColorInput, secondaryColorInput, selectedLabel, onChange, initialColors, } = options;
     let colorPresets = {};
     let presetButtons = {};
     let customPresetButton = null;
-    let selectedPresetKey = null;
     function loadColorPresets() {
         return __awaiter(this, void 0, void 0, function* () {
             if (Object.keys(colorPresets).length > 0) {
@@ -24,8 +23,7 @@ export function initColorPresetControls(options) {
                 if (!response.ok) {
                     throw new Error(`Failed to load color presets: ${response.status}`);
                 }
-                const data = (yield response.json());
-                colorPresets = data;
+                colorPresets = (yield response.json());
             }
             catch (error) {
                 console.warn("Failed to load color presets", error);
@@ -35,7 +33,10 @@ export function initColorPresetControls(options) {
         });
     }
     function setSelectedPreset(key) {
-        selectedPresetKey = key;
+        var _a, _b;
+        if (selectedLabel) {
+            selectedLabel.textContent = key ? (_b = (_a = colorPresets[key]) === null || _a === void 0 ? void 0 : _a.name) !== null && _b !== void 0 ? _b : key : "Custom colors";
+        }
         Object.values(presetButtons).forEach((button) => {
             var _a;
             const presetKey = (_a = button.dataset.presetKey) !== null && _a !== void 0 ? _a : "";
@@ -87,9 +88,7 @@ export function initColorPresetControls(options) {
         name.textContent = preset.name;
         button.appendChild(swatches);
         button.appendChild(name);
-        button.addEventListener("click", () => {
-            applyPreset(key);
-        });
+        button.addEventListener("click", () => applyPreset(key));
         return button;
     }
     function ensureCustomPresetButton() {

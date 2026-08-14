@@ -231,13 +231,15 @@ const overlayMarkup = `
   </div>
 `;
 export function ensureImageImportMarkup() {
+    var _a;
     const layoutToolbar = document.querySelector(".layout-toolbar");
-    const layoutShell = document.querySelector(".layout-shell");
-    if (!layoutToolbar || !layoutShell) {
+    const layoutShell = document.querySelector(".editor-shell, .layout-shell");
+    const imageImportEntry = document.getElementById("imageImportEntry");
+    if ((!layoutToolbar && !imageImportEntry) || !layoutShell) {
         throw new Error("Missing layout shell for image import overlay");
     }
     if (!document.getElementById("openImageImportBtn")) {
-        layoutToolbar.insertAdjacentHTML("beforeend", triggerMarkup);
+        (_a = (imageImportEntry !== null && imageImportEntry !== void 0 ? imageImportEntry : layoutToolbar)) === null || _a === void 0 ? void 0 : _a.insertAdjacentHTML("beforeend", triggerMarkup);
     }
     if (!document.getElementById("imageImportOverlay")) {
         layoutShell.insertAdjacentHTML("beforeend", overlayMarkup);

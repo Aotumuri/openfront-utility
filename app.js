@@ -1,6 +1,7 @@
 import { initColorPresetControls } from "./app/colorPresets.js";
 import { copyText } from "./app/copyText.js";
 import { createDrawingTools } from "./app/drawingTools.js";
+import { initEditorViewControls } from "./app/editorViewControls.js";
 import { buildDevStorageOutput, buildDiscordOutput, buildPreviewLink, } from "./app/exportOutputs.js";
 import { setupGridGuides } from "./app/gridGuides.js";
 import { createGridManager } from "./app/gridManager.js";
@@ -8,9 +9,15 @@ import { setupHistoryShortcuts } from "./app/historyShortcuts.js";
 import { initImageImportOverlay } from "./app/imageImportOverlay.js";
 import { decodePatternBase64, generatePatternBase64, } from "./app/patternEncoding.js";
 import { createPatternLoader } from "./app/patternLoader.js";
+import { initPaneResizeControls } from "./app/paneResizeControls.js";
 import { createPreviewRenderer } from "./app/previewRenderer.js";
+import { initShiftControls } from "./app/shiftControls.js";
+import { initStampControls } from "./app/stampControls.js";
 import { createToolState } from "./app/toolState.js";
 import { createHistoryManager } from "./app/undoRedo.js";
+import { initWorkspaceControls } from "./app/workspaceControls.js";
+import { initCopyPasteShortcuts } from "./app/copyPasteShortcuts.js";
+import { initToolShortcuts } from "./app/toolShortcuts.js";
 document.addEventListener("DOMContentLoaded", () => {
     var _a, _b;
     const toolbox = document.getElementById("toolbox");
@@ -19,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const penSizeInput = document.getElementById("pen-size");
     const toolLineBtn = document.getElementById("tool-line");
     const toolFillBtn = document.getElementById("tool-fill");
+    const toolShadeBtn = document.getElementById("tool-shade");
     const toolStarBtn = document.getElementById("tool-star");
     const toolCircleBtn = document.getElementById("tool-circle");
     const toolStampBtn = document.getElementById("tool-stamp");
@@ -43,18 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const shiftLeftBtn = document.getElementById("shiftLeftBtn");
     const shiftRightBtn = document.getElementById("shiftRightBtn");
     const shiftDownBtn = document.getElementById("shiftDownBtn");
-    const shiftModeAll = document.getElementById("shift-mode-all");
-    const shiftModePartial = document.getElementById("shift-mode-partial");
-    const shiftOverwriteOn = document.getElementById("shift-overwrite-on");
-    const shiftOverwriteOff = document.getElementById("shift-overwrite-off");
-    const stampWidthInput = document.getElementById("stampWidth");
-    const stampHeightInput = document.getElementById("stampHeight");
-    const stampApplyModeSelect = document.getElementById("stampApplyMode");
-    const stampEditor = document.getElementById("stampEditor");
-    const stampApplyBtn = document.getElementById("stampApplyBtn");
-    const stampClearBtn = document.getElementById("stampClearBtn");
-    const rotateLeftBtn = document.getElementById("rotateLeftBtn");
-    const rotateRightBtn = document.getElementById("rotateRightBtn");
     const gridDiv = document.getElementById("grid");
     const outputTextarea = document.getElementById("output");
     const discordOutputTextarea = document.getElementById("discordOutput");
@@ -69,25 +65,81 @@ document.addEventListener("DOMContentLoaded", () => {
     const previewSecondaryColorInput = document.getElementById("previewSecondaryColor");
     const swapColorsBtn = document.getElementById("swapColorsBtn");
     const colorPresetContainer = document.getElementById("colorPresetContainer");
-    const layoutTabsInput = document.getElementById("layout-tabs");
-    const viewPreviewInput = document.getElementById("view-preview");
-    const tabActionsInput = document.getElementById("tab-actions");
-    const tabToolsInput = document.getElementById("tab-tools");
-    const tabGridInput = document.getElementById("tab-grid");
-    const tabStampInput = document.getElementById("tab-stamp");
+    const selectedPresetLabel = document.getElementById("selectedPresetLabel");
+    const editorShell = document.querySelector(".editor-shell");
+    const toolbarToggleBtn = document.getElementById("toolbarToggleBtn");
+    const modeButtons = document.querySelectorAll("[data-view-mode]");
+    const floatPreviewBtn = document.getElementById("floatPreviewBtn");
+    const dockPreviewBtn = document.getElementById("dockPreviewBtn");
     const previewPanel = document.querySelector(".preview-panel");
+    const previewHeader = document.querySelector(".preview-header");
+    const previewBody = document.querySelector(".preview-body");
+    const previewScrollCue = document.getElementById("previewScrollCue");
+    const toolbarScroll = document.querySelector(".toolbar-scroll");
+    const toolbarScrollCue = document.getElementById("toolbarScrollCue");
+    const shortcutsMenu = document.querySelector(".shortcuts-menu");
+    const toolStatus = document.getElementById("toolStatus");
+    const toast = document.getElementById("toast");
     if (!colorPresetContainer) {
         throw new Error("Missing color preset container");
     }
     const previewContext = previewCanvas.getContext("2d");
     if (!previewContext)
         throw new Error("2D context not supported");
+    document.addEventListener("click", (event) => {
+        if (shortcutsMenu.open && !shortcutsMenu.contains(event.target)) {
+            shortcutsMenu.open = false;
+        }
+    });
+    const updatePreviewScrollCue = () => {
+        const hasMoreContent = previewBody.scrollTop + previewBody.clientHeight < previewBody.scrollHeight - 2;
+        previewScrollCue.hidden = !hasMoreContent;
+    };
+    previewBody.addEventListener("scroll", updatePreviewScrollCue, { passive: true });
+    previewScrollCue.addEventListener("click", () => {
+        previewBody.scrollTo({ top: previewBody.scrollHeight, behavior: "smooth" });
+    });
+    new ResizeObserver(updatePreviewScrollCue).observe(previewBody);
+    new ResizeObserver(updatePreviewScrollCue).observe(previewCanvas);
+    const updateToolbarScrollCue = () => {
+        const hasMoreContent = toolbarScroll.scrollTop + toolbarScroll.clientHeight < toolbarScroll.scrollHeight - 2;
+        toolbarScrollCue.hidden = !hasMoreContent;
+    };
+    toolbarScroll.addEventListener("scroll", updateToolbarScrollCue, { passive: true });
+    toolbarScrollCue.addEventListener("click", () => {
+        toolbarScroll.scrollBy({ top: toolbarScroll.clientHeight * 0.8, behavior: "smooth" });
+    });
+    new ResizeObserver(updateToolbarScrollCue).observe(toolbarScroll);
+    const workspaceControls = initWorkspaceControls({
+        workspace: document.getElementById("canvasWorkspace"),
+        viewport: document.getElementById("gridViewport"),
+        zoomInButton: document.getElementById("zoomInBtn"),
+        zoomOutButton: document.getElementById("zoomOutBtn"),
+        resetButton: document.getElementById("resetViewBtn"),
+        zoomValue: document.getElementById("zoomValue"),
+    });
+    const editorViewControls = initEditorViewControls({
+        shell: editorShell,
+        toolbarToggleButton: toolbarToggleBtn,
+        modeButtons,
+        previewPanel,
+        previewHeader,
+        floatPreviewButton: floatPreviewBtn,
+        dockPreviewButton: dockPreviewBtn,
+    });
+    initPaneResizeControls({
+        shell: editorShell,
+        workspaceSplit: document.querySelector(".workspace-split"),
+        toolbarHandle: document.getElementById("toolbarResizeHandle"),
+        previewHandle: document.getElementById("previewResizeHandle"),
+    });
     let handleGuideChange = () => { };
     const guideState = setupGridGuides(toolbox, () => handleGuideChange());
     const toolState = createToolState({
         toolPenBtn,
         toolLineBtn,
         toolFillBtn,
+        toolShadeBtn,
         toolStarBtn,
         toolCircleBtn,
         toolSelectBtn,
@@ -98,12 +150,29 @@ document.addEventListener("DOMContentLoaded", () => {
         stampBrushSizeInput,
         circleFillInput,
     });
+    const toolDescriptions = {
+        pen: "Pen · draw cells",
+        line: "Line · select start and end",
+        fill: "Fill · fill a connected area",
+        shade: "Shade · fill an area with a checker pattern",
+        star: "Star · place a star shape",
+        circle: "Circle · place a circle shape",
+        select: "Rotate Select · drag an area",
+        stamp: "Stamp · paint with your stamp",
+    };
     toolState.subscribeToToolChanges((tool) => {
-        if (tool === "stamp") {
-            tabStampInput.checked = true;
-        }
+        toolStatus.textContent = tool ? toolDescriptions[tool] : "Choose a drawing tool";
+    });
+    let toastTimeout;
+    document.addEventListener("pattern:copied", () => {
+        window.clearTimeout(toastTimeout);
+        toast.textContent = "Copied to clipboard";
+        toast.classList.add("is-visible");
+        toastTimeout = window.setTimeout(() => toast.classList.remove("is-visible"), 2200);
     });
     let updateOutput = () => { };
+    let isPatternChangeGroupOpen = false;
+    let pendingPatternChangeBase64 = null;
     const gridManager = createGridManager({
         gridDiv,
         tileWidthInput,
@@ -116,11 +185,27 @@ document.addEventListener("DOMContentLoaded", () => {
         shiftLeftBtn,
         shiftRightBtn,
         invertBtn: document.getElementById("invertGridBtn"),
-        rotateLeftBtn,
-        rotateRightBtn,
+        rotateLeftBtn: document.getElementById("rotateLeftBtn"),
+        rotateRightBtn: document.getElementById("rotateRightBtn"),
         guideState,
         toolState,
         onPatternChange: () => updateOutput(),
+        onPatternChangeStart: () => {
+            if (isApplyingHistory)
+                return;
+            isPatternChangeGroupOpen = true;
+            pendingPatternChangeBase64 = null;
+        },
+        onPatternChangeEnd: () => {
+            if (!isPatternChangeGroupOpen)
+                return;
+            isPatternChangeGroupOpen = false;
+            if (pendingPatternChangeBase64) {
+                historyManager.record(pendingPatternChangeBase64);
+                pendingPatternChangeBase64 = null;
+            }
+            updateHistoryButtons();
+        },
     });
     const drawingTools = createDrawingTools({
         getTileWidth: gridManager.getTileWidth,
@@ -129,6 +214,23 @@ document.addEventListener("DOMContentLoaded", () => {
         setCellActive: gridManager.setCellActive,
     });
     gridManager.setDrawingTools(drawingTools);
+    initCopyPasteShortcuts(gridManager, toolState);
+    initToolShortcuts({
+        pen: toolPenBtn,
+        line: toolLineBtn,
+        fill: toolFillBtn,
+        shade: toolShadeBtn,
+        star: toolStarBtn,
+        circle: toolCircleBtn,
+        stamp: toolStampBtn,
+    });
+    gridManager.subscribeToPasteMode((active) => {
+        toolStatus.textContent = active
+            ? "Paste · move over the canvas, then click to place"
+            : (toolState.getSelectedTool()
+                ? toolDescriptions[toolState.getSelectedTool()]
+                : "Choose a drawing tool");
+    });
     handleGuideChange = () => gridManager.generateGrid();
     const renderPreview = createPreviewRenderer({
         canvas: previewCanvas,
@@ -138,65 +240,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     const historyManager = createHistoryManager();
     let isApplyingHistory = false;
-    let stampPattern = Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => 0));
-    const clampInt = (value, min, max, fallback) => {
-        const parsed = parseInt(value);
-        if (!Number.isFinite(parsed))
-            return fallback;
-        return Math.max(min, Math.min(max, parsed));
-    };
-    const ensureStampPatternSize = () => {
-        const width = clampInt(stampWidthInput.value, 1, 24, 4);
-        const height = clampInt(stampHeightInput.value, 1, 24, 4);
-        stampWidthInput.value = String(width);
-        stampHeightInput.value = String(height);
-        stampPattern = Array.from({ length: height }, (_, y) => Array.from({ length: width }, (_, x) => { var _a, _b; return (_b = (_a = stampPattern[y]) === null || _a === void 0 ? void 0 : _a[x]) !== null && _b !== void 0 ? _b : 0; }));
-    };
-    const renderStampEditor = () => {
-        var _a, _b;
-        ensureStampPatternSize();
-        stampEditor.style.gridTemplateColumns = `repeat(${(_b = (_a = stampPattern[0]) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0}, 18px)`;
-        const cells = [];
-        for (let y = 0; y < stampPattern.length; y++) {
-            for (let x = 0; x < stampPattern[y].length; x++) {
-                const cell = document.createElement("button");
-                cell.type = "button";
-                cell.className = `stamp-editor-cell${stampPattern[y][x] === 1 ? " active" : ""}`;
-                cell.title = `${x}, ${y}`;
-                cell.onclick = () => {
-                    stampPattern[y][x] = stampPattern[y][x] === 1 ? 0 : 1;
-                    renderStampEditor();
-                };
-                cells.push(cell);
-            }
-        }
-        stampEditor.replaceChildren(...cells);
-    };
-    const getTiledStampValue = (x, y) => {
-        var _a, _b;
-        const height = stampPattern.length;
-        const width = (_b = (_a = stampPattern[0]) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0;
-        if (!width || !height)
-            return 0;
-        return stampPattern[y % height][x % width] === 1 ? 1 : 0;
-    };
-    const applyStampPattern = () => {
-        const selection = gridManager.getStampSelection();
-        if (!selection.length)
-            return;
-        const targetCells = new Set(selection.map((point) => `${point.x},${point.y}`));
-        const mode = stampApplyModeSelect.value;
-        for (let y = 0; y < gridManager.getTileHeight(); y++) {
-            for (let x = 0; x < gridManager.getTileWidth(); x++) {
-                if (!targetCells.has(`${x},${y}`))
-                    continue;
-                if (mode === "overlay" && gridManager.isCellActive(x, y))
-                    continue;
-                gridManager.setCellActive(x, y, getTiledStampValue(x, y) === 1);
-            }
-        }
-        updateOutput();
-    };
     const updateHistoryButtons = () => {
         undoBtn.disabled = !historyManager.canUndo();
         redoBtn.disabled = !historyManager.canRedo();
@@ -236,7 +279,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         window.history.replaceState(null, "", `#${base64}?${params.toString()}`);
         if (!isApplyingHistory) {
-            historyManager.record(base64);
+            if (isPatternChangeGroupOpen) {
+                pendingPatternChangeBase64 = base64;
+            }
+            else {
+                historyManager.record(base64);
+            }
         }
         updateHistoryButtons();
     };
@@ -262,23 +310,20 @@ document.addEventListener("DOMContentLoaded", () => {
             return null;
         return `#${cleaned.toLowerCase()}`;
     };
-    const hashValue = window.location.hash.startsWith("#")
-        ? window.location.hash.slice(1)
-        : "";
-    let initialColors = null;
-    let shouldFocusPreview = false;
-    if (!hashValue) {
+    if (!window.location.hash) {
         const isEasterEgg = Math.random() < 0.25;
         const injectedHash = isEasterEgg
             ? "#AFlhAAAAAADg______8DAAAAAAA4sbvhzgBRIVFEBGBOZIaZA0SRRBFRgKuRK-4MAAAAAADg______8DAAAAAADgAHAAOAAiABGACCAIMAQIAgICi4GAQECgIBAQBBCCCAGEqsIooaqwaggirBoCCAmGAEJVoaJQVVg1JBhWDQICIYGAgCBAGiAI4APwAfgAAAAAAAAA?primary=fedd67&secondary=000000"
             : "#AAEiAAAAAAAAAAAAAAAAAAAAAIDD8YnweTiiD5FIYEIgEpkIRCKBCoFIpCIQeTwyPB6RjEAkEIgQKEQiApFAIEIgEYkIOAKfCIGIIyIAAAAAAAAAAAA?primary=ffffff&secondary=000000";
         window.history.replaceState(null, "", injectedHash);
     }
-    const effectiveHashValue = window.location.hash.startsWith("#")
+    const hashValue = window.location.hash.startsWith("#")
         ? window.location.hash.slice(1)
         : "";
-    if (effectiveHashValue) {
-        const [patternPart, queryPart] = effectiveHashValue.split("?");
+    let initialColors = null;
+    let shouldFocusPreview = false;
+    if (hashValue) {
+        const [patternPart, queryPart] = hashValue.split("?");
         if (patternPart) {
             base64Input.value = patternPart;
             setTimeout(loadFromBase64, 0);
@@ -294,17 +339,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
             }
             const previewFlag = params.get("preview");
-            if (previewFlag !== null &&
-                previewFlag !== "0" &&
-                previewFlag !== "false") {
-                shouldFocusPreview = true;
-            }
+            shouldFocusPreview =
+                previewFlag !== null && previewFlag !== "0" && previewFlag !== "false";
         }
     }
     const colorPresetControls = initColorPresetControls({
         container: colorPresetContainer,
         primaryColorInput: previewPrimaryColorInput,
         secondaryColorInput: previewSecondaryColorInput,
+        selectedLabel: selectedPresetLabel,
         initialColors,
         onChange: () => updateOutput(),
     });
@@ -317,44 +360,48 @@ document.addEventListener("DOMContentLoaded", () => {
             gridManager.generateGrid(pattern);
         },
     });
-    function copyOutput() {
-        copyText(outputTextarea.value);
-    }
-    function copyDiscordOutput() {
-        copyText(discordOutputTextarea.value);
-    }
-    function copyPreviewLink() {
+    initStampControls({
+        gridManager,
+        toolState,
+        toolStampBtn,
+        stampWidthInput: document.getElementById("stampWidth"),
+        stampHeightInput: document.getElementById("stampHeight"),
+        stampApplyModeSelect: document.getElementById("stampApplyMode"),
+        stampEditor: document.getElementById("stampEditor"),
+        stampApplyBtn: document.getElementById("stampApplyBtn"),
+        stampClearBtn: document.getElementById("stampClearBtn"),
+        onChange: () => updateOutput(),
+    });
+    initShiftControls({
+        gridManager,
+        toolState,
+        toolSelectBtn,
+        shiftSelectBtn,
+        shiftModeAll: document.getElementById("shift-mode-all"),
+        shiftModePartial: document.getElementById("shift-mode-partial"),
+        shiftOverwriteOn: document.getElementById("shift-overwrite-on"),
+        shiftOverwriteOff: document.getElementById("shift-overwrite-off"),
+    });
+    loadBtn.onclick = loadFromBase64;
+    clearGridBtn.onclick = gridManager.clearGrid;
+    copyOutputBtn.onclick = () => copyText(outputTextarea.value);
+    copyDiscordBtn.onclick = () => copyText(discordOutputTextarea.value);
+    copyPreviewLinkBtn.onclick = () => {
         const link = buildPreviewLink(window.location.href, outputTextarea.value.trim(), previewPrimaryColorInput.value, previewSecondaryColorInput.value);
         previewLinkTextarea.value = link;
         copyText(link);
-    }
-    function copyDevStorageOutput() {
-        copyText(devStorageTextarea.value);
-    }
+    };
+    copyDevStorageBtn.onclick = () => copyText(devStorageTextarea.value);
     const handleUndo = () => {
         const base64 = historyManager.undo();
-        if (!base64)
-            return;
-        applyHistoryState(base64);
+        if (base64)
+            applyHistoryState(base64);
     };
     const handleRedo = () => {
         const base64 = historyManager.redo();
-        if (!base64)
-            return;
-        applyHistoryState(base64);
+        if (base64)
+            applyHistoryState(base64);
     };
-    loadBtn.onclick = loadFromBase64;
-    clearGridBtn.onclick = gridManager.clearGrid;
-    stampApplyBtn.onclick = applyStampPattern;
-    stampClearBtn.onclick = () => {
-        ensureStampPatternSize();
-        stampPattern = stampPattern.map((row) => row.map(() => 0));
-        renderStampEditor();
-    };
-    copyOutputBtn.onclick = copyOutput;
-    copyDiscordBtn.onclick = copyDiscordOutput;
-    copyPreviewLinkBtn.onclick = copyPreviewLink;
-    copyDevStorageBtn.onclick = copyDevStorageOutput;
     undoBtn.onclick = handleUndo;
     redoBtn.onclick = handleRedo;
     swapColorsBtn.onclick = () => {
@@ -365,81 +412,10 @@ document.addEventListener("DOMContentLoaded", () => {
         updateOutput();
     };
     setupHistoryShortcuts({ onUndo: handleUndo, onRedo: handleRedo });
-    const syncRotateSelectWithActionsTab = () => {
-        gridManager.clearShiftSelect();
-        clearShiftSelectUI();
-        if (!tabActionsInput.checked && toolState.getCurrentTool() === "select") {
-            toolSelectBtn.click();
-        }
-    };
-    const syncStampToolWithTab = () => {
-        if (tabStampInput.checked && toolState.getCurrentTool() !== "stamp") {
-            toolStampBtn.click();
-        }
-    };
-    tabActionsInput.addEventListener("change", syncRotateSelectWithActionsTab);
-    tabToolsInput.addEventListener("change", syncRotateSelectWithActionsTab);
-    tabGridInput.addEventListener("change", syncRotateSelectWithActionsTab);
-    tabStampInput.addEventListener("change", syncStampToolWithTab);
-    const syncShiftSelectButtonVisibility = () => {
-        const visible = shiftModePartial.checked;
-        shiftSelectBtn.classList.toggle("shift-select-visible", visible);
-        shiftSelectBtn.classList.toggle("shift-select-hidden", !visible);
-    };
-    const clearShiftSelectUI = () => {
-        shiftSelectBtn.classList.remove("selected");
-        shiftModeAll.checked = true;
-        shiftModePartial.checked = false;
-        syncShiftSelectButtonVisibility();
-    };
-    shiftSelectBtn.onclick = () => {
-        const next = !shiftSelectBtn.classList.contains("selected");
-        shiftSelectBtn.classList.toggle("selected", next);
-        gridManager.enableShiftSelect(next);
-    };
-    toolSelectBtn.addEventListener("click", () => {
-        gridManager.clearShiftSelect();
-        clearShiftSelectUI();
-    });
-    shiftOverwriteOn.onchange = () => {
-        if (shiftOverwriteOn.checked)
-            gridManager.setShiftOverwriteMode(true);
-    };
-    shiftOverwriteOff.onchange = () => {
-        if (shiftOverwriteOff.checked)
-            gridManager.setShiftOverwriteMode(false);
-    };
-    shiftModeAll.onchange = () => {
-        if (shiftModeAll.checked) {
-            gridManager.setShiftSelectionMode("all");
-            gridManager.clearShiftSelect();
-            clearShiftSelectUI();
-            syncShiftSelectButtonVisibility();
-        }
-    };
-    shiftModePartial.onchange = () => {
-        if (shiftModePartial.checked) {
-            gridManager.setShiftSelectionMode("partial");
-            syncShiftSelectButtonVisibility();
-        }
-    };
-    syncShiftSelectButtonVisibility();
-    gridManager.setShiftSelectionMode("all");
-    gridManager.setShiftOverwriteMode(true);
-    stampWidthInput.addEventListener("change", renderStampEditor);
-    stampHeightInput.addEventListener("change", renderStampEditor);
-    renderStampEditor();
     gridManager.generateGrid();
-    if (shouldFocusPreview) {
-        if (layoutTabsInput) {
-            layoutTabsInput.checked = true;
-        }
-        if (viewPreviewInput) {
-            viewPreviewInput.checked = true;
-        }
-        const scrollTarget = previewPanel !== null && previewPanel !== void 0 ? previewPanel : previewCanvas;
-        setTimeout(() => {
-            scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 0);
-    }
+    requestAnimationFrame(updatePreviewScrollCue);
+    requestAnimationFrame(updateToolbarScrollCue);
+    if (shouldFocusPreview)
+        editorViewControls.setViewMode("preview");
+    workspaceControls.reset();
 });
