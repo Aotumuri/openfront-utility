@@ -10,6 +10,9 @@ type WorkspaceControlsOptions = {
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.15;
+// Wheel input varies substantially between a mouse and a trackpad. A small
+// exponential factor keeps both inputs predictable without jumping on each tick.
+const WHEEL_ZOOM_SENSITIVITY = 0.0005;
 
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false;
@@ -144,8 +147,8 @@ export function initWorkspaceControls(options: WorkspaceControlsOptions) {
     "wheel",
     (event) => {
       event.preventDefault();
-      const direction = event.deltaY > 0 ? -1 : 1;
-      setZoom(zoom + direction * ZOOM_STEP, {
+      const nextZoom = zoom * Math.exp(-event.deltaY * WHEEL_ZOOM_SENSITIVITY);
+      setZoom(nextZoom, {
         clientX: event.clientX,
         clientY: event.clientY,
       });
