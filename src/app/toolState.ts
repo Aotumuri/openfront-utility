@@ -64,16 +64,23 @@ export function createToolState(options: ToolStateOptions): ToolState {
       toolCircleBtn,
       toolSelectBtn,
       toolStampBtn,
-    ].forEach(
-      (btn) => btn.classList.remove("selected")
-    );
-    if (tool === "pen") toolPenBtn.classList.add("selected");
-    if (tool === "line") toolLineBtn.classList.add("selected");
-    if (tool === "fill") toolFillBtn.classList.add("selected");
-    if (tool === "star") toolStarBtn.classList.add("selected");
-    if (tool === "circle") toolCircleBtn.classList.add("selected");
-    if (tool === "select") toolSelectBtn.classList.add("selected");
-    if (tool === "stamp") toolStampBtn.classList.add("selected");
+    ].forEach((btn) => {
+      btn.classList.remove("selected");
+      btn.setAttribute("aria-pressed", "false");
+    });
+    const selectedButton = {
+      pen: toolPenBtn,
+      line: toolLineBtn,
+      fill: toolFillBtn,
+      star: toolStarBtn,
+      circle: toolCircleBtn,
+      select: toolSelectBtn,
+      stamp: toolStampBtn,
+    }[tool ?? "pen"];
+    if (tool && selectedButton) {
+      selectedButton.classList.add("selected");
+      selectedButton.setAttribute("aria-pressed", "true");
+    }
     listeners.forEach((listener) => listener(tool));
   }
 

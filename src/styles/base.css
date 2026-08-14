@@ -49,6 +49,7 @@ button {
 
 button:hover {
   border-color: var(--accent);
+  background: #f3f8f8;
 }
 
 button:active {
@@ -75,6 +76,15 @@ button.selected,
   background: var(--accent);
   border-color: var(--accent-dark);
   color: #ffffff;
+}
+
+.btn-danger {
+  color: var(--danger);
+}
+
+.btn-danger:hover {
+  border-color: var(--danger);
+  background: #fff4ef;
 }
 
 input[type="text"],
@@ -185,6 +195,29 @@ h1 {
   font-weight: 700;
 }
 
+.toast {
+  position: fixed;
+  z-index: 60;
+  right: 18px;
+  bottom: 18px;
+  transform: translateY(12px);
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #1f2a2e;
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(31, 42, 46, 0.22);
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (max-width: 760px) {
   .top-bar {
     align-items: flex-start;
@@ -220,6 +253,11 @@ h1 {
   .top-actions button {
     padding: 6px 8px;
     font-size: 13px;
+  }
+
+  .toast {
+    right: 10px;
+    bottom: 10px;
   }
 
   .mode-switch button {

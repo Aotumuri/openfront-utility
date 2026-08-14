@@ -77,6 +77,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const dockPreviewBtn = document.getElementById("dockPreviewBtn") as HTMLButtonElement;
   const previewPanel = document.querySelector(".preview-panel") as HTMLElement;
   const previewHeader = document.querySelector(".preview-header") as HTMLElement;
+  const toolStatus = document.getElementById("toolStatus") as HTMLElement;
+  const toast = document.getElementById("toast") as HTMLElement;
 
   if (!colorPresetContainer) {
     throw new Error("Missing color preset container");
@@ -124,6 +126,25 @@ document.addEventListener("DOMContentLoaded", () => {
     circleSizeInput,
     stampBrushSizeInput,
     circleFillInput,
+  });
+  const toolDescriptions = {
+    pen: "Pen · draw cells",
+    line: "Line · select start and end",
+    fill: "Fill · fill a connected area",
+    star: "Star · place a star shape",
+    circle: "Circle · place a circle shape",
+    select: "Rotate Select · drag an area",
+    stamp: "Stamp · paint with your stamp",
+  };
+  toolState.subscribeToToolChanges((tool) => {
+    toolStatus.textContent = tool ? toolDescriptions[tool] : "Choose a drawing tool";
+  });
+  let toastTimeout: number | undefined;
+  document.addEventListener("pattern:copied", () => {
+    window.clearTimeout(toastTimeout);
+    toast.textContent = "Copied to clipboard";
+    toast.classList.add("is-visible");
+    toastTimeout = window.setTimeout(() => toast.classList.remove("is-visible"), 2200);
   });
 
   let updateOutput = () => {};

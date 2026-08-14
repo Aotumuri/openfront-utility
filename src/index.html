@@ -2,7 +2,7 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <title>Pattern JSON Generator + Preview</title>
+    <title>Pattern Editor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-RJ8487N9XW"></script>
     <script>
@@ -23,14 +23,14 @@
           <h1>Pattern Editor</h1>
         </div>
         <div class="top-actions">
-          <button id="undoBtn" disabled>Undo</button>
-          <button id="redoBtn" disabled>Redo</button>
+          <button id="undoBtn" type="button" disabled title="Undo (⌘/Ctrl + Z)">Undo</button>
+          <button id="redoBtn" type="button" disabled title="Redo (⌘/Ctrl + Shift + Z)">Redo</button>
           <div class="mode-switch" aria-label="Display mode">
             <button type="button" data-view-mode="both" class="selected">Both</button>
             <button type="button" data-view-mode="canvas">Canvas</button>
             <button type="button" data-view-mode="preview">Preview</button>
           </div>
-          <button id="toolbarToggleBtn" type="button" aria-expanded="true">Toolbar</button>
+          <button id="toolbarToggleBtn" type="button" aria-expanded="true">Tools</button>
         </div>
       </header>
 
@@ -41,9 +41,10 @@
               <div class="workspace-toolbar">
                 <div class="panel-title">Canvas</div>
                 <div class="workspace-actions">
-                  <button id="zoomOutBtn" type="button">-</button>
+                  <span id="toolStatus" class="tool-status" aria-live="polite">Pen · draw cells</span>
+                  <button id="zoomOutBtn" type="button" aria-label="Zoom out">−</button>
                   <output id="zoomValue">100%</output>
-                  <button id="zoomInBtn" type="button">+</button>
+                  <button id="zoomInBtn" type="button" aria-label="Zoom in">+</button>
                   <button id="resetViewBtn" type="button">Reset View</button>
                 </div>
               </div>
@@ -108,26 +109,26 @@
               <div class="panel-title">Tools</div>
               <div id="toolbox" class="toolbox">
                 <div class="tool-group">
-                  <button id="tool-pen" class="tool-btn" data-tool="pen">Pen</button>
+                  <button id="tool-pen" class="tool-btn" data-tool="pen" aria-pressed="true">Pen</button>
                   <input type="range" id="pen-size" min="1" max="9" step="2" value="1" class="tool-range" aria-label="Pen size" title="Pen size" />
                 </div>
                 <div class="tool-group">
-                  <button id="tool-line" class="tool-btn" data-tool="line" title="Click start point, then end point">Line</button>
+                  <button id="tool-line" class="tool-btn" data-tool="line" title="Click a start point, then an end point" aria-pressed="false">Line</button>
                 </div>
                 <div class="tool-group">
-                  <button id="tool-fill" class="tool-btn" data-tool="fill">Fill</button>
+                  <button id="tool-fill" class="tool-btn" data-tool="fill" aria-pressed="false">Fill</button>
                 </div>
                 <div class="tool-group">
-                  <button id="tool-star" class="tool-btn" data-tool="star">Star</button>
+                  <button id="tool-star" class="tool-btn" data-tool="star" aria-pressed="false">Star</button>
                   <input type="range" id="star-size" min="2" max="10" value="3" class="tool-range" />
                 </div>
                 <div class="tool-group">
-                  <button id="tool-circle" class="tool-btn" data-tool="circle">Circle</button>
+                  <button id="tool-circle" class="tool-btn" data-tool="circle" aria-pressed="false">Circle</button>
                   <input type="range" id="circle-size" min="2" max="15" value="5" class="tool-range" />
                   <label class="tool-toggle"><input type="checkbox" id="circle-fill" checked /> Fill</label>
                 </div>
                 <div class="tool-group">
-                  <button id="tool-stamp" class="tool-btn" data-tool="stamp">Stamp</button>
+                  <button id="tool-stamp" class="tool-btn" data-tool="stamp" aria-pressed="false">Stamp</button>
                   <input type="range" id="stamp-brush-size" min="1" max="9" step="1" value="2" class="tool-range" aria-label="Stamp brush size" title="Stamp brush size" />
                 </div>
               </div>
@@ -170,11 +171,11 @@
             <section class="toolbar-section">
               <div class="panel-title">Actions</div>
               <div class="action-row">
-                <button id="clearGridBtn">Clear</button>
+                <button id="clearGridBtn" type="button" class="btn-danger">Clear</button>
                 <button id="invertGridBtn">Invert</button>
               </div>
               <div class="action-row">
-                <button id="tool-select" class="tool-btn" data-tool="select">Rotate Select</button>
+                <button id="tool-select" class="tool-btn" data-tool="select" aria-pressed="false">Rotate Select</button>
                 <button id="rotateLeftBtn">Rotate Left</button>
                 <button id="rotateRightBtn">Rotate Right</button>
               </div>
@@ -261,6 +262,7 @@
         </aside>
       </main>
     </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script type="module" src="app.js"></script>
     <script type="module" src="index.js"></script>
   </body>

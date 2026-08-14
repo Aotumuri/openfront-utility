@@ -41,6 +41,10 @@
   gap: 8px;
 }
 
+.tool-btn.selected {
+  box-shadow: 0 2px 0 var(--accent-dark);
+}
+
 .tool-group:has(.tool-toggle) {
   grid-template-columns: minmax(86px, auto) 1fr auto;
 }
@@ -90,6 +94,11 @@ summary {
   font-weight: 700;
   cursor: pointer;
   list-style: none;
+}
+
+details[open] summary {
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
 }
 
 summary::-webkit-details-marker {
