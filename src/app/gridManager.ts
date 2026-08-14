@@ -2,6 +2,7 @@ import {
   getCircleCells,
   type GridPoint,
 } from "./circleGeometry.js";
+import { getStarCells } from "./starGeometry.js";
 import type { DrawingTools } from "./drawingTools.js";
 import type { GuideState } from "./gridGuides.js";
 import { invertPattern, shiftPatternDown, shiftPatternLeft, shiftPatternRight, shiftPatternUp } from "./patternTransforms.js";
@@ -465,12 +466,20 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     );
   };
 
+  const previewStar = (center: GridPoint, radius: number) => {
+    clearCirclePreview();
+    circlePreviewCells = getStarCells(center, radius, tileWidth, tileHeight);
+    circlePreviewCells.forEach((cell) =>
+      cellMatrix[cell.y]?.[cell.x]?.classList.add("circle-hover")
+    );
+  };
+
   gridDiv.onmouseleave = clearCirclePreview;
 
   toolState.subscribeToToolChanges((tool) => {
     if (tool) setPasteMode(false);
     if (tool !== "line") setLineStart(null);
-    if (tool !== "circle") clearCirclePreview();
+    if (tool !== "circle" && tool !== "star") clearCirclePreview();
     if (tool !== "select") {
       clearSelectionTimer();
       clearSelection();
@@ -832,6 +841,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
           } else if (tool === "fill") {
             drawingTools?.floodFill(x, y);
           } else if (tool === "star") {
+            clearCirclePreview();
             const r = toolState.getStarRadius();
             drawingTools?.drawStar(x, y, r);
           } else if (tool === "circle") {
@@ -867,6 +877,8 @@ export function createGridManager(options: GridManagerOptions): GridManager {
             onPatternChange();
           } else if (!isMouseDown && tool === "circle") {
             previewCircle({ x, y }, toolState.getCircleRadius());
+          } else if (!isMouseDown && tool === "star") {
+            previewStar({ x, y }, toolState.getStarRadius());
           } else if (isMouseDown && tool === "select") {
             updateSelection(x, y);
           } else if (isMouseDown && isShiftSelectEnabled) {
