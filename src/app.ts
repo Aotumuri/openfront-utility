@@ -77,6 +77,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const dockPreviewBtn = document.getElementById("dockPreviewBtn") as HTMLButtonElement;
   const previewPanel = document.querySelector(".preview-panel") as HTMLElement;
   const previewHeader = document.querySelector(".preview-header") as HTMLElement;
+  const previewBody = document.querySelector(".preview-body") as HTMLElement;
+  const previewScrollCue = document.getElementById("previewScrollCue") as HTMLButtonElement;
   const toolStatus = document.getElementById("toolStatus") as HTMLElement;
   const toast = document.getElementById("toast") as HTMLElement;
 
@@ -86,6 +88,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const previewContext = previewCanvas.getContext("2d");
   if (!previewContext) throw new Error("2D context not supported");
+
+  const updatePreviewScrollCue = () => {
+    const hasMoreContent =
+      previewBody.scrollTop + previewBody.clientHeight < previewBody.scrollHeight - 2;
+    previewScrollCue.hidden = !hasMoreContent;
+  };
+  previewBody.addEventListener("scroll", updatePreviewScrollCue, { passive: true });
+  previewScrollCue.addEventListener("click", () => {
+    previewBody.scrollTo({ top: previewBody.scrollHeight, behavior: "smooth" });
+  });
+  new ResizeObserver(updatePreviewScrollCue).observe(previewBody);
+  new ResizeObserver(updatePreviewScrollCue).observe(previewCanvas);
 
   const workspaceControls = initWorkspaceControls({
     workspace: document.getElementById("canvasWorkspace") as HTMLElement,
@@ -406,6 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupHistoryShortcuts({ onUndo: handleUndo, onRedo: handleRedo });
 
   gridManager.generateGrid();
+  requestAnimationFrame(updatePreviewScrollCue);
   if (shouldFocusPreview) editorViewControls.setViewMode("preview");
   workspaceControls.reset();
 });

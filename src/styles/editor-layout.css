@@ -208,7 +208,33 @@
 }
 
 .preview-panel {
+  position: relative;
   overflow: hidden;
+}
+
+.preview-scroll-cue {
+  position: absolute;
+  z-index: 3;
+  right: 12px;
+  bottom: 12px;
+  padding: 7px 10px;
+  border-color: rgba(11, 111, 109, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 3px 12px rgba(31, 42, 46, 0.16);
+  color: var(--accent-dark);
+  font-size: 12px;
+}
+
+.preview-scroll-cue span {
+  display: inline-block;
+  margin-left: 3px;
+  animation: preview-scroll-cue-bounce 1.5s ease-in-out infinite;
+}
+
+@keyframes preview-scroll-cue-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
 }
 
 .resize-handle {
@@ -338,5 +364,10 @@ body.is-resizing-pane .resize-handle::before {
 
   .canvas-workspace::after {
     display: none;
+  }
+
+  .preview-scroll-cue {
+    right: 8px;
+    bottom: 8px;
   }
 }
