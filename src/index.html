@@ -50,14 +50,29 @@
           </details>
         </section>
         <div class="top-actions">
-          <button id="undoBtn" type="button" disabled title="Undo (⌘/Ctrl + Z)">Undo</button>
-          <button id="redoBtn" type="button" disabled title="Redo (⌘/Ctrl + Shift + Z)">Redo</button>
+          <button id="undoBtn" type="button" class="icon-btn" disabled aria-label="Undo" title="Undo (⌘/Ctrl + Z)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5"/><path d="M5 12h9a6 6 0 1 1 0 12"/></svg></button>
+          <button id="redoBtn" type="button" class="icon-btn" disabled aria-label="Redo" title="Redo (⌘/Ctrl + Shift + Z)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5"/><path d="M19 12h-9a6 6 0 1 0 0 12"/></svg></button>
           <div class="mode-switch" aria-label="Display mode">
             <button type="button" data-view-mode="both" class="selected">Both</button>
             <button type="button" data-view-mode="canvas">Canvas</button>
             <button type="button" data-view-mode="preview">Preview</button>
           </div>
           <button id="toolbarToggleBtn" type="button" aria-expanded="true">Tools</button>
+          <details class="shortcuts-menu">
+            <summary>Shortcuts</summary>
+            <div class="shortcuts-popover">
+              <div class="shortcuts-title">Keyboard shortcuts</div>
+              <dl>
+                <div><dt><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>Z</kbd></dt><dd>Undo</dd></div>
+                <div><dt><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></dt><dd>Redo</dd></div>
+                <div><dt><kbd>Shift</kbd> + drag</dt><dd>Select an area</dd></div>
+                <div><dt><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>C</kbd></dt><dd>Copy & enter paste mode</dd></div>
+                <div><dt><kbd>Esc</kbd></dt><dd>Exit paste mode</dd></div>
+                <div><dt><kbd>Space</kbd> + drag</dt><dd>Pan canvas</dd></div>
+                <div><dt>Scroll</dt><dd>Zoom canvas</dd></div>
+              </dl>
+            </div>
+          </details>
         </div>
       </header>
 

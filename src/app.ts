@@ -82,6 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewScrollCue = document.getElementById("previewScrollCue") as HTMLButtonElement;
   const toolbarScroll = document.querySelector(".toolbar-scroll") as HTMLElement;
   const toolbarScrollCue = document.getElementById("toolbarScrollCue") as HTMLButtonElement;
+  const shortcutsMenu = document.querySelector(".shortcuts-menu") as HTMLDetailsElement;
   const toolStatus = document.getElementById("toolStatus") as HTMLElement;
   const toast = document.getElementById("toast") as HTMLElement;
 
@@ -91,6 +92,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const previewContext = previewCanvas.getContext("2d");
   if (!previewContext) throw new Error("2D context not supported");
+
+  document.addEventListener("click", (event) => {
+    if (shortcutsMenu.open && !shortcutsMenu.contains(event.target as Node)) {
+      shortcutsMenu.open = false;
+    }
+  });
 
   const updatePreviewScrollCue = () => {
     const hasMoreContent =
