@@ -656,6 +656,8 @@ export function createGridManager(options) {
         clearSelection();
         clearShiftSelection();
         clearStampSelection();
+        clearCopy();
+        setPasteMode(false);
         applyGridSizing();
         const basePattern = pattern !== null && pattern !== void 0 ? pattern : patternState;
         patternState = Array.from({ length: tileHeight }, (_, y) => Array.from({ length: tileWidth }, (_, x) => basePattern[y] && basePattern[y][x] === 1 ? 1 : 0));

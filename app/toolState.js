@@ -65,7 +65,7 @@ export function createToolState(options) {
         }
     };
     return {
-        getCurrentTool: () => currentTool !== null && currentTool !== void 0 ? currentTool : "pen",
+        getCurrentTool: () => currentTool,
         getSelectedTool: () => currentTool,
         getPenSize: () => parseInt(penSizeInput.value),
         getStarRadius: () => parseInt(starSizeInput.value),
