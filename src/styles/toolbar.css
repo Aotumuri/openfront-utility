@@ -88,6 +88,12 @@
   gap: 8px;
 }
 
+.tool-group.paired-tools {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.paired-tools .tool-btn { text-align: center; }
+
 .tool-btn.selected {
   box-shadow: 0 2px 0 var(--accent-dark);
 }

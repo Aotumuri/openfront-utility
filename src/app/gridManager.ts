@@ -840,6 +840,8 @@ export function createGridManager(options: GridManagerOptions): GridManager {
             setLineStart(null);
           } else if (tool === "fill") {
             drawingTools?.floodFill(x, y);
+          } else if (tool === "shade") {
+            drawingTools?.shadeFill(x, y);
           } else if (tool === "star") {
             clearCirclePreview();
             const r = toolState.getStarRadius();

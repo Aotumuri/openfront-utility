@@ -2,6 +2,7 @@ type ToolShortcutOptions = {
   pen: HTMLButtonElement;
   line: HTMLButtonElement;
   fill: HTMLButtonElement;
+  shade: HTMLButtonElement;
   star: HTMLButtonElement;
   circle: HTMLButtonElement;
   stamp: HTMLButtonElement;
@@ -12,6 +13,7 @@ export function initToolShortcuts(options: ToolShortcutOptions) {
     p: options.pen,
     l: options.line,
     f: options.fill,
+    h: options.shade,
     s: options.star,
     c: options.circle,
     t: options.stamp,

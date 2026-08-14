@@ -69,6 +69,7 @@
                 <div><dt><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>C</kbd></dt><dd>Copy & enter paste mode</dd></div>
                 <div><dt><kbd>Esc</kbd></dt><dd>Exit paste mode</dd></div>
                 <div><dt><kbd>P</kbd> <kbd>L</kbd> <kbd>F</kbd></dt><dd>Pen · Line · Fill</dd></div>
+                <div><dt><kbd>H</kbd></dt><dd>Shade fill</dd></div>
                 <div><dt><kbd>S</kbd> <kbd>C</kbd> <kbd>T</kbd></dt><dd>Star · Circle · Stamp</dd></div>
                 <div><dt><kbd>Space</kbd> + drag</dt><dd>Pan canvas</dd></div>
                 <div><dt>Scroll</dt><dd>Zoom canvas</dd></div>
@@ -162,8 +163,9 @@
                 <div class="tool-group">
                   <button id="tool-line" class="tool-btn" data-tool="line" title="Click a start point, then an end point" aria-pressed="false">Line</button>
                 </div>
-                <div class="tool-group">
+                <div class="tool-group paired-tools">
                   <button id="tool-fill" class="tool-btn" data-tool="fill" aria-pressed="false">Fill</button>
+                  <button id="tool-shade" class="tool-btn" data-tool="shade" aria-pressed="false" title="Fill an area with a black and white checker pattern">Shade</button>
                 </div>
                 <div class="tool-group">
                   <button id="tool-star" class="tool-btn" data-tool="star" aria-pressed="false">Star</button>

@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const penSizeInput = document.getElementById("pen-size") as HTMLInputElement;
   const toolLineBtn = document.getElementById("tool-line") as HTMLButtonElement;
   const toolFillBtn = document.getElementById("tool-fill") as HTMLButtonElement;
+  const toolShadeBtn = document.getElementById("tool-shade") as HTMLButtonElement;
   const toolStarBtn = document.getElementById("tool-star") as HTMLButtonElement;
   const toolCircleBtn = document.getElementById("tool-circle") as HTMLButtonElement;
   const toolStampBtn = document.getElementById("tool-stamp") as HTMLButtonElement;
@@ -153,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
     toolPenBtn,
     toolLineBtn,
     toolFillBtn,
+    toolShadeBtn,
     toolStarBtn,
     toolCircleBtn,
     toolSelectBtn,
@@ -167,6 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pen: "Pen · draw cells",
     line: "Line · select start and end",
     fill: "Fill · fill a connected area",
+    shade: "Shade · fill an area with a checker pattern",
     star: "Star · place a star shape",
     circle: "Circle · place a circle shape",
     select: "Rotate Select · drag an area",
@@ -230,6 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pen: toolPenBtn,
     line: toolLineBtn,
     fill: toolFillBtn,
+    shade: toolShadeBtn,
     star: toolStarBtn,
     circle: toolCircleBtn,
     stamp: toolStampBtn,

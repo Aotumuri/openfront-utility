@@ -6,6 +6,7 @@ export type DrawingTools = {
   drawCircle: (cx: number, cy: number, r: number, fill: boolean) => void;
   drawStar: (cx: number, cy: number, r: number) => void;
   floodFill: (sx: number, sy: number) => void;
+  shadeFill: (sx: number, sy: number) => void;
 };
 
 type DrawingOptions = {
@@ -82,10 +83,26 @@ export function createDrawingTools(options: DrawingOptions): DrawingTools {
     }
   }
 
+  function shadeFill(sx: number, sy: number) {
+    const width = getTileWidth();
+    const height = getTileHeight();
+    const target = isCellActive(sx, sy);
+    const visited = Array.from({ length: height }, () => Array(width).fill(false));
+    const stack: [number, number][] = [[sx, sy]];
+    while (stack.length) {
+      const [x, y] = stack.pop()!;
+      if (x < 0 || y < 0 || x >= width || y >= height || visited[y][x] || isCellActive(x, y) !== target) continue;
+      visited[y][x] = true;
+      setCellActive(x, y, (x + y) % 2 === 0);
+      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    }
+  }
+
   return {
     drawLine,
     drawCircle,
     drawStar,
     floodFill,
+    shadeFill,
   };
 }

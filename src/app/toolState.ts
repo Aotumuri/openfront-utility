@@ -2,6 +2,7 @@ export type ToolKind =
   | "pen"
   | "line"
   | "fill"
+  | "shade"
   | "star"
   | "circle"
   | "select"
@@ -11,6 +12,7 @@ type ToolStateOptions = {
   toolPenBtn: HTMLButtonElement;
   toolLineBtn: HTMLButtonElement;
   toolFillBtn: HTMLButtonElement;
+  toolShadeBtn: HTMLButtonElement;
   toolStarBtn: HTMLButtonElement;
   toolCircleBtn: HTMLButtonElement;
   toolSelectBtn: HTMLButtonElement;
@@ -40,7 +42,8 @@ export function createToolState(options: ToolStateOptions): ToolState {
   const {
     toolPenBtn,
     toolLineBtn,
-    toolFillBtn,
+  toolFillBtn,
+    toolShadeBtn,
     toolStarBtn,
     toolCircleBtn,
     toolSelectBtn,
@@ -62,6 +65,7 @@ export function createToolState(options: ToolStateOptions): ToolState {
       toolPenBtn,
       toolLineBtn,
       toolFillBtn,
+      toolShadeBtn,
       toolStarBtn,
       toolCircleBtn,
       toolSelectBtn,
@@ -74,6 +78,7 @@ export function createToolState(options: ToolStateOptions): ToolState {
       pen: toolPenBtn,
       line: toolLineBtn,
       fill: toolFillBtn,
+      shade: toolShadeBtn,
       star: toolStarBtn,
       circle: toolCircleBtn,
       select: toolSelectBtn,
@@ -89,6 +94,7 @@ export function createToolState(options: ToolStateOptions): ToolState {
   toolPenBtn.onclick = () => selectTool("pen");
   toolLineBtn.onclick = () => selectTool("line");
   toolFillBtn.onclick = () => selectTool("fill");
+  toolShadeBtn.onclick = () => selectTool("shade");
   toolStarBtn.onclick = () => selectTool("star");
   toolCircleBtn.onclick = () => selectTool("circle");
   toolSelectBtn.onclick = () => selectTool(currentTool === "select" ? null : "select");
