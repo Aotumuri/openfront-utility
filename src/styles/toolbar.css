@@ -28,6 +28,32 @@
   padding-top: 0;
 }
 
+.stamp-section {
+  padding: 12px;
+  border: 1px solid #b9d9d8;
+  border-radius: 8px;
+  background: #f6fbfb;
+}
+
+.transform-section {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.section-description {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .toolbox {
   display: flex;
   flex-direction: column;
@@ -199,6 +225,10 @@ details[open] summary::after {
 
 .stamp-size-row {
   grid-template-columns: 76px 62px 24px 62px;
+}
+
+.stamp-brush-row {
+  grid-template-columns: 76px minmax(0, 1fr);
 }
 
 .stamp-editor-wrap {
