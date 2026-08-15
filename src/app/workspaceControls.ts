@@ -5,6 +5,7 @@ type WorkspaceControlsOptions = {
   zoomOutButton: HTMLButtonElement;
   resetButton: HTMLButtonElement;
   zoomValue: HTMLOutputElement;
+  isMoveMode: () => boolean;
 };
 
 const MIN_ZOOM = 0.25;
@@ -36,8 +37,15 @@ function isEditableTarget(target: EventTarget | null) {
 }
 
 export function initWorkspaceControls(options: WorkspaceControlsOptions) {
-  const { workspace, viewport, zoomInButton, zoomOutButton, resetButton, zoomValue } =
-    options;
+  const {
+    workspace,
+    viewport,
+    zoomInButton,
+    zoomOutButton,
+    resetButton,
+    zoomValue,
+    isMoveMode,
+  } = options;
   let zoom = 1;
   let panX = 0;
   let panY = 0;
@@ -92,6 +100,7 @@ export function initWorkspaceControls(options: WorkspaceControlsOptions) {
   };
 
   const isPanGesture = (event: PointerEvent) =>
+    isMoveMode() ||
     isSpacePressed ||
     event.button === 1 ||
     event.altKey ||
@@ -156,8 +165,8 @@ export function initWorkspaceControls(options: WorkspaceControlsOptions) {
         startPinch();
         event.preventDefault();
         event.stopPropagation();
+        return;
       }
-      return;
     }
     if (!isPanGesture(event)) return;
     event.preventDefault();
@@ -180,8 +189,8 @@ export function initWorkspaceControls(options: WorkspaceControlsOptions) {
         event.preventDefault();
         event.stopPropagation();
         updatePinch();
+        return;
       }
-      return;
     }
     if (panPointerId !== event.pointerId) return;
     panX = startPanX + event.clientX - panStartX;
@@ -193,7 +202,7 @@ export function initWorkspaceControls(options: WorkspaceControlsOptions) {
     if (event.pointerType === "touch") {
       touchPoints.delete(event.pointerId);
       finishPinch();
-      return;
+      if (panPointerId !== event.pointerId) return;
     }
     if (panPointerId !== event.pointerId) return;
     panPointerId = null;

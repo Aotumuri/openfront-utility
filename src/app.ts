@@ -124,14 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   new ResizeObserver(updateToolbarScrollCue).observe(toolbarScroll);
 
-  const workspaceControls = initWorkspaceControls({
-    workspace: document.getElementById("canvasWorkspace") as HTMLElement,
-    viewport: document.getElementById("gridViewport") as HTMLElement,
-    zoomInButton: document.getElementById("zoomInBtn") as HTMLButtonElement,
-    zoomOutButton: document.getElementById("zoomOutBtn") as HTMLButtonElement,
-    resetButton: document.getElementById("resetViewBtn") as HTMLButtonElement,
-    zoomValue: document.getElementById("zoomValue") as HTMLOutputElement,
-  });
   const editorViewControls = initEditorViewControls({
     shell: editorShell,
     toolbarToggleButton: toolbarToggleBtn,
@@ -165,6 +157,16 @@ document.addEventListener("DOMContentLoaded", () => {
     stampBrushSizeInput,
     circleFillInput,
   });
+  const canvasWorkspace = document.getElementById("canvasWorkspace") as HTMLElement;
+  const workspaceControls = initWorkspaceControls({
+    workspace: canvasWorkspace,
+    viewport: document.getElementById("gridViewport") as HTMLElement,
+    zoomInButton: document.getElementById("zoomInBtn") as HTMLButtonElement,
+    zoomOutButton: document.getElementById("zoomOutBtn") as HTMLButtonElement,
+    resetButton: document.getElementById("resetViewBtn") as HTMLButtonElement,
+    zoomValue: document.getElementById("zoomValue") as HTMLOutputElement,
+    isMoveMode: () => toolState.getCurrentTool() === null,
+  });
   const toolDescriptions = {
     pen: "Pen · draw cells",
     line: "Line · select start and end",
@@ -176,7 +178,8 @@ document.addEventListener("DOMContentLoaded", () => {
     stamp: "Stamp · paint with your stamp",
   };
   toolState.subscribeToToolChanges((tool) => {
-    toolStatus.textContent = tool ? toolDescriptions[tool] : "Choose a drawing tool";
+    canvasWorkspace.classList.toggle("is-move-mode", tool === null);
+    toolStatus.textContent = tool ? toolDescriptions[tool] : "Move · drag canvas";
   });
   let toastTimeout: number | undefined;
   document.addEventListener("pattern:copied", () => {
