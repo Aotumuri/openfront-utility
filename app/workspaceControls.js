@@ -14,7 +14,7 @@ function isEditableTarget(target) {
         tagName === "textarea");
 }
 export function initWorkspaceControls(options) {
-    const { workspace, viewport, zoomInButton, zoomOutButton, resetButton, zoomValue } = options;
+    const { workspace, viewport, zoomInButton, zoomOutButton, resetButton, zoomValue, isMoveMode, } = options;
     let zoom = 1;
     let panX = 0;
     let panY = 0;
@@ -61,7 +61,8 @@ export function initWorkspaceControls(options) {
         panY = 0;
         render();
     };
-    const isPanGesture = (event) => isSpacePressed ||
+    const isPanGesture = (event) => isMoveMode() ||
+        isSpacePressed ||
         event.button === 1 ||
         event.altKey ||
         event.metaKey ||
@@ -119,8 +120,8 @@ export function initWorkspaceControls(options) {
                 startPinch();
                 event.preventDefault();
                 event.stopPropagation();
+                return;
             }
-            return;
         }
         if (!isPanGesture(event))
             return;
@@ -144,8 +145,8 @@ export function initWorkspaceControls(options) {
                 event.preventDefault();
                 event.stopPropagation();
                 updatePinch();
+                return;
             }
-            return;
         }
         if (panPointerId !== event.pointerId)
             return;
@@ -157,7 +158,8 @@ export function initWorkspaceControls(options) {
         if (event.pointerType === "touch") {
             touchPoints.delete(event.pointerId);
             finishPinch();
-            return;
+            if (panPointerId !== event.pointerId)
+                return;
         }
         if (panPointerId !== event.pointerId)
             return;

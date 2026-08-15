@@ -110,14 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
         toolbarScroll.scrollBy({ top: toolbarScroll.clientHeight * 0.8, behavior: "smooth" });
     });
     new ResizeObserver(updateToolbarScrollCue).observe(toolbarScroll);
-    const workspaceControls = initWorkspaceControls({
-        workspace: document.getElementById("canvasWorkspace"),
-        viewport: document.getElementById("gridViewport"),
-        zoomInButton: document.getElementById("zoomInBtn"),
-        zoomOutButton: document.getElementById("zoomOutBtn"),
-        resetButton: document.getElementById("resetViewBtn"),
-        zoomValue: document.getElementById("zoomValue"),
-    });
     const editorViewControls = initEditorViewControls({
         shell: editorShell,
         toolbarToggleButton: toolbarToggleBtn,
@@ -150,6 +142,16 @@ document.addEventListener("DOMContentLoaded", () => {
         stampBrushSizeInput,
         circleFillInput,
     });
+    const canvasWorkspace = document.getElementById("canvasWorkspace");
+    const workspaceControls = initWorkspaceControls({
+        workspace: canvasWorkspace,
+        viewport: document.getElementById("gridViewport"),
+        zoomInButton: document.getElementById("zoomInBtn"),
+        zoomOutButton: document.getElementById("zoomOutBtn"),
+        resetButton: document.getElementById("resetViewBtn"),
+        zoomValue: document.getElementById("zoomValue"),
+        isMoveMode: () => toolState.getCurrentTool() === null,
+    });
     const toolDescriptions = {
         pen: "Pen · draw cells",
         line: "Line · select start and end",
@@ -161,7 +163,8 @@ document.addEventListener("DOMContentLoaded", () => {
         stamp: "Stamp · paint with your stamp",
     };
     toolState.subscribeToToolChanges((tool) => {
-        toolStatus.textContent = tool ? toolDescriptions[tool] : "Choose a drawing tool";
+        canvasWorkspace.classList.toggle("is-move-mode", tool === null);
+        toolStatus.textContent = tool ? toolDescriptions[tool] : "Move · drag canvas";
     });
     let toastTimeout;
     document.addEventListener("pattern:copied", () => {

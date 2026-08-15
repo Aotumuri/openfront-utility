@@ -116,6 +116,10 @@
   cursor: grabbing;
 }
 
+.canvas-workspace.is-move-mode::after {
+  content: "Drag to pan · Pinch or scroll to zoom";
+}
+
 .canvas-workspace.is-pinching {
   cursor: zoom-in;
 }

@@ -35,14 +35,17 @@ export function createToolState(options) {
         }
         listeners.forEach((listener) => listener(tool));
     }
-    toolPenBtn.onclick = () => selectTool("pen");
-    toolLineBtn.onclick = () => selectTool("line");
-    toolFillBtn.onclick = () => selectTool("fill");
-    toolShadeBtn.onclick = () => selectTool("shade");
-    toolStarBtn.onclick = () => selectTool("star");
-    toolCircleBtn.onclick = () => selectTool("circle");
-    toolSelectBtn.onclick = () => selectTool(currentTool === "select" ? null : "select");
-    toolStampBtn.onclick = () => selectTool("stamp");
+    const toggleTool = (tool) => {
+        selectTool(currentTool === tool ? null : tool);
+    };
+    toolPenBtn.onclick = () => toggleTool("pen");
+    toolLineBtn.onclick = () => toggleTool("line");
+    toolFillBtn.onclick = () => toggleTool("fill");
+    toolShadeBtn.onclick = () => toggleTool("shade");
+    toolStarBtn.onclick = () => toggleTool("star");
+    toolCircleBtn.onclick = () => toggleTool("circle");
+    toolSelectBtn.onclick = () => toggleTool("select");
+    toolStampBtn.onclick = () => toggleTool("stamp");
     selectTool("pen");
     starSizeInput.oninput = () => {
         if (currentTool === "star") {
