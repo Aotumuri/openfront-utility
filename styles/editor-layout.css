@@ -116,6 +116,10 @@
   cursor: grabbing;
 }
 
+.canvas-workspace.is-pinching {
+  cursor: zoom-in;
+}
+
 .canvas-workspace.is-space-pan {
   cursor: grab;
 }

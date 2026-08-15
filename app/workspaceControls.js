@@ -25,6 +25,10 @@ export function initWorkspaceControls(options) {
     let startPanY = 0;
     let isSpacePressed = false;
     let didSpacePan = false;
+    const touchPoints = new Map();
+    let pinchStartDistance = 0;
+    let pinchStartZoom = 1;
+    let isPinching = false;
     const clampZoom = (value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
     const render = () => {
         viewport.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${zoom})`;
@@ -62,7 +66,50 @@ export function initWorkspaceControls(options) {
         event.metaKey ||
         event.target === workspace ||
         event.target === viewport;
+    const startPinch = () => {
+        const points = [...touchPoints.values()];
+        if (points.length < 2)
+            return;
+        const [first, second] = points;
+        pinchStartDistance = Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+        if (pinchStartDistance === 0)
+            return;
+        pinchStartZoom = zoom;
+        isPinching = true;
+        if (panPointerId !== null && workspace.hasPointerCapture(panPointerId)) {
+            workspace.releasePointerCapture(panPointerId);
+        }
+        panPointerId = null;
+        workspace.classList.remove("is-panning");
+        workspace.classList.add("is-pinching");
+    };
+    const updatePinch = () => {
+        const points = [...touchPoints.values()];
+        if (!isPinching || points.length < 2 || pinchStartDistance === 0)
+            return;
+        const [first, second] = points;
+        const distance = Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+        setZoom(pinchStartZoom * (distance / pinchStartDistance), {
+            clientX: (first.clientX + second.clientX) / 2,
+            clientY: (first.clientY + second.clientY) / 2,
+        });
+    };
+    const finishPinch = () => {
+        if (touchPoints.size >= 2)
+            return;
+        isPinching = false;
+        workspace.classList.remove("is-pinching");
+    };
     workspace.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "touch") {
+            touchPoints.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+            if (touchPoints.size >= 2) {
+                startPinch();
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            return;
+        }
         if (!isPanGesture(event))
             return;
         event.preventDefault();
@@ -77,21 +124,39 @@ export function initWorkspaceControls(options) {
         workspace.setPointerCapture(event.pointerId);
     }, { capture: true });
     workspace.addEventListener("pointermove", (event) => {
+        if (event.pointerType === "touch") {
+            if (!touchPoints.has(event.pointerId))
+                return;
+            touchPoints.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+            if (isPinching) {
+                event.preventDefault();
+                event.stopPropagation();
+                updatePinch();
+            }
+            return;
+        }
         if (panPointerId !== event.pointerId)
             return;
         panX = startPanX + event.clientX - panStartX;
         panY = startPanY + event.clientY - panStartY;
         render();
-    });
+    }, { capture: true });
     const stopPan = (event) => {
+        if (event.pointerType === "touch") {
+            touchPoints.delete(event.pointerId);
+            finishPinch();
+            return;
+        }
         if (panPointerId !== event.pointerId)
             return;
         panPointerId = null;
         workspace.classList.remove("is-panning");
-        workspace.releasePointerCapture(event.pointerId);
+        if (workspace.hasPointerCapture(event.pointerId)) {
+            workspace.releasePointerCapture(event.pointerId);
+        }
     };
-    workspace.addEventListener("pointerup", stopPan);
-    workspace.addEventListener("pointercancel", stopPan);
+    workspace.addEventListener("pointerup", stopPan, { capture: true });
+    workspace.addEventListener("pointercancel", stopPan, { capture: true });
     workspace.addEventListener("click", (event) => {
         if (!didSpacePan)
             return;
