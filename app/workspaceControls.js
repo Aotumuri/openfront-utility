@@ -29,6 +29,7 @@ export function initWorkspaceControls(options) {
     let pinchStartDistance = 0;
     let pinchStartZoom = 1;
     let isPinching = false;
+    let touchPinch = null;
     const clampZoom = (value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
     const render = () => {
         viewport.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${zoom})`;
@@ -100,6 +101,17 @@ export function initWorkspaceControls(options) {
         isPinching = false;
         workspace.classList.remove("is-pinching");
     };
+    const getTouchPair = (touches) => {
+        if (touches.length < 2)
+            return null;
+        const first = touches[0];
+        const second = touches[1];
+        return {
+            distance: Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY),
+            clientX: (first.clientX + second.clientX) / 2,
+            clientY: (first.clientY + second.clientY) / 2,
+        };
+    };
     workspace.addEventListener("pointerdown", (event) => {
         if (event.pointerType === "touch") {
             touchPoints.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
@@ -157,6 +169,37 @@ export function initWorkspaceControls(options) {
     };
     workspace.addEventListener("pointerup", stopPan, { capture: true });
     workspace.addEventListener("pointercancel", stopPan, { capture: true });
+    // Some mobile browsers expose multi-touch movement through Touch Events even
+    // when Pointer Events are available. Keep this fallback separate so pointer
+    // handling remains the primary path and drawing is not affected.
+    workspace.addEventListener("touchstart", (event) => {
+        if (isPinching)
+            return;
+        const pair = getTouchPair(event.touches);
+        if (!pair || pair.distance === 0)
+            return;
+        touchPinch = { distance: pair.distance, zoom };
+        workspace.classList.add("is-pinching");
+        event.preventDefault();
+    }, { capture: true, passive: false });
+    workspace.addEventListener("touchmove", (event) => {
+        if (!touchPinch)
+            return;
+        const pair = getTouchPair(event.touches);
+        if (!pair)
+            return;
+        event.preventDefault();
+        setZoom(touchPinch.zoom * (pair.distance / touchPinch.distance), pair);
+    }, { capture: true, passive: false });
+    const stopTouchPinch = (event) => {
+        if (event.touches.length >= 2)
+            return;
+        touchPinch = null;
+        if (!isPinching)
+            workspace.classList.remove("is-pinching");
+    };
+    workspace.addEventListener("touchend", stopTouchPinch, { capture: true });
+    workspace.addEventListener("touchcancel", stopTouchPinch, { capture: true });
     workspace.addEventListener("click", (event) => {
         if (!didSpacePan)
             return;
