@@ -14,26 +14,39 @@ function injectGridGuideStyle() {
     document.head.appendChild(style);
 }
 export function setupGridGuides(toolbox, onChange) {
+    var _a;
     injectGridGuideStyle();
     const blackGuideBtn = document.createElement("button");
-    blackGuideBtn.textContent = "Grid Guide (Black)";
+    blackGuideBtn.innerHTML = '<i data-lucide="grid-2x2" aria-hidden="true"></i><span>Grid guide</span>';
     blackGuideBtn.id = "gridGuideBlackBtn";
-    blackGuideBtn.style.marginLeft = "8px";
+    blackGuideBtn.title = "Toggle black grid guide";
+    blackGuideBtn.setAttribute("aria-label", "Toggle black grid guide");
     const centerGuideBtn = document.createElement("button");
-    centerGuideBtn.textContent = "Center Guide (Red/Blue)";
+    centerGuideBtn.innerHTML = '<i data-lucide="crosshair" aria-hidden="true"></i><span>Center guide</span>';
     centerGuideBtn.id = "gridGuideCenterBtn";
-    centerGuideBtn.style.marginLeft = "8px";
+    centerGuideBtn.title = "Toggle red and blue center guide";
+    centerGuideBtn.setAttribute("aria-label", "Toggle red and blue center guide");
+    const rulerBtn = document.createElement("button");
+    rulerBtn.innerHTML = '<i data-lucide="ruler-dimension-line" aria-hidden="true"></i><span>Rulers</span>';
+    rulerBtn.id = "gridRulerBtn";
+    rulerBtn.title = "Toggle grid rulers";
+    rulerBtn.setAttribute("aria-label", "Toggle grid rulers");
     if (toolbox) {
-        toolbox.appendChild(blackGuideBtn);
-        toolbox.appendChild(centerGuideBtn);
+        const guideControls = document.createElement("div");
+        guideControls.className = "guide-controls";
+        guideControls.append(blackGuideBtn, centerGuideBtn, rulerBtn);
+        toolbox.appendChild(guideControls);
+        (_a = window.lucide) === null || _a === void 0 ? void 0 : _a.createIcons({ attrs: { "stroke-width": 2 } });
     }
     let gridGuideBlack = false;
     let gridGuideCenter = false;
+    let gridRulerEnabled = false;
     function updateGuideBtnStyle() {
         blackGuideBtn.className = gridGuideBlack ? "guide-btn-on" : "guide-btn-off";
         centerGuideBtn.className = gridGuideCenter
             ? "guide-btn-on"
             : "guide-btn-off";
+        rulerBtn.className = gridRulerEnabled ? "guide-btn-on" : "guide-btn-off";
     }
     blackGuideBtn.onclick = () => {
         gridGuideBlack = !gridGuideBlack;
@@ -45,9 +58,15 @@ export function setupGridGuides(toolbox, onChange) {
         updateGuideBtnStyle();
         onChange();
     };
+    rulerBtn.onclick = () => {
+        gridRulerEnabled = !gridRulerEnabled;
+        updateGuideBtnStyle();
+        onChange();
+    };
     updateGuideBtnStyle();
     return {
         isBlackEnabled: () => gridGuideBlack,
         isCenterEnabled: () => gridGuideCenter,
+        isRulerEnabled: () => gridRulerEnabled,
     };
 }

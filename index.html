@@ -50,14 +50,19 @@
           </details>
         </section>
         <div class="top-actions">
-          <button id="undoBtn" type="button" class="icon-btn" disabled aria-label="Undo" title="Undo (⌘/Ctrl + Z)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5"/><path d="M5 12h9a6 6 0 1 1 0 12"/></svg></button>
-          <button id="redoBtn" type="button" class="icon-btn" disabled aria-label="Redo" title="Redo (⌘/Ctrl + Shift + Z)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5"/><path d="M19 12h-9a6 6 0 1 0 0 12"/></svg></button>
+          <button id="undoBtn" type="button" class="icon-btn" disabled aria-label="Undo" title="Undo (⌘/Ctrl + Z)"><i data-lucide="undo-2" aria-hidden="true"></i></button>
+          <button id="redoBtn" type="button" class="icon-btn" disabled aria-label="Redo" title="Redo (⌘/Ctrl + Shift + Z)"><i data-lucide="redo-2" aria-hidden="true"></i></button>
           <div class="mode-switch" aria-label="Display mode">
-            <button type="button" data-view-mode="both" class="selected">Both</button>
-            <button type="button" data-view-mode="canvas">Canvas</button>
-            <button type="button" data-view-mode="preview">Preview</button>
+            <button type="button" data-view-mode="both" class="selected" aria-label="Show canvas and preview" title="Show canvas and preview"><i data-lucide="panels-top-left" aria-hidden="true"></i></button>
+            <button type="button" data-view-mode="canvas" aria-label="Show canvas" title="Show canvas"><i data-lucide="square-pen" aria-hidden="true"></i></button>
+            <button type="button" data-view-mode="preview" aria-label="Show preview" title="Show preview"><i data-lucide="eye" aria-hidden="true"></i></button>
           </div>
-          <button id="toolbarToggleBtn" type="button" aria-expanded="true">Tools</button>
+          <div class="tool-density-switch" role="group" aria-label="Tool display">
+            <span class="tool-density-label">Tools</span>
+            <button type="button" data-tool-density="normal" aria-pressed="true"><i data-lucide="list" aria-hidden="true"></i><span>Normal</span></button>
+            <button type="button" data-tool-density="compact" aria-pressed="false"><i data-lucide="minimize-2" aria-hidden="true"></i><span>Compact</span></button>
+          </div>
+          <button id="toolbarToggleBtn" type="button" class="icon-btn" aria-expanded="true" aria-label="Show or hide tools" title="Show or hide tools"><i data-lucide="panel-right" aria-hidden="true"></i></button>
           <details class="shortcuts-menu">
             <summary>Shortcuts</summary>
             <div class="shortcuts-popover">
@@ -78,7 +83,7 @@
         </div>
       </header>
 
-      <main class="editor-shell" data-view-mode="both">
+      <main class="editor-shell" data-view-mode="both" data-tool-density="normal">
         <section class="workspace-panel" aria-label="Canvas and preview workspace">
           <div class="workspace-split">
             <section class="canvas-panel">
@@ -86,15 +91,20 @@
                 <div class="panel-title">Canvas</div>
                 <div class="workspace-actions">
                   <span id="toolStatus" class="tool-status" aria-live="polite">Pen · draw cells</span>
-                  <button id="zoomOutBtn" type="button" aria-label="Zoom out">−</button>
+                  <button id="zoomOutBtn" type="button" class="icon-btn icon-btn-small" aria-label="Zoom out" title="Zoom out"><i data-lucide="zoom-out" aria-hidden="true"></i></button>
                   <output id="zoomValue">100%</output>
-                  <button id="zoomInBtn" type="button" aria-label="Zoom in">+</button>
-                  <button id="resetViewBtn" type="button">Reset View</button>
+                  <button id="zoomInBtn" type="button" class="icon-btn icon-btn-small" aria-label="Zoom in" title="Zoom in"><i data-lucide="zoom-in" aria-hidden="true"></i></button>
+                  <button id="resetViewBtn" type="button" class="icon-btn icon-btn-small" aria-label="Reset view" title="Reset view"><i data-lucide="rotate-ccw" aria-hidden="true"></i></button>
                 </div>
               </div>
               <div id="canvasWorkspace" class="canvas-workspace">
                 <div id="gridViewport" class="grid-viewport">
-                  <div id="grid" class="grid"></div>
+                  <div class="grid-with-rulers">
+                    <div class="grid-ruler-corner" aria-hidden="true"></div>
+                    <div id="gridColumnRuler" class="grid-ruler grid-ruler-top" aria-hidden="true"></div>
+                    <div id="gridRowRuler" class="grid-ruler grid-ruler-left" aria-hidden="true"></div>
+                    <div id="grid" class="grid"></div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -110,8 +120,8 @@
               <div class="preview-header">
                 <div class="panel-title">Preview</div>
                 <div class="preview-actions">
-                  <button id="floatPreviewBtn" class="preview-action-btn" type="button">Float</button>
-                  <button id="dockPreviewBtn" class="preview-action-btn" type="button" hidden>Dock</button>
+                  <button id="floatPreviewBtn" class="preview-action-btn icon-btn-small" type="button" aria-label="Float preview" title="Float preview"><i data-lucide="panel-top-open" aria-hidden="true"></i></button>
+                  <button id="dockPreviewBtn" class="preview-action-btn icon-btn-small" type="button" hidden aria-label="Dock preview" title="Dock preview"><i data-lucide="panel-top-close" aria-hidden="true"></i></button>
                 </div>
               </div>
               <div class="preview-body">
@@ -127,7 +137,7 @@
                     <label for="previewSecondaryColor">Secondary</label>
                     <input type="color" id="previewSecondaryColor" value="#000000" />
                   </div>
-                  <button id="swapColorsBtn">Swap Colors</button>
+                  <button id="swapColorsBtn"><i data-lucide="arrow-left-right" aria-hidden="true"></i><span>Swap colors</span></button>
                   <details class="color-preset-details">
                     <summary>Color Presets</summary>
                     <div id="colorPresetContainer" class="color-preset-container loading">
@@ -156,24 +166,31 @@
               <div class="panel-title">Tools</div>
               <div id="toolbox" class="toolbox">
                 <div class="tool-group">
-                  <button id="tool-pen" class="tool-btn" data-tool="pen" aria-pressed="true">Pen</button>
+                  <button id="tool-pen" class="tool-btn icon-tool-btn" data-tool="pen" aria-pressed="true" aria-label="Pen" title="Pen"><i data-lucide="pencil" aria-hidden="true"></i><span class="tool-label">Pen</span></button>
                   <input type="range" id="pen-size" min="1" max="9" step="2" value="1" class="tool-range" aria-label="Pen size" title="Pen size" />
                 </div>
                 <div class="tool-group">
-                  <button id="tool-line" class="tool-btn" data-tool="line" title="Click a start point, then an end point" aria-pressed="false">Line</button>
+                  <button id="tool-line" class="tool-btn icon-tool-btn" data-tool="line" title="Line: click a start point, then an end point" aria-label="Line" aria-pressed="false"><i data-lucide="ruler" aria-hidden="true"></i><span class="tool-label">Line</span></button>
                 </div>
                 <div class="tool-group paired-tools">
-                  <button id="tool-fill" class="tool-btn" data-tool="fill" aria-pressed="false">Fill</button>
-                  <button id="tool-shade" class="tool-btn" data-tool="shade" aria-pressed="false" title="Fill an area with a black and white checker pattern">Shade</button>
+                  <button id="tool-fill" class="tool-btn icon-tool-btn" data-tool="fill" aria-pressed="false" aria-label="Fill" title="Fill"><i data-lucide="paint-bucket" aria-hidden="true"></i><span class="tool-label">Fill</span></button>
+                  <button id="tool-shade" class="tool-btn icon-tool-btn" data-tool="shade" aria-pressed="false" aria-label="Shade" title="Shade: fill with a black and white checker pattern">
+                    <img class="shade-icon" src="icons/shade.svg" alt="" />
+                    <span class="tool-label">Shade</span>
+                  </button>
                 </div>
                 <div class="tool-group">
-                  <button id="tool-star" class="tool-btn" data-tool="star" aria-pressed="false">Star</button>
+                  <button id="tool-star" class="tool-btn icon-tool-btn" data-tool="star" aria-pressed="false" aria-label="Star" title="Star"><i data-lucide="star" aria-hidden="true"></i><span class="tool-label">Star</span></button>
                   <input type="range" id="star-size" min="2" max="10" value="3" class="tool-range" />
                 </div>
                 <div class="tool-group">
-                  <button id="tool-circle" class="tool-btn" data-tool="circle" aria-pressed="false">Circle</button>
+                  <button id="tool-circle" class="tool-btn icon-tool-btn" data-tool="circle" aria-pressed="false" aria-label="Circle" title="Circle"><i data-lucide="circle" aria-hidden="true"></i><span class="tool-label">Circle</span></button>
                   <input type="range" id="circle-size" min="2" max="15" value="5" class="tool-range" />
                   <label class="tool-toggle"><input type="checkbox" id="circle-fill" checked /> Fill</label>
+                </div>
+                <div id="compactToolSizeControl" class="compact-tool-size" hidden>
+                  <label id="compactToolSizeLabel" for="compactToolSize">Size</label>
+                  <input type="range" id="compactToolSize" class="tool-range" aria-labelledby="compactToolSizeLabel" />
                 </div>
               </div>
             </section>
@@ -184,7 +201,7 @@
                   <div class="panel-title">Stamp setup</div>
                   <p class="section-description">Create a pattern, then paint it on the canvas.</p>
                 </div>
-                <button id="tool-stamp" class="tool-btn" data-tool="stamp" aria-pressed="false">Use Stamp</button>
+                <button id="tool-stamp" class="tool-btn icon-tool-btn" data-tool="stamp" aria-pressed="false" aria-label="Use stamp" title="Use stamp"><i data-lucide="stamp" aria-hidden="true"></i><span class="tool-label">Use stamp</span></button>
               </div>
               <div class="row slider-row stamp-brush-row">
                 <label for="stamp-brush-size">Brush</label>
@@ -206,18 +223,18 @@
               <div class="stamp-editor-wrap">
                 <div class="stamp-editor-toolbar">
                   <span class="panel-title">Pattern</span>
-                  <button id="stampClearBtn" type="button">Clear</button>
+                  <button id="stampClearBtn" type="button"><i data-lucide="eraser" aria-hidden="true"></i><span>Clear</span></button>
                 </div>
                 <div id="stampEditor" class="stamp-editor" aria-label="Stamp pattern editor"></div>
               </div>
-              <button id="stampApplyBtn" class="btn-primary">Apply Stamp</button>
+              <button id="stampApplyBtn" class="btn-primary"><i data-lucide="stamp" aria-hidden="true"></i><span>Apply stamp</span></button>
             </section>
 
             <section class="toolbar-section">
               <div class="panel-title">Pattern</div>
               <div class="action-row">
-                <button id="clearGridBtn" type="button" class="btn-danger">Clear</button>
-                <button id="invertGridBtn">Invert</button>
+                <button id="clearGridBtn" type="button" class="btn-danger"><i data-lucide="trash-2" aria-hidden="true"></i><span>Clear</span></button>
+                <button id="invertGridBtn"><i data-lucide="contrast" aria-hidden="true"></i><span>Invert</span></button>
               </div>
             </section>
 
@@ -227,11 +244,11 @@
                   <div class="panel-title">Transform selection</div>
                   <p class="section-description">Select an area before rotating or shifting it.</p>
                 </div>
-                <button id="tool-select" class="tool-btn" data-tool="select" aria-pressed="false">Select Area</button>
+                <button id="tool-select" class="tool-btn icon-tool-btn" data-tool="select" aria-pressed="false" aria-label="Select area" title="Select area"><i data-lucide="mouse-pointer-2" aria-hidden="true"></i><span class="tool-label">Select area</span></button>
               </div>
               <div class="action-row">
-                <button id="rotateLeftBtn">Rotate Left</button>
-                <button id="rotateRightBtn">Rotate Right</button>
+                <button id="rotateLeftBtn" class="icon-btn" aria-label="Rotate selection left" title="Rotate selection left"><i data-lucide="rotate-ccw" aria-hidden="true"></i></button>
+                <button id="rotateRightBtn" class="icon-btn" aria-label="Rotate selection right" title="Rotate selection right"><i data-lucide="rotate-cw" aria-hidden="true"></i></button>
               </div>
               <details>
                 <summary>Shift</summary>
@@ -242,7 +259,7 @@
                     <label for="shift-mode-all" class="toggle-pill-option">All</label>
                     <label for="shift-mode-partial" class="toggle-pill-option">Partial</label>
                   </div>
-                  <button id="shift-select-btn" class="tool-btn shift-select-hidden">Shift Select</button>
+                  <button id="shift-select-btn" class="tool-btn icon-tool-btn shift-select-hidden" aria-label="Select shift area" title="Select shift area"><i data-lucide="mouse-pointer-2" aria-hidden="true"></i><span class="tool-label">Select shift area</span></button>
                   <div class="toggle-pill toggle-pill-secondary" role="tablist" aria-label="Shift overwrite mode">
                     <input type="radio" name="shift-overwrite-mode" id="shift-overwrite-on" checked />
                     <input type="radio" name="shift-overwrite-mode" id="shift-overwrite-off" />
@@ -250,10 +267,10 @@
                     <label for="shift-overwrite-off" class="toggle-pill-option">Keep Filled</label>
                   </div>
                   <div class="shift-pad">
-                    <button id="shiftUpBtn">Up</button>
-                    <button id="shiftLeftBtn">Left</button>
-                    <button id="shiftRightBtn">Right</button>
-                    <button id="shiftDownBtn">Down</button>
+                    <button id="shiftUpBtn" class="icon-btn" aria-label="Shift up" title="Shift up"><i data-lucide="arrow-up" aria-hidden="true"></i></button>
+                    <button id="shiftLeftBtn" class="icon-btn" aria-label="Shift left" title="Shift left"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                    <button id="shiftRightBtn" class="icon-btn" aria-label="Shift right" title="Shift right"><i data-lucide="arrow-right" aria-hidden="true"></i></button>
+                    <button id="shiftDownBtn" class="icon-btn" aria-label="Shift down" title="Shift down"><i data-lucide="arrow-down" aria-hidden="true"></i></button>
                   </div>
                 </div>
               </details>
@@ -266,23 +283,23 @@
                 <div class="details-body export-stack">
                   <label for="output">JSON</label>
                   <textarea id="output" readonly></textarea>
-                  <button id="copyOutputBtn" class="btn-primary">Copy JSON</button>
+                  <button id="copyOutputBtn" class="btn-primary"><i data-lucide="copy" aria-hidden="true"></i><span>Copy JSON</span></button>
                   <label for="discordOutput">Discord</label>
                   <textarea id="discordOutput" readonly></textarea>
-                  <button id="copyDiscordBtn" class="btn-primary">Copy For Discord</button>
+                  <button id="copyDiscordBtn" class="btn-primary"><i data-lucide="copy" aria-hidden="true"></i><span>Copy for Discord</span></button>
                   <label for="previewLinkOutput">Preview Link</label>
                   <textarea id="previewLinkOutput" readonly></textarea>
-                  <button id="copyPreviewLinkBtn" class="btn-primary">Copy Preview Link</button>
+                  <button id="copyPreviewLinkBtn" class="btn-primary"><i data-lucide="link" aria-hidden="true"></i><span>Copy preview link</span></button>
                   <label for="devStorageOutput">Dev localStorage</label>
                   <textarea id="devStorageOutput" readonly></textarea>
-                  <button id="copyDevStorageBtn" class="btn-primary">Copy Dev localStorage</button>
+                  <button id="copyDevStorageBtn" class="btn-primary"><i data-lucide="copy" aria-hidden="true"></i><span>Copy dev localStorage</span></button>
                 </div>
               </details>
               <details>
                 <summary>Import Base64</summary>
                 <div class="details-body">
                   <input type="text" id="base64Input" class="text-input" placeholder="Paste Base64 pattern" />
-                  <button id="loadBtn" class="btn-primary">Load</button>
+                  <button id="loadBtn" class="btn-primary"><i data-lucide="upload" aria-hidden="true"></i><span>Load</span></button>
                 </div>
               </details>
               <div id="imageImportEntry" class="image-import-entry"></div>
@@ -295,6 +312,8 @@
       </main>
     </div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="lucide.min.js"></script>
+    <script>lucide.createIcons({ attrs: { "stroke-width": 2 } });</script>
     <script type="module" src="app.js"></script>
     <script type="module" src="index.js"></script>
   </body>

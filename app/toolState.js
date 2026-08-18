@@ -1,7 +1,25 @@
 export function createToolState(options) {
-    const { toolPenBtn, toolLineBtn, toolFillBtn, toolShadeBtn, toolStarBtn, toolCircleBtn, toolSelectBtn, toolStampBtn, penSizeInput, starSizeInput, circleSizeInput, stampBrushSizeInput, circleFillInput, } = options;
+    const { toolPenBtn, toolLineBtn, toolFillBtn, toolShadeBtn, toolStarBtn, toolCircleBtn, toolSelectBtn, toolStampBtn, penSizeInput, compactToolSizeInput, compactToolSizeControl, starSizeInput, circleSizeInput, stampBrushSizeInput, circleFillInput, initialTool, } = options;
     let currentTool = null;
     const listeners = new Set();
+    const sizeInputByTool = {
+        pen: penSizeInput,
+        star: starSizeInput,
+        circle: circleSizeInput,
+    };
+    const syncCompactToolSize = () => {
+        var _a;
+        const sizeInput = currentTool ? sizeInputByTool[currentTool] : undefined;
+        compactToolSizeControl.hidden = !sizeInput;
+        compactToolSizeInput.disabled = !sizeInput;
+        if (!sizeInput)
+            return;
+        compactToolSizeInput.min = sizeInput.min;
+        compactToolSizeInput.max = sizeInput.max;
+        compactToolSizeInput.step = sizeInput.step || "1";
+        compactToolSizeInput.value = sizeInput.value;
+        compactToolSizeInput.setAttribute("aria-label", (_a = sizeInput.getAttribute("aria-label")) !== null && _a !== void 0 ? _a : "Tool size");
+    };
     function selectTool(tool) {
         if (currentTool === tool)
             return;
@@ -33,6 +51,7 @@ export function createToolState(options) {
             selectedButton.classList.add("selected");
             selectedButton.setAttribute("aria-pressed", "true");
         }
+        syncCompactToolSize();
         listeners.forEach((listener) => listener(tool));
     }
     const toggleTool = (tool) => {
@@ -46,22 +65,15 @@ export function createToolState(options) {
     toolCircleBtn.onclick = () => toggleTool("circle");
     toolSelectBtn.onclick = () => toggleTool("select");
     toolStampBtn.onclick = () => toggleTool("stamp");
-    selectTool("pen");
-    starSizeInput.oninput = () => {
-        if (currentTool === "star") {
-            // No preview behavior yet.
-        }
-    };
-    penSizeInput.oninput = () => {
-        if (currentTool === "pen") {
-            // No preview behavior yet.
-        }
-    };
-    circleSizeInput.oninput = () => {
-        if (currentTool === "circle") {
-            // No preview behavior yet.
-        }
-    };
+    selectTool(initialTool !== null && initialTool !== void 0 ? initialTool : "pen");
+    compactToolSizeInput.addEventListener("input", () => {
+        const sizeInput = currentTool ? sizeInputByTool[currentTool] : undefined;
+        if (sizeInput)
+            sizeInput.value = compactToolSizeInput.value;
+    });
+    [penSizeInput, starSizeInput, circleSizeInput].forEach((input) => {
+        input.addEventListener("input", syncCompactToolSize);
+    });
     circleFillInput.onchange = () => {
         if (currentTool === "circle") {
             // No preview behavior yet.

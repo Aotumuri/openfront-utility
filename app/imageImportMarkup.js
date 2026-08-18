@@ -7,7 +7,7 @@ function mustElement(id) {
 }
 const triggerMarkup = `
   <div class="layout-group layout-group-end">
-    <button id="openImageImportBtn" class="btn-primary">Image Convert</button>
+    <button id="openImageImportBtn" class="btn-primary"><i data-lucide="image" aria-hidden="true"></i><span>Image convert</span></button>
   </div>
 `;
 const overlayMarkup = `
@@ -28,7 +28,7 @@ const overlayMarkup = `
             Choose what counts as 1, then apply it to the grid.
           </p>
         </div>
-        <button id="closeImageImportBtn">Close</button>
+        <button id="closeImageImportBtn" class="icon-btn icon-btn-small" aria-label="Close image convert" title="Close"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
 
       <div class="image-import-body">
@@ -70,8 +70,8 @@ const overlayMarkup = `
               </label>
             </div>
             <div class="row">
-              <button id="imageImportUseGridBtn">Use current grid</button>
-              <button id="imageImportUseImageBtn">Use image size</button>
+              <button id="imageImportUseGridBtn"><i data-lucide="grid-2x2" aria-hidden="true"></i><span>Use current grid</span></button>
+              <button id="imageImportUseImageBtn"><i data-lucide="image" aria-hidden="true"></i><span>Use image size</span></button>
             </div>
             <p class="image-import-meta">
               Output size stays within the editor's current grid limits.
@@ -222,16 +222,16 @@ const overlayMarkup = `
       </div>
 
       <div class="image-import-footer">
-        <button id="cancelImageImportBtn">Keep Editing</button>
+        <button id="cancelImageImportBtn"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Keep editing</span></button>
         <button id="applyImageImportBtn" class="btn-primary" disabled>
-          Apply to Grid
+          <i data-lucide="check" aria-hidden="true"></i><span>Apply to grid</span>
         </button>
       </div>
     </section>
   </div>
 `;
 export function ensureImageImportMarkup() {
-    var _a;
+    var _a, _b;
     const layoutToolbar = document.querySelector(".layout-toolbar");
     const layoutShell = document.querySelector(".editor-shell, .layout-shell");
     const imageImportEntry = document.getElementById("imageImportEntry");
@@ -240,6 +240,7 @@ export function ensureImageImportMarkup() {
     }
     if (!document.getElementById("openImageImportBtn")) {
         (_a = (imageImportEntry !== null && imageImportEntry !== void 0 ? imageImportEntry : layoutToolbar)) === null || _a === void 0 ? void 0 : _a.insertAdjacentHTML("beforeend", triggerMarkup);
+        (_b = window.lucide) === null || _b === void 0 ? void 0 : _b.createIcons({ attrs: { "stroke-width": 2 } });
     }
     if (!document.getElementById("imageImportOverlay")) {
         layoutShell.insertAdjacentHTML("beforeend", overlayMarkup);

@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const base64Input = document.getElementById("base64Input");
     const toolPenBtn = document.getElementById("tool-pen");
     const penSizeInput = document.getElementById("pen-size");
+    const compactToolSizeInput = document.getElementById("compactToolSize");
+    const compactToolSizeControl = document.getElementById("compactToolSizeControl");
     const toolLineBtn = document.getElementById("tool-line");
     const toolFillBtn = document.getElementById("tool-fill");
     const toolShadeBtn = document.getElementById("tool-shade");
@@ -52,6 +54,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const shiftRightBtn = document.getElementById("shiftRightBtn");
     const shiftDownBtn = document.getElementById("shiftDownBtn");
     const gridDiv = document.getElementById("grid");
+    const gridColumnRuler = document.getElementById("gridColumnRuler");
+    const gridRowRuler = document.getElementById("gridRowRuler");
     const outputTextarea = document.getElementById("output");
     const discordOutputTextarea = document.getElementById("discordOutput");
     const previewLinkTextarea = document.getElementById("previewLinkOutput");
@@ -67,6 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const colorPresetContainer = document.getElementById("colorPresetContainer");
     const selectedPresetLabel = document.getElementById("selectedPresetLabel");
     const editorShell = document.querySelector(".editor-shell");
+    const toolDensityButtons = document.querySelectorAll("[data-tool-density]");
     const toolbarToggleBtn = document.getElementById("toolbarToggleBtn");
     const modeButtons = document.querySelectorAll("[data-view-mode]");
     const floatPreviewBtn = document.getElementById("floatPreviewBtn");
@@ -80,6 +85,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const shortcutsMenu = document.querySelector(".shortcuts-menu");
     const toolStatus = document.getElementById("toolStatus");
     const toast = document.getElementById("toast");
+    const savedTool = localStorage.getItem("selected-tool");
+    const initialTool = ["pen", "line", "fill", "shade", "star", "circle", "select", "stamp"].includes(savedTool !== null && savedTool !== void 0 ? savedTool : "")
+        ? savedTool
+        : undefined;
+    const setToolDensity = (density) => {
+        editorShell.dataset.toolDensity = density;
+        toolDensityButtons.forEach((button) => {
+            button.setAttribute("aria-pressed", String(button.dataset.toolDensity === density));
+        });
+        localStorage.setItem("tool-density", density);
+    };
+    const savedToolDensity = localStorage.getItem("tool-density");
+    if (savedToolDensity === "compact" || savedToolDensity === "normal") {
+        setToolDensity(savedToolDensity);
+    }
+    toolDensityButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const density = button.dataset.toolDensity;
+            if (density === "normal" || density === "compact")
+                setToolDensity(density);
+        });
+    });
     if (!colorPresetContainer) {
         throw new Error("Missing color preset container");
     }
@@ -137,10 +164,13 @@ document.addEventListener("DOMContentLoaded", () => {
         toolSelectBtn,
         toolStampBtn,
         penSizeInput,
+        compactToolSizeInput,
+        compactToolSizeControl,
         starSizeInput,
         circleSizeInput,
         stampBrushSizeInput,
         circleFillInput,
+        initialTool,
     });
     const canvasWorkspace = document.getElementById("canvasWorkspace");
     const workspaceControls = initWorkspaceControls({
@@ -163,6 +193,8 @@ document.addEventListener("DOMContentLoaded", () => {
         stamp: "Stamp · paint with your stamp",
     };
     toolState.subscribeToToolChanges((tool) => {
+        if (tool)
+            localStorage.setItem("selected-tool", tool);
         canvasWorkspace.classList.toggle("is-move-mode", tool === null);
         toolStatus.textContent = tool ? toolDescriptions[tool] : "Move · drag canvas";
     });
@@ -178,6 +210,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let pendingPatternChangeBase64 = null;
     const gridManager = createGridManager({
         gridDiv,
+        gridColumnRuler,
+        gridRowRuler,
         tileWidthInput,
         tileHeightInput,
         tileWidthValue,
@@ -217,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setCellActive: gridManager.setCellActive,
     });
     gridManager.setDrawingTools(drawingTools);
-    initCopyPasteShortcuts(gridManager, toolState);
+    initCopyPasteShortcuts(gridManager);
     initToolShortcuts({
         pen: toolPenBtn,
         line: toolLineBtn,

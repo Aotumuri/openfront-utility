@@ -81,6 +81,29 @@
   gap: 8px;
 }
 
+.compact-tool-size {
+  display: none;
+}
+
+.guide-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.guide-controls button {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.guide-controls button svg {
+  width: 20px;
+  height: 20px;
+}
+
 .tool-group {
   display: grid;
   grid-template-columns: minmax(86px, auto) 1fr;
@@ -104,6 +127,88 @@
 
 .tool-btn {
   text-align: left;
+}
+
+.icon-tool-btn {
+  width: 42px;
+  min-width: 42px;
+  min-height: 38px;
+  padding: 7px;
+}
+
+.shade-icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  transform: translateY(3px);
+}
+
+.tool-btn.selected .shade-icon {
+  filter: brightness(0) invert(1);
+}
+
+.editor-shell[data-tool-density="normal"] .icon-tool-btn {
+  width: auto;
+  min-width: 104px;
+  justify-content: flex-start;
+  padding: 7px 10px;
+}
+
+.tool-group:has(.icon-tool-btn) {
+  grid-template-columns: 42px minmax(0, 1fr);
+}
+
+.editor-shell[data-tool-density="normal"] .tool-group:has(.icon-tool-btn) {
+  grid-template-columns: minmax(104px, auto) minmax(0, 1fr);
+}
+
+.tool-group.paired-tools:has(.icon-tool-btn) {
+  grid-template-columns: repeat(2, 42px);
+}
+
+.editor-shell[data-tool-density="normal"] .tool-group.paired-tools:has(.icon-tool-btn) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.editor-shell[data-tool-density="compact"] .tool-label {
+  display: none;
+}
+
+.editor-shell[data-tool-density="compact"] .toolbox {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(42px, 1fr));
+  align-items: center;
+  justify-content: start;
+}
+
+.editor-shell[data-tool-density="compact"] .tool-group {
+  display: contents;
+}
+
+.editor-shell[data-tool-density="compact"] .tool-group .tool-range {
+  display: none;
+}
+
+.editor-shell[data-tool-density="compact"] .compact-tool-size:not([hidden]) {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-shell[data-tool-density="compact"] .guide-controls {
+  grid-column: 1 / -1;
+}
+
+.editor-shell[data-tool-density="compact"] .guide-controls button span {
+  display: none;
+}
+
+.compact-tool-size label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .tool-range,

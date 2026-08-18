@@ -31,12 +31,14 @@
           rows="10"
           placeholder="Paste JSON here..."
         ></textarea>
-        <button id="load-button" class="btn-primary">Load Patterns</button>
+        <button id="load-button" class="btn-primary"><i data-lucide="folder-open" aria-hidden="true"></i><span>Load patterns</span></button>
       </section>
 
       <div class="pattern-list" id="pattern-list"></div>
     </div>
 
+    <script src="lucide.min.js"></script>
+    <script>lucide.createIcons({ attrs: { "stroke-width": 2 } });</script>
     <script src="./index.js"></script>
     <script src="./preview.js"></script>
   </body>
