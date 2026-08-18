@@ -685,6 +685,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     const point = getCellPoint(event.target as Element);
     if (!point) return;
     event.preventDefault();
+    suppressClick = true;
     touchPointerId = event.pointerId;
     isMouseDown = true;
     gridDiv.setPointerCapture(event.pointerId);
