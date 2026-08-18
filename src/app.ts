@@ -264,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setCellActive: gridManager.setCellActive,
   });
   gridManager.setDrawingTools(drawingTools);
-  initCopyPasteShortcuts(gridManager, toolState);
+  initCopyPasteShortcuts(gridManager);
   initToolShortcuts({
     pen: toolPenBtn,
     line: toolLineBtn,
