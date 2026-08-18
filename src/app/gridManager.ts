@@ -265,6 +265,11 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     selectionCells.forEach((point) => {
       cellMatrix[point.y]?.[point.x]?.classList.remove("selection-cell");
     });
+    if (selectionAnchorCell) {
+      cellMatrix[selectionAnchorCell.y]?.[selectionAnchorCell.x]?.classList.remove(
+        "selection-anchor"
+      );
+    }
     selectionCells = [];
     selectionStart = null;
     selectionEnd = null;
@@ -301,6 +306,11 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     selectionCells.forEach((point) => {
       cellMatrix[point.y]?.[point.x]?.classList.remove("selection-cell");
     });
+    if (selectionAnchorCell) {
+      cellMatrix[selectionAnchorCell.y]?.[selectionAnchorCell.x]?.classList.remove(
+        "selection-anchor"
+      );
+    }
     selectionCells = [];
     if (!selectionStart || !selectionEnd) return;
     const rect = getSelectionCorner(selectionStart, selectionEnd);
