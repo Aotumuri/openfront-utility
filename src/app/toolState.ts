@@ -24,6 +24,7 @@ type ToolStateOptions = {
   circleSizeInput: HTMLInputElement;
   stampBrushSizeInput: HTMLInputElement;
   circleFillInput: HTMLInputElement;
+  initialTool?: ToolKind;
 };
 
 export type ToolState = {
@@ -57,6 +58,7 @@ export function createToolState(options: ToolStateOptions): ToolState {
     circleSizeInput,
     stampBrushSizeInput,
     circleFillInput,
+    initialTool,
   } = options;
 
   let currentTool: ToolKind | null = null;
@@ -125,7 +127,7 @@ export function createToolState(options: ToolStateOptions): ToolState {
   toolCircleBtn.onclick = () => toggleTool("circle");
   toolSelectBtn.onclick = () => toggleTool("select");
   toolStampBtn.onclick = () => toggleTool("stamp");
-  selectTool("pen");
+  selectTool(initialTool ?? "pen");
 
   compactToolSizeInput.addEventListener("input", () => {
     const sizeInput = currentTool ? sizeInputByTool[currentTool] : undefined;

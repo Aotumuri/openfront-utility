@@ -20,7 +20,7 @@ import { initPaneResizeControls } from "./app/paneResizeControls.js";
 import { createPreviewRenderer } from "./app/previewRenderer.js";
 import { initShiftControls } from "./app/shiftControls.js";
 import { initStampControls } from "./app/stampControls.js";
-import { createToolState } from "./app/toolState.js";
+import { createToolState, type ToolKind } from "./app/toolState.js";
 import { createHistoryManager } from "./app/undoRedo.js";
 import { initWorkspaceControls } from "./app/workspaceControls.js";
 import { initCopyPasteShortcuts } from "./app/copyPasteShortcuts.js";
@@ -94,6 +94,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const shortcutsMenu = document.querySelector(".shortcuts-menu") as HTMLDetailsElement;
   const toolStatus = document.getElementById("toolStatus") as HTMLElement;
   const toast = document.getElementById("toast") as HTMLElement;
+
+  const savedTool = localStorage.getItem("selected-tool");
+  const initialTool: ToolKind | undefined = ["pen", "line", "fill", "shade", "star", "circle", "select", "stamp"].includes(savedTool ?? "")
+    ? savedTool as ToolKind
+    : undefined;
 
   const setToolDensity = (density: "normal" | "compact") => {
     editorShell.dataset.toolDensity = density;
@@ -187,6 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
     circleSizeInput,
     stampBrushSizeInput,
     circleFillInput,
+    initialTool,
   });
   const canvasWorkspace = document.getElementById("canvasWorkspace") as HTMLElement;
   const workspaceControls = initWorkspaceControls({
@@ -209,6 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
     stamp: "Stamp · paint with your stamp",
   };
   toolState.subscribeToToolChanges((tool) => {
+    if (tool) localStorage.setItem("selected-tool", tool);
     canvasWorkspace.classList.toggle("is-move-mode", tool === null);
     toolStatus.textContent = tool ? toolDescriptions[tool] : "Move · drag canvas";
   });
