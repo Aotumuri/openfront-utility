@@ -28,3 +28,7 @@ const copyStaticFiles = async (dir) => {
 
 await mkdir(outDir, { recursive: true });
 await copyStaticFiles(srcDir);
+await cp(
+  path.join(rootDir, "node_modules", "lucide", "dist", "umd", "lucide.min.js"),
+  path.join(outDir, "lucide.min.js"),
+);

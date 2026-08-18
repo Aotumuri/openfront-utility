@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <clipPath id="shade-half">
+      <path d="M12 4a8 8 0 0 1 0 16Z" />
+    </clipPath>
+  </defs>
+  <circle cx="12" cy="12" r="8" />
+  <path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none" opacity=".18" />
+  <g clip-path="url(#shade-half)">
+    <path d="m7 7 10 10M9 4l11 11M13 4l7 7M7 12l8 8M9 17l3 3" />
+  </g>
+</svg>

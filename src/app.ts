@@ -74,6 +74,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const colorPresetContainer = document.getElementById("colorPresetContainer") as HTMLDivElement;
   const selectedPresetLabel = document.getElementById("selectedPresetLabel");
   const editorShell = document.querySelector(".editor-shell") as HTMLElement;
+  const toolDensityButtons = document.querySelectorAll<HTMLButtonElement>(
+    "[data-tool-density]",
+  );
   const toolbarToggleBtn = document.getElementById("toolbarToggleBtn") as HTMLButtonElement;
   const modeButtons = document.querySelectorAll<HTMLButtonElement>("[data-view-mode]");
   const floatPreviewBtn = document.getElementById("floatPreviewBtn") as HTMLButtonElement;
@@ -87,6 +90,28 @@ document.addEventListener("DOMContentLoaded", () => {
   const shortcutsMenu = document.querySelector(".shortcuts-menu") as HTMLDetailsElement;
   const toolStatus = document.getElementById("toolStatus") as HTMLElement;
   const toast = document.getElementById("toast") as HTMLElement;
+
+  const setToolDensity = (density: "normal" | "compact") => {
+    editorShell.dataset.toolDensity = density;
+    toolDensityButtons.forEach((button) => {
+      button.setAttribute(
+        "aria-pressed",
+        String(button.dataset.toolDensity === density),
+      );
+    });
+    localStorage.setItem("tool-density", density);
+  };
+
+  const savedToolDensity = localStorage.getItem("tool-density");
+  if (savedToolDensity === "compact" || savedToolDensity === "normal") {
+    setToolDensity(savedToolDensity);
+  }
+  toolDensityButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const density = button.dataset.toolDensity;
+      if (density === "normal" || density === "compact") setToolDensity(density);
+    });
+  });
 
   if (!colorPresetContainer) {
     throw new Error("Missing color preset container");

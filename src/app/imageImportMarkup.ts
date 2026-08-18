@@ -48,7 +48,7 @@ function mustElement<T extends HTMLElement>(id: string) {
 
 const triggerMarkup = `
   <div class="layout-group layout-group-end">
-    <button id="openImageImportBtn" class="btn-primary">Image Convert</button>
+    <button id="openImageImportBtn" class="btn-primary"><i data-lucide="image" aria-hidden="true"></i><span>Image convert</span></button>
   </div>
 `;
 
@@ -70,7 +70,7 @@ const overlayMarkup = `
             Choose what counts as 1, then apply it to the grid.
           </p>
         </div>
-        <button id="closeImageImportBtn">Close</button>
+        <button id="closeImageImportBtn" class="icon-btn icon-btn-small" aria-label="Close image convert" title="Close"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
 
       <div class="image-import-body">
@@ -112,8 +112,8 @@ const overlayMarkup = `
               </label>
             </div>
             <div class="row">
-              <button id="imageImportUseGridBtn">Use current grid</button>
-              <button id="imageImportUseImageBtn">Use image size</button>
+              <button id="imageImportUseGridBtn"><i data-lucide="grid-2x2" aria-hidden="true"></i><span>Use current grid</span></button>
+              <button id="imageImportUseImageBtn"><i data-lucide="image" aria-hidden="true"></i><span>Use image size</span></button>
             </div>
             <p class="image-import-meta">
               Output size stays within the editor's current grid limits.
@@ -264,9 +264,9 @@ const overlayMarkup = `
       </div>
 
       <div class="image-import-footer">
-        <button id="cancelImageImportBtn">Keep Editing</button>
+        <button id="cancelImageImportBtn"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Keep editing</span></button>
         <button id="applyImageImportBtn" class="btn-primary" disabled>
-          Apply to Grid
+          <i data-lucide="check" aria-hidden="true"></i><span>Apply to grid</span>
         </button>
       </div>
     </section>
@@ -284,6 +284,9 @@ export function ensureImageImportMarkup(): ImageImportElements {
 
   if (!document.getElementById("openImageImportBtn")) {
     (imageImportEntry ?? layoutToolbar)?.insertAdjacentHTML("beforeend", triggerMarkup);
+    (window as Window & {
+      lucide?: { createIcons: (options?: unknown) => void };
+    }).lucide?.createIcons({ attrs: { "stroke-width": 2 } });
   }
 
   if (!document.getElementById("imageImportOverlay")) {

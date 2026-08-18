@@ -79,6 +79,28 @@ button:disabled {
   vertical-align: middle;
 }
 
+button > svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  stroke-width: 2;
+  vertical-align: middle;
+}
+
+button:has(> svg) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.icon-btn-small {
+  width: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 5px;
+}
+
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
@@ -179,6 +201,7 @@ h1 {
 
 .top-actions,
 .mode-switch,
+.tool-density-switch,
 .workspace-actions,
 .action-row,
 .row {
@@ -305,9 +328,42 @@ kbd { padding: 2px 5px; border: 1px solid var(--border-strong); border-radius: 4
   background: var(--surface-muted);
 }
 
+.tool-density-switch {
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-muted);
+}
+
+.tool-density-label {
+  padding: 0 3px 0 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tool-density-switch button {
+  padding: 5px 7px;
+  background: transparent;
+  font-size: 12px;
+}
+
+.tool-density-switch button[aria-pressed="true"] {
+  border-color: var(--accent-dark);
+  background: var(--accent);
+  color: #fff;
+}
+
 .mode-switch button {
   padding: 5px 9px;
   background: transparent;
+}
+
+.mode-switch button.selected {
+  border-color: var(--accent);
+  background: #dff1f0;
+  color: var(--accent-dark);
+  box-shadow: inset 0 0 0 1px rgba(6, 79, 78, 0.18);
 }
 
 .panel-title {
@@ -384,7 +440,8 @@ kbd { padding: 2px 5px; border: 1px solid var(--border-strong); border-radius: 4
   }
 
   .top-actions,
-  .mode-switch {
+  .mode-switch,
+  .tool-density-switch {
     gap: 5px;
   }
 
@@ -419,6 +476,11 @@ kbd { padding: 2px 5px; border: 1px solid var(--border-strong); border-radius: 4
 
   .mode-switch button {
     padding: 5px 7px;
+  }
+
+  .tool-density-label,
+  .tool-density-switch button span {
+    display: none;
   }
 
   .mode-switch button[data-view-mode="both"] {
