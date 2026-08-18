@@ -24,18 +24,27 @@ export function setupGridGuides(
 ): GuideState {
   injectGridGuideStyle();
   const blackGuideBtn = document.createElement("button");
-  blackGuideBtn.textContent = "Grid Guide (Black)";
+  blackGuideBtn.innerHTML = '<i data-lucide="grid-2x2" aria-hidden="true"></i>';
   blackGuideBtn.id = "gridGuideBlackBtn";
-  blackGuideBtn.style.marginLeft = "8px";
+  blackGuideBtn.title = "Toggle black grid guide";
+  blackGuideBtn.setAttribute("aria-label", "Toggle black grid guide");
 
   const centerGuideBtn = document.createElement("button");
-  centerGuideBtn.textContent = "Center Guide (Red/Blue)";
+  centerGuideBtn.innerHTML = '<i data-lucide="crosshair" aria-hidden="true"></i>';
   centerGuideBtn.id = "gridGuideCenterBtn";
-  centerGuideBtn.style.marginLeft = "8px";
+  centerGuideBtn.title = "Toggle red and blue center guide";
+  centerGuideBtn.setAttribute("aria-label", "Toggle red and blue center guide");
 
   if (toolbox) {
-    toolbox.appendChild(blackGuideBtn);
-    toolbox.appendChild(centerGuideBtn);
+    const guideControls = document.createElement("div");
+    guideControls.className = "guide-controls";
+    guideControls.append(blackGuideBtn, centerGuideBtn);
+    toolbox.appendChild(guideControls);
+    (
+      window as Window & {
+        lucide?: { createIcons: (options?: unknown) => void };
+      }
+    ).lucide?.createIcons({ attrs: { "stroke-width": 2 } });
   }
 
   let gridGuideBlack = false;

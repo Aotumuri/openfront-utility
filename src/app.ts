@@ -31,6 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const base64Input = document.getElementById("base64Input") as HTMLInputElement;
   const toolPenBtn = document.getElementById("tool-pen") as HTMLButtonElement;
   const penSizeInput = document.getElementById("pen-size") as HTMLInputElement;
+  const compactToolSizeInput = document.getElementById("compactToolSize") as HTMLInputElement;
+  const compactToolSizeControl = document.getElementById("compactToolSizeControl") as HTMLElement;
   const toolLineBtn = document.getElementById("tool-line") as HTMLButtonElement;
   const toolFillBtn = document.getElementById("tool-fill") as HTMLButtonElement;
   const toolShadeBtn = document.getElementById("tool-shade") as HTMLButtonElement;
@@ -177,6 +179,8 @@ document.addEventListener("DOMContentLoaded", () => {
     toolSelectBtn,
     toolStampBtn,
     penSizeInput,
+    compactToolSizeInput,
+    compactToolSizeControl,
     starSizeInput,
     circleSizeInput,
     stampBrushSizeInput,

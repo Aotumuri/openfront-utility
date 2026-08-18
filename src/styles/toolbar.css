@@ -81,6 +81,28 @@
   gap: 8px;
 }
 
+.compact-tool-size {
+  display: none;
+}
+
+.guide-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.guide-controls button {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guide-controls button svg {
+  width: 20px;
+  height: 20px;
+}
+
 .tool-group {
   display: grid;
   grid-template-columns: minmax(86px, auto) 1fr;
@@ -149,6 +171,39 @@
 
 .editor-shell[data-tool-density="compact"] .tool-label {
   display: none;
+}
+
+.editor-shell[data-tool-density="compact"] .toolbox {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(42px, 1fr));
+  align-items: center;
+  justify-content: start;
+}
+
+.editor-shell[data-tool-density="compact"] .tool-group {
+  display: contents;
+}
+
+.editor-shell[data-tool-density="compact"] .tool-group .tool-range {
+  display: none;
+}
+
+.editor-shell[data-tool-density="compact"] .compact-tool-size:not([hidden]) {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-shell[data-tool-density="compact"] .guide-controls {
+  grid-column: 1 / -1;
+}
+
+.compact-tool-size label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .tool-range,
