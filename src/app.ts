@@ -61,6 +61,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const shiftRightBtn = document.getElementById("shiftRightBtn") as HTMLButtonElement;
   const shiftDownBtn = document.getElementById("shiftDownBtn") as HTMLButtonElement;
   const gridDiv = document.getElementById("grid")!;
+  const gridColumnRuler = document.getElementById("gridColumnRuler") as HTMLElement;
+  const gridRowRuler = document.getElementById("gridRowRuler") as HTMLElement;
   const outputTextarea = document.getElementById("output") as HTMLTextAreaElement;
   const discordOutputTextarea = document.getElementById("discordOutput") as HTMLTextAreaElement;
   const previewLinkTextarea = document.getElementById("previewLinkOutput") as HTMLTextAreaElement;
@@ -223,6 +225,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let pendingPatternChangeBase64: string | null = null;
   const gridManager = createGridManager({
     gridDiv,
+    gridColumnRuler,
+    gridRowRuler,
     tileWidthInput,
     tileHeightInput,
     tileWidthValue,

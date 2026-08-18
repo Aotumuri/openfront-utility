@@ -99,7 +99,12 @@
               </div>
               <div id="canvasWorkspace" class="canvas-workspace">
                 <div id="gridViewport" class="grid-viewport">
-                  <div id="grid" class="grid"></div>
+                  <div class="grid-with-rulers">
+                    <div class="grid-ruler-corner" aria-hidden="true"></div>
+                    <div id="gridColumnRuler" class="grid-ruler grid-ruler-top" aria-hidden="true"></div>
+                    <div id="gridRowRuler" class="grid-ruler grid-ruler-left" aria-hidden="true"></div>
+                    <div id="grid" class="grid"></div>
+                  </div>
                 </div>
               </div>
             </section>

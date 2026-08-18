@@ -10,6 +10,8 @@ import type { ToolState } from "./toolState.js";
 
 type GridManagerOptions = {
   gridDiv: HTMLElement;
+  gridColumnRuler: HTMLElement;
+  gridRowRuler: HTMLElement;
   tileWidthInput: HTMLInputElement;
   tileHeightInput: HTMLInputElement;
   tileWidthValue: HTMLInputElement;
@@ -53,6 +55,8 @@ export type GridManager = {
 export function createGridManager(options: GridManagerOptions): GridManager {
   const {
     gridDiv,
+    gridColumnRuler,
+    gridRowRuler,
     tileWidthInput,
     tileHeightInput,
     tileWidthValue,
@@ -116,6 +120,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   let isPatternChangeStrokeActive = false;
   let patternState: number[][] = [];
   let cellMatrix: HTMLDivElement[][] = [];
+  const gridWithRulers = gridDiv.closest(".grid-with-rulers") as HTMLElement;
   const baseCellSize = 20;
   const selectionHoldDelay = 250;
 
@@ -128,6 +133,32 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     const cellSize = baseCellSize * getGridScale();
     gridDiv.style.setProperty("--cell-size", `${cellSize}px`);
     gridDiv.style.gridTemplateColumns = `repeat(${tileWidth}, var(--cell-size))`;
+    gridColumnRuler.style.gridTemplateColumns = `repeat(${tileWidth}, ${cellSize}px)`;
+    gridRowRuler.style.gridTemplateRows = `repeat(${tileHeight}, ${cellSize}px)`;
+  };
+
+  const renderGridRulers = () => {
+    const showRulers = guideState.isRulerEnabled();
+    gridWithRulers.classList.toggle("rulers-visible", showRulers);
+    gridColumnRuler.hidden = !showRulers;
+    gridRowRuler.hidden = !showRulers;
+    if (!showRulers) return;
+    gridColumnRuler.replaceChildren(
+      ...Array.from({ length: tileWidth }, (_, x) => {
+        const label = document.createElement("span");
+        label.className = "grid-ruler-label";
+        label.textContent = (x + 1) % 5 === 0 ? String(x + 1) : "";
+        return label;
+      })
+    );
+    gridRowRuler.replaceChildren(
+      ...Array.from({ length: tileHeight }, (_, y) => {
+        const label = document.createElement("span");
+        label.className = "grid-ruler-label";
+        label.textContent = (y + 1) % 5 === 0 ? String(y + 1) : "";
+        return label;
+      })
+    );
   };
 
   document.body.onmousedown = () => (isMouseDown = true);
@@ -152,7 +183,10 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     tileHeightInput.value = tileHeightValue.value;
     generateGrid();
   });
-  gridScaleInput?.addEventListener("change", applyGridSizing);
+  gridScaleInput?.addEventListener("change", () => {
+    applyGridSizing();
+    renderGridRulers();
+  });
 
   const isInBounds = (x: number, y: number) =>
     x >= 0 && y >= 0 && x < tileWidth && y < tileHeight;
@@ -753,6 +787,7 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     clearCopy();
     setPasteMode(false);
     applyGridSizing();
+    renderGridRulers();
     const basePattern = pattern ?? patternState;
     patternState = Array.from({ length: tileHeight }, (_, y) =>
       Array.from({ length: tileWidth }, (_, x) =>
