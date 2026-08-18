@@ -692,7 +692,58 @@ export function createGridManager(options: GridManagerOptions): GridManager {
   const getCellPointAt = (event: PointerEvent) =>
     getCellPoint(document.elementFromPoint(event.clientX, event.clientY));
 
-  const applyTouchPoint = (point: GridPoint) => {
+  const applyTouchStartPoint = (point: GridPoint) => {
+    if (pasteMode) {
+      applyPaste(point);
+      return;
+    }
+    if (isShiftSelectEnabled) {
+      updateShiftSelection(point.x, point.y);
+      return;
+    }
+    const tool = toolState.getCurrentTool();
+    if (tool === "pen") {
+      beginPatternChangeStroke();
+      if (toggleState === null) {
+        toggleState = !isCellActive(point.x, point.y);
+      }
+      applyPenBrush(point.x, point.y, toggleState);
+      onPatternChange();
+    } else if (tool === "select") {
+      updateSelection(point.x, point.y);
+    } else if (tool === "stamp") {
+      updateStampSelection(point.x, point.y);
+    } else if (tool === "line") {
+      if (!lineStart) {
+        setLineStart(point);
+        return;
+      }
+      drawingTools?.drawLine(lineStart.x, lineStart.y, point.x, point.y);
+      setLineStart(null);
+      onPatternChange();
+    } else if (tool === "fill") {
+      drawingTools?.floodFill(point.x, point.y);
+      onPatternChange();
+    } else if (tool === "shade") {
+      drawingTools?.shadeFill(point.x, point.y);
+      onPatternChange();
+    } else if (tool === "star") {
+      clearCirclePreview();
+      drawingTools?.drawStar(point.x, point.y, toolState.getStarRadius());
+      onPatternChange();
+    } else if (tool === "circle") {
+      clearCirclePreview();
+      drawingTools?.drawCircle(
+        point.x,
+        point.y,
+        toolState.getCircleRadius(),
+        toolState.isCircleFilled(),
+      );
+      onPatternChange();
+    }
+  };
+
+  const applyTouchMovePoint = (point: GridPoint) => {
     if (isShiftSelectEnabled) {
       updateShiftSelection(point.x, point.y);
       return;
@@ -730,14 +781,14 @@ export function createGridManager(options: GridManagerOptions): GridManager {
     } else if (toolState.getCurrentTool() === "stamp") {
       startStampSelection(point.x, point.y);
     }
-    applyTouchPoint(point);
+    applyTouchStartPoint(point);
   });
 
   gridDiv.addEventListener("pointermove", (event) => {
     if (touchPointerId !== event.pointerId) return;
     event.preventDefault();
     const point = getCellPointAt(event);
-    if (point) applyTouchPoint(point);
+    if (point) applyTouchMovePoint(point);
   });
 
   const finishTouchPointer = (event: PointerEvent) => {
